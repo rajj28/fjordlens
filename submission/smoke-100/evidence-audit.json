@@ -1,0 +1,9 @@
+{
+  "profiles": 100,
+  "claims_checked": 4473,
+  "claims_with_resolvable_evidence": 4473,
+  "financial_values_checked_against_raw_source": 1842,
+  "errors": [],
+  "passed": true,
+  "scope": "Snapshot hashes, selector resolution and exact financial amounts/periods/scopes. Not a measurement of external recall or independently reviewed company precision."
+}

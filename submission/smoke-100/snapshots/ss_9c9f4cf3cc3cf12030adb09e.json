@@ -1,0 +1,22 @@
+{
+  "id": "ss_9c9f4cf3cc3cf12030adb09e",
+  "requested_url": "https://novooi.com/contact-us/",
+  "final_url": "https://novooi.com/contact-us/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-04T18:06:18Z",
+  "content_sha256": "29fb1aaf679ae1ddfdb5802ab58891bcc93847dea2d20b6b8bc330a09ee80601",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/29fb1aaf679ae1ddfdb5802ab58891bcc93847dea2d20b6b8bc330a09ee80601.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 313717,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sun, 04 Oct 2026 18:06:17 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

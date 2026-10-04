@@ -1,0 +1,9 @@
+{
+  "validator": "signalpost_public_citation_v1",
+  "valid": true,
+  "envelopes_checked": 100,
+  "citations_checked": 4496,
+  "factual_support_verified": false,
+  "entity_binding_verified": false,
+  "findings": []
+}

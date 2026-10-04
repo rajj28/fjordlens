@@ -1,0 +1,22 @@
+{
+  "id": "ss_c78e3c028381100b8356cdc3",
+  "requested_url": "https://novooi.com/brands/ansten-press/",
+  "final_url": "https://novooi.com/brands/ansten-press/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-04T18:06:21Z",
+  "content_sha256": "4e66396d5d6f671531da7255479d66d5523a7a0d9cb3525e85f16460b5167c27",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/4e66396d5d6f671531da7255479d66d5523a7a0d9cb3525e85f16460b5167c27.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 328976,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sun, 04 Oct 2026 18:06:21 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

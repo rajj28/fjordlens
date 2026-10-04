@@ -2,3 +2,5 @@
 *.gz binary
 *.png binary
 *.zip binary
+# Captured response bodies are evidence: keep them byte-for-byte (their SHA-256 is cited).
+**/snapshots/** binary
