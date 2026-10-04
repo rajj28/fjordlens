@@ -343,10 +343,18 @@ def group_context(ctx, url, owners, pages):
     return any((set(tokens(w)) & GROUP_CONTEXT) - ours for w in windows if w)
 
 
-def postcode_window(text, postcode):
-    """Short verbatim window of parsed page text around the first writing of the registered postcode."""
-    match = re.search(r"(?<!\d)" + re.escape(postcode) + r"(?!\d)", text or "")
-    return text[max(0, match.start() - 120):match.end() + 60].strip() if match else None
+def postcode_window(text, postcode, town="", street=""):
+    """Short verbatim window of parsed page text around the registered postcode: preferably where it is written
+    with the registered town or next to the registered street (a price or a phone fragment can share the digits)."""
+    text = text or ""
+    windows = [text[max(0, m.start() - 120):m.end() + 60].strip()
+               for m in re.finditer(r"(?<!\d)" + re.escape(postcode) + r"(?!\d)", text)][:50]
+    for wanted in (town, street):
+        if wanted:
+            hit = next((w for w in windows if wanted in " ".join(tokens(w))), None)
+            if hit:
+                return hit
+    return windows[0] if windows else None
 
 
 def text_window(text, number):
@@ -540,11 +548,14 @@ def assess(ctx, candidate, pages):
     if proof is None and rule.startswith("D"):
         # Rule D's distinguishing evidence is the registered address: quote the page text around its postcode.
         postcode = postcode_town_hit.split(" ", 1)[0] if postcode_town_hit else (address_hit[1] if address_hit else None)
-        for index, page in enumerate(pages):
-            window = postcode_window(page.get("text", ""), postcode) if postcode else None
-            if window:
-                proof = (index, {"type": "normalized_text", "value": window}, window)
-                break
+        town = postcode_town_hit.split(" ", 1)[1] if postcode_town_hit else ""
+        street = address_hit[0] if address_hit else ""
+        candidates = [(index, postcode_window(page.get("text", ""), postcode, town, street)) for index, page in enumerate(pages)] if postcode else []
+        # First a page whose window shows the town or street with the postcode, else the first postcode window.
+        for index, window in sorted((c for c in candidates if c[1]),
+                                    key=lambda c: (not any(w and w in " ".join(tokens(c[1])) for w in (town, street)), c[0])):
+            proof = (index, {"type": "normalized_text", "value": window}, window)
+            break
     if proof is None:
         proof = (0, {"type": "normalized_text", "value": name_hit or ""}, name_hit or "")
     if not str(proof[2] or "").strip():

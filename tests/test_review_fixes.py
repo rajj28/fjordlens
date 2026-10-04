@@ -171,6 +171,15 @@ class GateReviewTests(unittest.TestCase):
         self.assertTrue(result["publishable"], result)
         self.assertIn("5013", result["proof_span"])
 
+    def test_rule_d_proof_prefers_the_postcode_written_with_the_town(self):
+        html = ("<title>Fjordkraft Teknikk AS</title><p>Servicepakke 5013 kroner.</p>"
+                + "<p>Vi leverer elektro, automasjon og service til industri i hele Vestland.</p>" * 6
+                + "<footer>Fjordkraft Teknikk AS, Strandgaten 5, 5013 Bergen</footer>")
+        result = self.decide(html, "https://fjordkraftteknikk.no/", "dns_guess")
+        self.assertTrue(result["publishable"], result)
+        self.assertIn("5013 Bergen", result["proof_span"])
+        self.assertNotIn("kroner", result["proof_span"])
+
 
 class BudgetConfigTests(unittest.TestCase):
     def test_invalid_cost_configuration_falls_back_to_safe_defaults(self):
