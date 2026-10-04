@@ -4,6 +4,7 @@ Every sentence carries the claim IDs it rests on. Figures are quoted from filed 
 derived numbers (equity ratio, operating margin) are labelled as calculations and cite both inputs.
 Nothing here can introduce a fact that is not already a published claim.
 """
+from datetime import datetime
 from decimal import Decimal, InvalidOperation
 import re
 
@@ -15,6 +16,66 @@ FAMILY_LABELS = {"identity": "official identity", "financials": "filed annual ac
                  "website": "verified company website", "description": "company-published description",
                  "contact": "company-published contact details", "social_profiles": "company-linked social profiles",
                  "hiring": "hiring signals", "activity": "dated public activity", "workforce": "registered workforce"}
+
+
+CHANGE_PHRASES = {
+    "changed_name": "Registered name changed", "changed_legal_form": "Legal form changed",
+    "changed_address": "Registered address changed", "changed_status": "Registry status changed",
+    "changed_registry_website": "Website in the register changed", "changed_employee_count": "Registered employee count changed",
+    "changed_industry": "Industry code changed", "new_filing": "New annual accounts on file",
+    "changed_financials": "Filed figures changed for the same period", "new_role": "New registered role",
+    "removed_role": "Registered role removed", "changed_role": "Registered role changed",
+    "new_location": "New registered workplace", "removed_location": "Registered workplace removed",
+    "changed_location": "Registered workplace details changed", "new_job": "New job ad",
+    "closed_job": "Job ad no longer active in NAV's feed", "new_publication": "New company publication",
+    "changed_website": "Verified website changed",
+}
+
+
+def age_in_years(date_text, today_text):
+    try:
+        start = datetime.fromisoformat(str(date_text)[:10])
+        today = datetime.fromisoformat(str(today_text or "")[:10]) if today_text else datetime.now()
+    except ValueError:
+        return None
+    years = today.year - start.year - ((today.month, today.day) < (start.month, start.day))
+    return years if years >= 0 else None
+
+
+WEBSITE_REASONS = {
+    "A": "the site shows the organisation number in its own footer or organisation markup",
+    "A2": "the company filed this domain with the registry and the site shows its organisation number and legal name",
+    "B": "the company filed this domain with the registry and the site's own title or logo carries the full legal name",
+    "C": "the company filed this website with the registry and the site shows the legal name with registry contact details",
+    "D": "the site names the company and shows its registered address",
+}
+
+
+def website_reason(profile, website):
+    evidence = {e["id"]: e for e in profile.get("evidence", [])}
+    for evidence_id in website.get("evidence_ids", []):
+        rule = str((evidence.get(evidence_id, {}).get("identity_proof") or {}).get("rule") or "")
+        code = rule.split(":", 1)[0].strip()
+        if code in WEBSITE_REASONS:
+            return WEBSITE_REASONS[code]
+    return None
+
+
+def change_detail(change):
+    """Short, sourced description of one change (previous → current where both are simple)."""
+    before, after = change.get("previous_value"), change.get("current_value")
+    value = after if after is not None else before
+    if change.get("type") == "new_filing" and change.get("filing_years"):
+        return "filing year " + ", ".join(change["filing_years"])
+    if isinstance(value, dict):
+        for key in ("name", "title", "url"):
+            if value.get(key):
+                return str(value[key])[:120]
+        if "amount" in value:
+            return f"{change.get('field', '').replace('_', ' ')} {before.get('amount') if isinstance(before, dict) else '?'} → {after.get('amount') if isinstance(after, dict) else '?'} {value.get('currency', '')}"
+    if isinstance(before, (str, int, float, bool)) and isinstance(after, (str, int, float, bool)):
+        return f"{before} → {after}"
+    return change.get("field", "fact").replace("_", " ")
 
 
 def money(value):
@@ -76,10 +137,14 @@ def _summarize(profile):
     for claim in secondary:
         value = claim["value"] if isinstance(claim["value"], dict) else {"kode": str(claim["value"])}
         say(what, f"Secondary industry: {value.get('kode', '?')} ({value.get('beskrivelse', '')}).", [claim])
+    said = set()
     for field, label in (("statutory_purpose", "Statutory purpose (registry)"), ("registered_activity", "Registered activity (registry)")):
         claim = first(field)
         if claim:
             text = " ".join(claim["value"]) if isinstance(claim["value"], list) else str(claim["value"])
+            if text.strip() in said:
+                continue
+            said.add(text.strip())
             say(what, f"{label}: “{text[:600]}”", [claim])
     description = first("business_description")
     if description:
@@ -89,7 +154,12 @@ def _summarize(profile):
         say(what, f"The official registry reports {employees['value']} employees.", [employees])
     founded = first("founded_on") or first("registered_on")
     if founded:
-        say(what, f"It was {'founded' if founded['field'] == 'founded_on' else 'registered'} on {founded['value']}.", [founded])
+        verb = "incorporated (stiftelsesdato)" if founded["field"] == "founded_on" else "first registered in the entity register"
+        years = age_in_years(str(founded["value"]), profile.get("run", {}).get("completed_at"))
+        say(what, f"It was {verb} on {founded['value']}" + (f", about {years} years ago." if years is not None else "."), [founded])
+    flags = [c for c in (first("bankrupt"), first("liquidating")) if c and c["value"] is True]
+    if flags:
+        say(what, "Risk flag in the official register: " + " and ".join("bankruptcy" if c["field"] == "bankrupt" else "liquidation" for c in flags) + ".", flags)
     if form:
         say(what, f"Legal form: {form['value']}.", [form])
 
@@ -124,9 +194,24 @@ def _summarize(profile):
         say(where, f"The verified website lists an address: {site_address['value'] if isinstance(site_address['value'], str) else 'see source'} (self-reported).", [site_address])
 
     numbers = section("latest_numbers", "Latest filed numbers")
+    financial = [c for f, items in by_field.items() if f.startswith("financial_") for c in items if c.get("reporting_period")]
+
+    def period_of(claim):
+        period = claim.get("reporting_period") or {}
+        return (str(period.get("fraDato") or ""), str(period.get("tilDato") or ""))
+
+    def latest_period(scope):
+        # Latest end date; on a tie (a full year and a part year ending together) the period with most figures, then the longest.
+        counts = {}
+        for claim in financial:
+            if claim.get("scope") == scope:
+                counts[period_of(claim)] = counts.get(period_of(claim), 0) + 1
+        return max(counts, key=lambda key: (key[1], counts[key], [-ord(ch) for ch in key[0]])) if counts else None
+
     def latest(field, scope="legal_entity"):
-        items = [c for c in by_field.get(field, []) if c.get("scope") == scope and c.get("reporting_period")]
-        return sorted(items, key=lambda c: c["reporting_period"].get("tilDato", ""))[-1] if items else None
+        # Every figure in one statement comes from the same complete reporting period of this scope.
+        key = latest_period(scope)
+        return next((c for c in by_field.get(field, []) if c.get("scope") == scope and period_of(c) == key), None) if key else None
     for scope, label in (("legal_entity", "company accounts"), ("consolidated_group", "group (consolidated) accounts")):
         revenue, operating, net = latest("financial_revenue", scope), latest("financial_operating_profit", scope), latest("financial_net_profit", scope)
         equity, assets, debt = latest("financial_equity", scope), latest("financial_assets", scope), latest("financial_debt", scope)
@@ -191,6 +276,9 @@ def _summarize(profile):
     website = first("official_website")
     if website:
         say(online, f"Verified official website: {website['value']}.", [website])
+        how = website_reason(profile, website)
+        if how:
+            say(online, f"How it was verified: {how}.", [website])
     profiles = [c for c in by_field.get("company_profile", []) + by_field.get("company_linked_profile", []) if isinstance(c["value"], dict)]
     if profiles:
         say(online, "Company-linked profiles: " + ", ".join(f"{c['value'].get('platform')} ({c['value'].get('url')})" for c in profiles[:6]) + ".", profiles[:6])
@@ -212,8 +300,8 @@ def _summarize(profile):
     if material:
         for change in material[:6]:
             claim = by_id.get(change["claim_id"])
-            label = change.get("field", "fact").replace("_", " ")
-            say(changed, f"{change['type'].capitalize()}: {label} (observed {str(change.get('observed_at', ''))[:10]}).", [claim] if claim else [])
+            phrase = CHANGE_PHRASES.get(change["type"], change["type"].replace("_", " ").capitalize())
+            say(changed, f"{phrase}: {change_detail(change)} (observed {str(change.get('observed_at', ''))[:10]}).", [claim] if claim else [])
     elif previous:
         say(changed, f"No material changes since the previous run ({previous}).", claims[:1])
     stale = [c for c in profile["claims"] if c.get("stale")]

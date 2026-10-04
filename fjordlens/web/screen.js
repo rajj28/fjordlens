@@ -26,30 +26,48 @@ function screenAmount(text, unit) {
   return value * (['billion', 'bn', 'mrd'].includes(u) ? 1e9 : ['million', 'm', 'mill', 'mnok'].includes(u) ? 1e6 : 1);
 }
 
+const SCREEN_FILLER = new Set(['companies', 'company', 'firms', 'firm', 'businesses', 'business', 'organisations', 'organizations',
+  'entities', 'show', 'list', 'find', 'give', 'get', 'me', 'all', 'the', 'a', 'an', 'with', 'and', 'or', 'that', 'which', 'who',
+  'are', 'is', 'in', 'of', 'for', 'to', 'have', 'has', 'having', 'registered', 'please', 'whose', 'their', 'its', 'norwegian',
+  'norway', 'norge', 'located', 'based', 'where', 'nok']);
+
 function parseScreen(query) {
+  // Mirrors fjordlens/research.py: a query is refused rather than run with some of its criteria silently ignored.
   const text = String(query || '').trim().split(/\s+/).join(' ');
   const lower = text.toLowerCase();
   const filters = [];
+  const spans = [];
+  const find = (...patterns) => {
+    for (const pattern of patterns) {
+      const m = lower.match(pattern);
+      if (m) { spans.push([m.index, m.index + m[0].length]); return m; }
+    }
+    return null;
+  };
   const unsupported = [...new Set(Object.entries(SCREEN_UNSUPPORTED).filter(([t]) => lower.includes(t)).map(([, m]) => m))];
-  const muni = lower.match(/\b(?:in|located in|municipality(?:\s+is|\s*=)?)\s+([a-zæøåéü .'-]+?)(?=\s+(?:with|and|having|that|where|top|sorted|by)\b|$)/);
+  const muni = find(/\b(?:in|located in|municipality(?:\s+is|\s*=)?)\s+([a-zæøåéü .'-]+?)(?=\s+(?:with|and|having|that|where|top|sorted|by)\b|$)/);
   if (muni && !['norway', 'norge'].includes(muni[1].trim())) filters.push({field: 'municipality', operator: 'eq', value: muni[1].trim().toUpperCase()});
-  const form = lower.match(new RegExp(`\\b(?:legal\\s+form|organisation\\s+form|organization\\s+form|form)\\s*(?:is|=)?\\s*(${SCREEN_FORMS})\\b`));
+  const form = find(new RegExp(`\\b(?:legal\\s+form|organisation\\s+form|organization\\s+form|form)\\s*(?:is|=)?\\s*(${SCREEN_FORMS})\\b`));
   if (form) filters.push({field: 'legal_form', operator: 'eq', value: form[1].toUpperCase()});
-  const emp = lower.match(/\b(more than|over|above|greater than|at least|fewer than|less than|under|below|at most)\s+(\d+)\s+(?:registered\s+)?(?:employees?|ansatte)\b/)
-    || lower.match(/\b(?:employees?|ansatte)\s*(>=|<=|>|<|=)\s*(\d+)\b/);
+  const emp = find(/\b(more than|over|above|greater than|at least|fewer than|less than|under|below|at most)\s+(\d+)\s+(?:registered\s+)?(?:employees?|ansatte)\b/,
+    /\b(?:employees?|ansatte)\s*(>=|<=|>|<|=)\s*(\d+)\b/);
   if (emp) filters.push({field: 'employees', operator: SCREEN_OPS[emp[1]] || emp[1], value: Number(emp[2])});
-  const rev = lower.match(/\b(?:revenue|turnover|omsetning)\s*(>=|<=|>|<|=|more than|over|above|greater than|at least|fewer than|less than|under|below|at most)\s*(?:nok\s*)?(\d[\d ,.]*)\s*(billion|bn|million|m|mill|mnok|mrd)?\b/)
-    || lower.match(/\b(more than|over|above|greater than|at least|fewer than|less than|under|below|at most)\s*(?:nok\s*)?(\d[\d ,.]*)\s*(billion|bn|million|m|mill|mnok|mrd)?\s+(?:in\s+)?(?:revenue|turnover|omsetning)\b/);
+  const rev = find(/\b(?:revenue|turnover|omsetning)\s*(>=|<=|>|<|=|more than|over|above|greater than|at least|fewer than|less than|under|below|at most)\s*(?:nok\s*)?(\d[\d ,.]*)\s*(billion|bn|million|m|mill|mnok|mrd)?\b/,
+    /\b(more than|over|above|greater than|at least|fewer than|less than|under|below|at most)\s*(?:nok\s*)?(\d[\d ,.]*)\s*(billion|bn|million|m|mill|mnok|mrd)?\s+(?:in\s+)?(?:revenue|turnover|omsetning)\b/);
   if (rev) filters.push({field: 'revenue', operator: SCREEN_OPS[rev[1]] || rev[1], value: screenAmount(rev[2].replace(/[ ,.]+$/, ''), rev[3])});
-  if (/\b(unprofitable|loss[- ]making|negative annual result)\b/.test(lower)) filters.push({field: 'annual_result', operator: '<', value: 0});
-  else if (/\b(profitable|positive annual result)\b/.test(lower)) filters.push({field: 'annual_result', operator: '>', value: 0});
-  if (/\b(?:with|has|have|having)\s+(?:an?\s+)?(?:verified\s+|official\s+)?website\b/.test(lower)) filters.push({field: 'website', operator: 'present', value: true});
-  if (/\b(?:with|has|have|having)\s+(?:filed\s+|annual\s+)?accounts\b/.test(lower)) filters.push({field: 'financials', operator: 'available', value: true});
-  if (/\b(?:hiring|with (?:open )?(?:jobs|job ads|vacancies))\b/.test(lower)) filters.push({field: 'hiring', operator: 'present', value: true});
-  const ind = text.match(/\bindustry(?:\s+contains|\s+is|\s*=)?\s+["']([^"']+)["']/i);
+  if (find(/\b(unprofitable|loss[- ]making|negative annual result)\b/)) filters.push({field: 'annual_result', operator: '<', value: 0});
+  else if (find(/\b(profitable|positive annual result)\b/)) filters.push({field: 'annual_result', operator: '>', value: 0});
+  if (find(/\b(?:with|has|have|having)\s+(?:an?\s+)?(?:verified\s+|official\s+)?website\b/)) filters.push({field: 'website', operator: 'present', value: true});
+  if (find(/\b(?:with|has|have|having)\s+(?:filed\s+|annual\s+)?accounts\b/)) filters.push({field: 'financials', operator: 'available', value: true});
+  if (find(/\b(?:hiring|with (?:open )?(?:jobs|job ads|vacancies))\b/)) filters.push({field: 'hiring', operator: 'present', value: true});
+  const ind = find(/\bindustry(?:\s+contains|\s+is|\s*=)?\s+["']([^"']+)["']/);
   if (ind) filters.push({field: 'industry', operator: 'contains', value: ind[1].toLowerCase()});
-  const top = lower.match(/\btop\s+(\d+)\s+(?:companies\s+)?by\s+(revenue|employees)\b/);
+  const top = find(/\btop\s+(\d+)\s+(?:companies\s+)?by\s+(revenue|employees)\b/);
   const sort = top ? {field: top[2], direction: 'desc', limit: Math.max(1, Math.min(Number(top[1]), 100))} : null;
+  const residual = lower.split('');
+  for (const [a, b] of spans) for (let i = a; i < b; i += 1) residual[i] = ' ';
+  const leftover = (residual.join('').match(/[a-zæøåéü0-9]+/g) || []).filter(w => !SCREEN_FILLER.has(w) && !/^\d+$/.test(w));
+  if (leftover.length && !unsupported.length) unsupported.push('criterion not supported by the screening grammar: ' + leftover.slice(0, 8).join(' '));
   return {query: text, filters, sort, unsupported, executable: Boolean(filters.length || sort) && !unsupported.length};
 }
 

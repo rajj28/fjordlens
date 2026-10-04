@@ -34,24 +34,40 @@ def _number(text, unit):
     return amount * (1_000_000_000 if unit in {"billion", "bn", "mrd", "milliard", "milliarder"} else 1_000_000 if unit in {"million", "m", "mill", "mnok", "millioner"} else 1)
 
 
+FILLER = {"companies", "company", "firms", "firm", "businesses", "business", "organisations", "organizations", "entities", "show",
+          "list", "find", "give", "get", "me", "all", "the", "a", "an", "with", "and", "or", "that", "which", "who", "are", "is",
+          "in", "of", "for", "to", "have", "has", "having", "registered", "please", "whose", "their", "its", "norwegian",
+          "norway", "norge", "located", "based", "where", "nok"}
+
+
 def parse_screen_query(query):
-    """Closed grammar -> inspectable plan. Unknown or unsupported criteria make the plan non-executable."""
+    """Closed grammar -> inspectable plan. Unknown or unsupported criteria make the plan non-executable: a query is
+    never run with part of its criteria silently ignored."""
     text = " ".join(str(query or "").strip().split())
-    lower = text.casefold()
-    filters = []
+    lower = text.lower()
+    filters, spans = [], []
     unsupported = sorted({message for term, message in UNSUPPORTED_SCREEN_TERMS.items() if term in lower})
-    municipality = re.search(r"\b(?:in|located in|municipality(?:\s+is|\s*=)?)\s+([a-zæøåéü .'-]+?)(?=\s+(?:with|and|having|that|where|top|sorted|by)\b|$)", lower)
+
+    def find(*patterns):
+        for pattern in patterns:
+            match = re.search(pattern, lower)
+            if match:
+                spans.append(match.span())
+                return match
+        return None
+
+    municipality = find(r"\b(?:in|located in|municipality(?:\s+is|\s*=)?)\s+([a-zæøåéü .'-]+?)(?=\s+(?:with|and|having|that|where|top|sorted|by)\b|$)")
     if municipality and municipality.group(1).strip() not in {"norway", "norge"}:
         filters.append({"field": "municipality", "operator": "eq", "value": municipality.group(1).strip().upper(), "evidence": "registered_address"})
-    legal_form = re.search(rf"\b(?:legal\s+form|organisation\s+form|organization\s+form|form)\s*(?:is|=)?\s*({LEGAL_FORMS})\b", lower)
+    legal_form = find(rf"\b(?:legal\s+form|organisation\s+form|organization\s+form|form)\s*(?:is|=)?\s*({LEGAL_FORMS})\b")
     if legal_form:
         filters.append({"field": "legal_form", "operator": "eq", "value": legal_form.group(1).upper(), "evidence": "legal_form"})
-    employees = re.search(r"\b(more than|over|above|greater than|at least|fewer than|less than|under|below|at most)\s+(\d+)\s+(?:registered\s+)?(?:employees?|ansatte)\b", lower) \
-        or re.search(r"\b(?:employees?|ansatte)\s*(>=|<=|>|<|=)\s*(\d+)\b", lower)
+    employees = find(r"\b(more than|over|above|greater than|at least|fewer than|less than|under|below|at most)\s+(\d+)\s+(?:registered\s+)?(?:employees?|ansatte)\b",
+                     r"\b(?:employees?|ansatte)\s*(>=|<=|>|<|=)\s*(\d+)\b")
     if employees:
         filters.append({"field": "employees", "operator": OPERATORS.get(employees.group(1), employees.group(1)), "value": int(employees.group(2)), "evidence": "employees"})
-    revenue = re.search(r"\b(?:revenue|turnover|omsetning)\s*(>=|<=|>|<|=|more than|over|above|greater than|at least|fewer than|less than|under|below|at most)\s*(?:nok\s*)?([\d][\d ,.]*)\s*(billion|bn|million|m|mill|mnok|mrd)?\b", lower) \
-        or re.search(r"\b(more than|over|above|greater than|at least|fewer than|less than|under|below|at most)\s*(?:nok\s*)?([\d][\d ,.]*)\s*(billion|bn|million|m|mill|mnok|mrd)?\s+(?:in\s+)?(?:revenue|turnover|omsetning)\b", lower)
+    revenue = find(r"\b(?:revenue|turnover|omsetning)\s*(>=|<=|>|<|=|more than|over|above|greater than|at least|fewer than|less than|under|below|at most)\s*(?:nok\s*)?([\d][\d ,.]*)\s*(billion|bn|million|m|mill|mnok|mrd)?\b",
+                   r"\b(more than|over|above|greater than|at least|fewer than|less than|under|below|at most)\s*(?:nok\s*)?([\d][\d ,.]*)\s*(billion|bn|million|m|mill|mnok|mrd)?\s+(?:in\s+)?(?:revenue|turnover|omsetning)\b")
     if revenue:
         try:
             amount = _number(revenue.group(2).strip(" ,."), revenue.group(3))
@@ -59,23 +75,29 @@ def parse_screen_query(query):
                             "value": int(amount) if amount == amount.to_integral_value() else float(amount), "evidence": "financial_revenue"})
         except InvalidOperation:
             unsupported.append("revenue amount could not be read")
-    if re.search(r"\b(unprofitable|loss[- ]making|negative annual result)\b", lower):
+    if find(r"\b(unprofitable|loss[- ]making|negative annual result)\b"):
         filters.append({"field": "annual_result", "operator": "<", "value": 0, "evidence": "financial_net_profit"})
-    elif re.search(r"\b(profitable|positive annual result)\b", lower):
+    elif find(r"\b(profitable|positive annual result)\b"):
         filters.append({"field": "annual_result", "operator": ">", "value": 0, "evidence": "financial_net_profit"})
-    if re.search(r"\b(?:with|has|have|having)\s+(?:an?\s+)?(?:verified\s+|official\s+)?website\b", lower):
+    if find(r"\b(?:with|has|have|having)\s+(?:an?\s+)?(?:verified\s+|official\s+)?website\b"):
         filters.append({"field": "website", "operator": "present", "value": True, "evidence": "official_website"})
-    if re.search(r"\b(?:with|has|have|having)\s+(?:filed\s+|annual\s+)?accounts\b", lower):
+    if find(r"\b(?:with|has|have|having)\s+(?:filed\s+|annual\s+)?accounts\b"):
         filters.append({"field": "financials", "operator": "available", "value": True, "evidence": "financial_revenue"})
-    if re.search(r"\b(?:hiring|with (?:open )?(?:jobs|job ads|vacancies))\b", lower):
+    if find(r"\b(?:hiring|with (?:open )?(?:jobs|job ads|vacancies))\b"):
         filters.append({"field": "hiring", "operator": "present", "value": True, "evidence": "job_posting"})
-    industry = re.search(r"\bindustry(?:\s+contains|\s+is|\s*=)?\s+[\"']([^\"']+)[\"']", text, flags=re.IGNORECASE)
+    industry = find(r"\bindustry(?:\s+contains|\s+is|\s*=)?\s+[\"']([^\"']+)[\"']")
     if industry:
         filters.append({"field": "industry", "operator": "contains", "value": industry.group(1).casefold(), "evidence": "industry"})
     sort = None
-    top = re.search(r"\btop\s+(\d+)\s+(?:companies\s+)?by\s+(revenue|employees)\b", lower)
+    top = find(r"\btop\s+(\d+)\s+(?:companies\s+)?by\s+(revenue|employees)\b")
     if top:
         sort = {"field": top.group(2), "direction": "desc", "limit": max(1, min(int(top.group(1)), 100))}
+    residual = list(lower)
+    for start, stop in spans:
+        residual[start:stop] = " " * (stop - start)
+    leftover = [w for w in re.findall(r"[a-zæøåéü0-9]+", "".join(residual)) if w not in FILLER and not w.isdigit()]
+    if leftover and not unsupported:
+        unsupported.append("criterion not supported by the screening grammar: " + " ".join(leftover[:8]))
     return {"version": "closed_company_screen_v1", "query": text, "filters": filters, "sort": sort, "unsupported": unsupported,
             "executable": bool(filters or sort) and not unsupported}
 

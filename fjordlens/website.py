@@ -2,10 +2,11 @@
 from __future__ import annotations
 from datetime import datetime, timezone
 import os
+import html as stdlib_html
 import re
 from urllib.parse import urljoin, urlsplit, urlencode
 from xml.etree import ElementTree as ET
-from . import discovery, gate
+from . import articles, discovery, gate, search
 from .core import canonical
 from .gate import registered_domain
 from .html import clean, parse_html, structured_nodes
@@ -25,8 +26,11 @@ def valid_date(value):
 
 def page_priority(link):
     value = link["url"] + " " + link.get("text", "")
-    groups = (r"kontakt|contact|legal|impressum", r"jobb|job|career|karriere|ledig|stilling", r"nyhet|news|aktuelt|press", r"om-oss|about|location|kontor")
-    return next((i for i, pattern in enumerate(groups) if re.search(pattern, value, re.I)), 9)
+    groups = (r"kontakt|contact|legal|impressum", None, r"nyhet|news|aktuelt|press|blogg|blog|artikler", r"om-oss|about|location|kontor")
+    for i, pattern in enumerate(groups):
+        if (CAREERS.search(value) if pattern is None else re.search(pattern, value, re.I)):
+            return i
+    return 9
 
 def company_url(value):
     value = str(value or "").strip()
@@ -110,6 +114,11 @@ def names_other_entity(page, legal_name):
     return False
 
 
+# Careers words as whole words or path segments only: "utstillingsmodell" (exhibition model) is not a job page.
+CAREERS = re.compile(r"(?<![a-zæøå])(karriere|career|careers|jobb|jobs|jobbe|ledige[-_ ]stillinger|ledig[-_ ]stilling|"
+                     r"stillinger|stilling|vacancies|vacancy|join[-_ ]us|bli[-_ ]med)(?![a-zæøå])", re.I)
+
+
 PLACEHOLDER_BRANDS = re.compile(r"^(hjem|home|forside|startside|velkommen|welcome|wordpress|wix|squarespace|webflow|shopify|"
                                 r"just another wordpress site|min nettside|my site|untitled|index)$", re.I)
 
@@ -141,6 +150,215 @@ def public_brand(profile, org, page, response, proof, entity_name=""):
             continue
         add_web(profile, "public_brand", brand, response, "identity", proof, span=span, method=method, selector=selector, scope="company_reported")
         return
+
+
+WORDPRESS_PLACEHOLDERS = {"hello world!", "hei verden!", "hallo verden!", "hello world", "hei verden"}
+PAGINATION = re.compile(r"/(?:page|side|sida|p)/\d+/?$|[?&](?:page|side|paged|p)=\d+", re.I)
+LISTING_PAGE = re.compile(r"nyhet|news|aktuelt|presse|press|blogg|blog|artikler|articles|arkiv|archive", re.I)
+CONTACT_PAGE = re.compile(r"kontakt|contact", re.I)
+PHONE_CUE = re.compile(r"(?:tlf|telefon|phone|mobil|mobile|ring oss|sentralbord)\.?\s*:?\s*((?:\+47|0047)?[\s.]?(?:\d[\s.]?){7}\d)(?!\d)", re.I)
+ORG_TYPES = {"Organization", "Corporation", "LocalBusiness", "ProfessionalService", "Store", "Restaurant", "AutoDealer",
+             "HomeAndConstructionBusiness", "GeneralContractor", "Electrician", "Plumber", "LegalService", "AccountingService"}
+
+
+MISSING_PATHS = (("activity", ("/nyheter", "/aktuelt", "/blogg", "/news")), ("contact", ("/kontakt", "/kontakt-oss", "/contact")))
+
+
+def probe_missing(profile, fetcher, org, entity, home, proof, visited):
+    """After the link-driven crawl, a family still without facts gets up to two conventional pages on the verified
+    site (robots-checked like every page; the same page-scope gates apply)."""
+    for family, paths in MISSING_PATHS:
+        if profile.data["availability"][family]["state"] == "available":
+            continue
+        tried = 0
+        for path in paths:
+            url = urljoin(home.url, path)
+            if url in visited or url + "/" in visited or tried >= 2:
+                continue
+            tried += 1
+            visited.add(url)
+            r = fetcher.get(url, org)
+            profile.snapshot(r)
+            profile.data["attempts"].append({"strategy": "missing_type_probe_v1", "family": family, "url": url, "state": r.state})
+            if r.state == "available" and "html" in r.headers.get("content-type", "text/html") and host(r.url) == host(home.url) \
+                    and r.url.rstrip("/") != home.url.rstrip("/"):
+                visited.add(r.url)
+                extract(profile, entity, parse_html(r.text(), r.url), r, proof)
+                if profile.data["availability"][family]["state"] == "available":
+                    break
+
+
+def known_claim(profile, field, key):
+    """First source wins: the same fact found again by another extractor is not a second, conflicting claim."""
+    with profile.lock:
+        return any(c["field"] == field and c.get("key") == key for c in profile.data["claims"])
+
+
+def known_publication(profile, url):
+    return known_claim(profile, "company_publication", url)
+
+
+def known_phone(profile, digits):
+    with profile.lock:
+        return any(c["field"] == "website_phone" and re.sub(r"\D", "", str(c["value"]))[-8:] == digits for c in profile.data["claims"])
+
+
+def article_page(profile, page, response, proof):
+    """A single article on the verified site that states its own publication date (meta, JSON-LD or time element)."""
+    parts = urlsplit(response.url)
+    segments = [x for x in parts.path.split("/") if x]
+    if len(segments) < 2 or not LISTING_PAGE.search("/".join(segments[:-1])) or host(response.url) != host(proof["url"]):
+        return
+    if PAGINATION.search(parts.path + ("?" + parts.query if parts.query else "")) or segments[-1].isdigit():
+        return
+    url = f"{parts.scheme}://{parts.netloc}{parts.path}"
+    found = articles.article_published_date(response.text(), response.retrieved_at[:10], page_url=response.url)
+    if not found or len(found.get("title") or "") < 8 or known_publication(profile, url):
+        return
+    value = {"title": found["title"][:300], "url": url, "published_on": found["published_on"], "source_kind": "company_owned",
+             "independent_sentiment": False}
+    add_web(profile, "company_publication", value, response, "activity", proof, span=found["span"], key=url,
+            date=found["published_on"], scope="company_published_content", method="html_article_date_v1",
+            selector={"type": "article_date", "source": found["source"], "value": found["span"][:500]})
+
+
+def dated_links(profile, page, response, proof):
+    """Company publications from a news/blog listing page (or the homepage): an article link on the verified site
+    with a publication date shown next to it (time element, written date, or /YYYY/MM/DD/ in the URL)."""
+    path = urlsplit(page["url"]).path
+    if not (LISTING_PAGE.search(path) or path.strip("/") == "") or host(page["url"]) != host(proof["url"]):
+        return
+    for item in articles.extract_dated_links(response.text(), response.url, response.retrieved_at[:10]):
+        if known_publication(profile, item["url"]):
+            continue
+        value = {"title": item["title"], "url": item["url"], "published_on": item["published_on"],
+                 "source_kind": "company_owned", "independent_sentiment": False}
+        add_web(profile, "company_publication", value, response, "activity", proof, span=item["span"], key=item["url"],
+                date=item["published_on"], scope="company_published_content", method="html_dated_link_v1",
+                selector={"type": "dated_link", "url": item["url"], "title": item["title"], "date_source": item["date_source"]})
+
+
+THIRD_PARTY = re.compile(r"regnskap|revisor|revisjon|advokat|partner|samarbeid|leverand|levert av|utviklet av|webdesign|design(?:et)? av|"
+                         r"utleier|huseier|gårdeier|forhandler|agent|megler|bank|forsikring|legevakt|politi|nødnummer|kommune|fylke|"
+                         r"accountant|auditor|lawyer|supplier|landlord|developed by|powered by|designed by", re.I)
+OTHER_ENTITY = re.compile(r"\b[A-ZÆØÅ][\wÆØÅæøå&.\-]*(?:\s+[\wÆØÅæøå&.\-]+){0,5}\s+(?:AS|ASA|ANS|DA|SA|NUF|BA|KS)\b")
+NUMBER_SEPARATOR = r"(?:\s|&nbsp;|&#160;|&#xa0;|[.\-]|<[^<>]{0,60}>)*"
+
+
+def verbatim_number(text, digits):
+    """The phone number exactly as written in the source (spaces, entities or inline tags between digits)."""
+    pattern = r"(?<!\d)(?:(?:\+|00)47" + NUMBER_SEPARATOR + ")?" + NUMBER_SEPARATOR.join(digits) + r"(?!\d)"
+    match = re.search(pattern, text, re.I)
+    return match.group(0) if match else None
+
+
+def contact_phones(profile, page, response, proof, legal_name=""):
+    """Phone numbers the verified site's own contact page labels as such (cue word next to the number)."""
+    seen = set()
+    own = core_name(legal_name)
+    lines = page.get("lines", [])[:400]
+    text = response.text()
+    for index, line in enumerate(lines):
+        context = " ".join(lines[max(0, index - 2):index + 1])
+        if THIRD_PARTY.search(context) or any(not own or not core_name(m.group(0)).endswith(own) for m in OTHER_ENTITY.finditer(context)):
+            continue  # an accountant's, landlord's, partner's or other company's number is not ours
+        for match in PHONE_CUE.finditer(line):
+            written = match.group(1).strip()
+            digits = re.sub(r"\D", "", written)
+            digits = digits[2:] if digits.startswith("47") and len(digits) == 10 else digits[4:] if digits.startswith("0047") else digits
+            if len(digits) != 8 or digits in seen or digits[0] not in "2345679" or known_phone(profile, digits):
+                continue
+            raw = verbatim_number(text, digits)
+            if not raw:
+                continue
+            seen.add(digits)
+            add_web(profile, "website_phone", written, response, "contact", proof, span=raw,
+                    key=digits, method="html_contact_page_v1", selector={"type": "normalized_text", "value": match.group(0)})
+            if len(seen) >= 3:
+                return
+
+
+LEGAL_FORMS = {"as", "asa", "ans", "da", "sa", "enk", "nuf", "ba", "ks", "sf", "iks"}
+
+
+def core_name(value):
+    """A legal name without its legal-form word(s): "Bergen Bil AS" -> "bergen bil"."""
+    words = normalize_name(value).split()
+    while words and words[-1] in LEGAL_FORMS:
+        words.pop()
+    while words and words[0] in LEGAL_FORMS:
+        words.pop(0)
+    return " ".join(words)
+
+
+def own_organisation(node, org, legal_name):
+    """The site's own organisation node: our organisation number, or exactly our legal name (with or without the
+    legal form) and no conflicting identifier. A longer name ("BERGEN BIL EIENDOM AS") is another legal entity."""
+    if not jsonld_types(node) & ORG_TYPES:
+        return False
+    numbers = {item.get("organisation_number") for item in node_org_identifiers(node)}
+    if numbers:
+        return numbers == {org}
+    target = core_name(legal_name)
+    return bool(target) and any(core_name(node.get(key)) == target for key in ("legalName", "name") if isinstance(node.get(key), str))
+
+
+def same_as(profile, page, response, proof, node, path, legal_name):
+    """Social profiles the site's own organisation markup declares (schema.org sameAs)."""
+    links = node.get("sameAs")
+    links = [links] if isinstance(links, str) else links if isinstance(links, list) else []
+    quote = jsonld_quote(page, (path or "") + "/sameAs") or canonical(links)[:3000]
+    for index, link in enumerate(links[:12]):
+        if not isinstance(link, str):
+            continue
+        profile_url = social_profile_url(link)
+        if not profile_url or not handle_matches_company(profile_url[1], legal_name, proof["url"]):
+            continue
+        platform, url = profile_url[0], profile_url[2]
+        if known_claim(profile, "company_linked_profile", url):
+            continue
+        value = {"platform": platform, "url": url, "url_as_published": link, "relationship": "declared_in_site_organization_markup",
+                 "destination_verified": False}
+        add_web(profile, "company_linked_profile", value, response, "social_profiles", proof, span=quote, key=url,
+                scope="site_declared_link", method="jsonld_sameas_v1",
+                selector={"type": "parsed_html_pointer", "value": "/jsonld" + (path or "") + f"/sameAs/{index}"})
+
+
+def wordpress_posts(profile, fetcher, org, home, proof):
+    """Dated posts from the verified site's own WordPress REST API (one request, JSON evidence)."""
+    if "wp-json" not in home.text()[:400000]:
+        return
+    url = urljoin(home.url, "/wp-json/wp/v2/posts?per_page=10&_fields=id,date,link,title")
+    r = fetcher.get(url, org)
+    profile.snapshot(r)
+    profile.data["attempts"].append({"strategy": "wordpress_posts_v1", "url": url, "state": r.state})
+    if r.state != "available" or host(r.url) != host(home.url):
+        return
+    try:
+        posts = r.json()
+    except ValueError:
+        return
+    if not isinstance(posts, list):
+        return
+    for index, post in enumerate(posts[:10]):
+        if not isinstance(post, dict):
+            continue
+        link, published = post.get("link"), valid_date(post.get("date"))
+        title = clean(re.sub(r"<[^>]+>", " ", str((post.get("title") or {}).get("rendered") or "") if isinstance(post.get("title"), dict) else ""))
+        title = stdlib_html.unescape(title)
+        if not isinstance(link, str) or host(link) != host(home.url) or not published or not title:
+            continue
+        if title.strip().lower() in WORDPRESS_PLACEHOLDERS:
+            continue  # WordPress's default first post is not company activity.
+        if published > r.retrieved_at[:10]:
+            continue
+        if known_publication(profile, link):
+            continue
+        value = {"title": title[:300], "url": link, "published_on": published, "source_kind": "company_owned",
+                 "independent_sentiment": False}
+        # JSON evidence: the quote is the verbatim slice of this post's object in the API response.
+        profile.add("company_publication", value, r, pointer=f"/{index}", family="activity", key=link, effective_at=published,
+                    source_class="company_owned", method="json_pointer_v1", scope="company_published_content", identity_proof=proof)
 
 
 def extract(profile, entity, page, response, proof):
@@ -185,14 +403,24 @@ def extract(profile, entity, page, response, proof):
                 break
     if urlsplit(page["url"]).path.strip("/") == "" and host(page["url"]) == host(proof["url"]):
         public_brand(profile, org, page, response, proof, entity.get("navn") or "")
+    try:
+        dated_links(profile, page, response, proof)
+        article_page(profile, page, response, proof)
+    except Exception as exc:  # noqa: BLE001 - malformed markup must not stop the remaining extraction
+        profile.data["attempts"].append({"strategy": "publication_extraction_v1", "url": response.url, "state": "failed",
+                                         "error": f"{type(exc).__name__}: {str(exc)[:160]}"})
+    if CONTACT_PAGE.search(urlsplit(page["url"]).path):
+        contact_phones(profile, page, response, proof, entity.get("navn") or "")
     for index, link in enumerate(page["links"]):
         profile_url = social_profile_url(link["url"])
-        if profile_url and handle_matches_company(profile_url[1], entity.get("navn") or "", proof["url"]):
+        if (profile_url and handle_matches_company(profile_url[1], entity.get("navn") or "", proof["url"])
+                and not known_claim(profile, "company_linked_profile", profile_url[2])):
             platform, url = profile_url[0], profile_url[2]
             value = {"platform": platform, "url": url, "relationship": "linked_by_verified_company_site", "destination_verified": False}
             add_web(profile, "company_linked_profile", value, response, "social_profiles", proof,
                     span=link.get("href") or link["url"], key=url, scope="site_declared_link", method="html_href_v1", selector={"type": "parsed_html_pointer", "value": f"/links/{index}/href"})
-        if re.search(r"career|karriere|ledig|stilling|jobb|/jobs", link["url"] + " " + link["text"], re.I) and host(link["url"]) == host(proof["url"]):
+        if (CAREERS.search(urlsplit(link["url"]).path + " " + link["text"]) and host(link["url"]) == host(proof["url"])
+                and not known_claim(profile, "careers_page_url", link["url"])):
             # A careers page is not a hiring fact (only a job-feed item or a posting is): it is part of the website.
             add_web(profile, "careers_page_url", {"url": link["url"], "title": link["text"] or "Careers"}, response,
                     "website", proof, span=link.get("href") or link["url"], key=link["url"], method="html_href_v1", selector={"type": "parsed_html_pointer", "value": f"/links/{index}/href"})
@@ -232,11 +460,13 @@ def extract(profile, entity, page, response, proof):
             target = urljoin(page["url"], target)
             if host(target) != host(proof["url"]):
                 continue
-            if date > response.retrieved_at[:10]:
+            if date > response.retrieved_at[:10] or known_publication(profile, target):
                 continue
             add_web(profile, "company_publication", {"title": clean(headline), "url": target, "published_on": date,
                                                       "source_kind": "company_owned", "independent_sentiment": False}, response,
                     "activity", proof, span=jsonld_quote(page, path) or canonical(node)[:3000], key=target, date=date, scope="company_published_content", method="jsonld_article_v1", selector={"type": "parsed_html_pointer", "value": "/jsonld" + path})
+        if gate.OWNER_NODE_PATH.match(path or "/0") and own_organisation(node, org, entity.get("navn") or ""):
+            same_as(profile, page, response, proof, node, path, entity.get("navn") or "")
         if node_org(node) == org:
             for name, field in (("telephone", "website_phone"), ("email", "website_email"), ("address", "website_contact_address")):
                 if node.get(name):
@@ -295,7 +525,7 @@ def fetch_page(profile, fetcher, org, url):
         return r
     parts = urlsplit(url)
     alternates = []
-    if r.error and re.search(r"getaddrinfo|Name or service|nodename|DNS", r.error):
+    if r.error and re.search(r"getaddrinfo|Name or service|nodename|DNS|Hostname mismatch|certificate is not valid for", r.error):
         other = parts.hostname[4:] if parts.hostname.startswith("www.") else "www." + parts.hostname
         alternates.append(parts._replace(netloc=other).geturl())
     if url.startswith("https://"):
@@ -349,29 +579,9 @@ def publish_declared_profiles(profile, declared):
                     key=item["url"], source_class="official_registry", scope="registry_declared_link")
 
 
-def research(profile, fetcher, entity, max_pages=7, caches=None):
-    org = entity["organisasjonsnummer"]
-    with profile.lock:
-        units = [c["value"] for c in profile.data["claims"] if c["field"] == "registered_workplace" and isinstance(c["value"], dict)]
-    # Workplace addresses, phones and e-mails are registry contacts too (gate evidence E4).
-    workplaces = [{**(u["address"] if isinstance(u.get("address"), dict) else {}), "telefon": u.get("phone"), "mobil": u.get("mobile"),
-                   "epostadresse": u.get("email")} for u in units]
-    with profile.lock:
-        people = [c["value"].get("name") for c in profile.data["claims"] if c["field"] == "registered_role" and isinstance(c["value"], dict)
-                  and c["value"].get("role_code") in {"DAGL", "LEDE", "INNH", "DTPR", "DTSO"} and isinstance(c["value"].get("name"), str)]
-    ctx = gate.Context(entity, workplaces, people)
-    brands = sorted({u.get("name") for u in units if isinstance(u.get("name"), str)})[:4]
-    sites, declared = discovery.candidates(entity, caches=caches if caches is not None else getattr(fetcher, "caches", None),
-                                           dns=bool(getattr(fetcher, "dns_enabled", False)), brands=brands, workplaces=units)
-    publish_declared_profiles(profile, declared)
-    if not sites:
-        profile.state("website", "not_available", "No registry website, business e-mail domain or name-derived domain candidate exists")
-        for family in SITE_FAMILIES:
-            if profile.data["availability"][family]["state"] != "available":
-                profile.state(family, "not_available", "No company website candidate to research")
-        return
-    accepted, last_state = None, "not_available"
-    for cand in sites[:5]:
+def try_candidates(profile, fetcher, org, ctx, candidates, last_state):
+    """Fetch each candidate's homepage (plus verification pages) and return the first gate-accepted site."""
+    for cand in candidates:
         r = fetch_page(profile, fetcher, org, cand["url"])
         page = html_page(r)
         if page is None:
@@ -393,9 +603,46 @@ def research(profile, fetcher, entity, max_pages=7, caches=None):
                 verdict = gate.assess(ctx, cand, pages)
         profile.data["identity_assessments"].append(verdict)
         if verdict["publishable"]:
-            accepted = (verdict, pages, responses)
-            break
+            return (verdict, pages, responses), last_state
         last_state = "ambiguous"
+    return None, last_state
+
+
+def research(profile, fetcher, entity, max_pages=7, caches=None):
+    org = entity["organisasjonsnummer"]
+    with profile.lock:
+        units = [c["value"] for c in profile.data["claims"] if c["field"] == "registered_workplace" and isinstance(c["value"], dict)]
+    # Workplace addresses, phones and e-mails are registry contacts too (gate evidence E4).
+    workplaces = [{**(u["address"] if isinstance(u.get("address"), dict) else {}), "telefon": u.get("phone"), "mobil": u.get("mobile"),
+                   "epostadresse": u.get("email")} for u in units]
+    with profile.lock:
+        people = [c["value"].get("name") for c in profile.data["claims"] if c["field"] == "registered_role" and isinstance(c["value"], dict)
+                  and c["value"].get("role_code") in {"DAGL", "LEDE", "INNH", "DTPR", "DTSO"} and isinstance(c["value"].get("name"), str)]
+    ctx = gate.Context(entity, workplaces, people)
+    brands = sorted({u.get("name") for u in units if isinstance(u.get("name"), str)})[:4]
+    sites, declared = discovery.candidates(entity, caches=caches if caches is not None else getattr(fetcher, "caches", None),
+                                           dns=bool(getattr(fetcher, "dns_enabled", False)), brands=brands, workplaces=units)
+    publish_declared_profiles(profile, declared)
+    if not sites and not search.enabled():
+        profile.state("website", "not_available", "No registry website, business e-mail domain or name-derived domain candidate exists")
+        for family in SITE_FAMILIES:
+            if profile.data["availability"][family]["state"] != "available":
+                profile.state(family, "not_available", "No company website candidate to research")
+        return
+    accepted, last_state = try_candidates(profile, fetcher, org, ctx, sites[:5], "not_available")
+    if not accepted and search.enabled():
+        # Optional licensed search (only with an evaluator-supplied key): nominations face the same gate.
+        nominated = search.nominate(fetcher, entity, exclude={registered_domain(c["url"]) for c in sites})
+        profile.data["attempts"].append({"strategy": "search_nomination_v1", "state": "available" if nominated else "not_available",
+                                         "candidates": [c["url"] for c in nominated]})
+        if nominated:
+            accepted, last_state = try_candidates(profile, fetcher, org, ctx, nominated, last_state)
+        elif not sites:
+            profile.state("website", "not_available", "No registry website, business e-mail domain, name-derived domain or search candidate exists")
+            for family in SITE_FAMILIES:
+                if profile.data["availability"][family]["state"] != "available":
+                    profile.state(family, "not_available", "No company website candidate to research")
+            return
     if not accepted:
         reason = "No candidate passed the exact-company identity gate" if last_state == "ambiguous" else "Candidate sites could not be fetched"
         profile.state("website", last_state, reason)
@@ -450,12 +697,15 @@ def research(profile, fetcher, entity, max_pages=7, caches=None):
                 ordered.append(groups[priority].pop(0))
     for link in ordered[:max(0, max_pages - len(pages))]:
         r = fetcher.get(link["url"], org)
+        visited.update({link["url"], r.url})
         profile.snapshot(r)
         profile.data["attempts"].append({"strategy": "targeted_static_v1", "url": r.url, "state": r.state, "snapshot_id": r.snapshot_id})
         if r.state == "available" and "html" in r.headers.get("content-type", "text/html") and registered_domain(r.url) == registered_domain(home.url):
             page = parse_html(r.text(), r.url)
             extract(profile, entity, page, r, proof)
             feeds.extend(page["feeds"])
+    probe_missing(profile, fetcher, org, entity, home, proof, visited)
+    wordpress_posts(profile, fetcher, org, home, proof)
     for url in list(dict.fromkeys(feeds))[:1]:
         if registered_domain(url) != registered_domain(home.url):
             continue

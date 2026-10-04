@@ -80,7 +80,7 @@ class RolesRefreshAuditTests(unittest.TestCase):
                 self.assertTrue(current["availability"]["leadership"]["complete"])
                 result = refresh(current, self.previous())
                 self.assertEqual(result["claims"], [])
-                self.assertEqual([c["type"] for c in result["changes"]], ["removed"])
+                self.assertEqual([c["type"] for c in result["changes"]], ["removed_role"])
 
     def test_corporate_role_names_remain_supported(self):
         corporate = {"enhet": {"navn": ["Audit", "AS"], "organisasjonsnummer": ORG},

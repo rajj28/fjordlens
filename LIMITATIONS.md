@@ -1,13 +1,13 @@
-# Known limits and honest abstention (FjordLens v0.2)
+# Known limits and honest abstention (FjordLens v1)
 
 ## What is not covered
 
-- **No search engine**: Candidate URLs come only from registry fields (website, business e-mail domain), NAV employer homepages, and DNS-checked domains derived from the legal name or a registered workplace's trading name. No general web search, no Brave connector in the submitted runtime.
+- **Search only with an evaluator-supplied key**: by default, candidate URLs come only from registry fields (website, business e-mail domain, also of registered subunits), NAV employer homepages, and DNS-checked domains derived from the legal name or a registered workplace's trading name. If `BRAVE_SEARCH_API_KEY` is set, a web search nominates further candidates for companies with no verified free candidate; results are transient and nominated sites face the unchanged gate.
 - **No JavaScript rendering**: Static HTML only. Dynamic content, SPA navigation, client-side hydration, and lazy-loaded data are not fetched.
 - **No LinkedIn, Meta (Facebook/Instagram), Indeed, Glassdoor, Google, TikTok, X/Twitter scraping**: These hosts are hard-blocked in `net.RESTRICTED`. A company's outbound links to them may be recorded as `company_linked_profile` without fetching the destination.
 - **PDF annual accounts not parsed**: Filing-history connector (`official.history`) returns download URLs and filing years only. Document extraction is not implemented.
 - **Brønnøysund announcements excluded by robots.txt**: The `w2.brreg.no` announcements host disallows the agent via robots.txt; no announcements are collected.
-- **TLS-broken sites skipped**: `website.fetch_page` tries www/non-www DNS fallback, then plain HTTP fallback. If all fail (certificate errors, handshake failures, connection refused, timeout, EOF), the site is marked `blocked`/`failed` and not researched.
+- **TLS-broken sites skipped**: `website.fetch_page` tries the other www/non-www host on DNS failure or a certificate issued for the other name, then plain HTTP. If all fail (certificate errors, handshake failures, connection refused, timeout, EOF), the site is marked `blocked`/`failed` and not researched.
 - **No CAPTCHA solving, no authentication bypass, no paywall bypass**.
 - **No browser automation / Playwright at runtime**: Playwright is an optional dev dependency only.
 - **No sentiment analysis, review scoring, popularity ranking, or predicted official score**.
@@ -17,7 +17,9 @@
 - **A live run cannot reconstruct evidence from a past cutoff**. Supply a trusted snapshot bundle (`--replay`) for historical evaluation. Timezone-aware comparisons reject prior evidence after the cutoff, but cannot independently authenticate a supplier's retrieval timestamps.
 - **`--registry-snapshot` freezes only the official identity lookup**. Other connectors remain live; missing supplied identities cause abstention. Full offline reproduction requires `--replay`.
 - **Historical replay and auditable refresh require raw snapshots beside the prior profile export**. Public profiles alone contain no complete raw-source bundle; missing required historical bytes are explicit failures. The raw evidence archive is kept private and excluded from version control.
-- **The all-factor name/address/phone route (Rule D) is an auditable inference from agreeing sources**; confidence numbers are heuristic, not measured accuracy.
+- **Rule D (the site names itself as the company and shows its registered street or postcode with town) is an auditable inference from agreeing sources**; a name with only a phone number or a registered person is never enough for a domain we derived ourselves. Confidence numbers are heuristic, not measured accuracy.
+- **Dated links on listing pages are paired with a date only inside the link or the nearest element that links to no other article**; list layouts with no per-item element yield no dated links rather than possibly mis-dated ones.
+- **Contact-page phone numbers are company-reported**: a number labelled `Tlf`/`Telefon` on the verified site's contact page may belong to a named employee.
 - **No JBOX bonus eligibility claimed**. The entry has no JBOX dependency.
 
 ## Source rights per source
@@ -32,7 +34,7 @@
 
 ## Secrets
 
-None. The runtime uses no API keys, tokens, or secrets. The optional Brave connector (not used in submission) would require an entrant-provided key passed at runtime.
+None required. The only optional secret is `BRAVE_SEARCH_API_KEY`, which must be supplied by the evaluator at run time; it is sent only to `api.search.brave.com` in a request header, never logged, and search queries are stripped from the request log.
 
 ## Safe URL handling
 

@@ -1,4 +1,4 @@
-# Data schema (FjordLens v0.2)
+# Data schema (FjordLens v1)
 
 Each JSONL envelope is produced by `core.Profile` (during research) and `runner.finalize` (at terminal assembly). All fields below are present in every envelope.
 
@@ -21,6 +21,7 @@ Each JSONL envelope is produced by `core.Profile` (during research) and `runner.
 | `refresh` | `refresh.refresh` | `{previous_run_id, preserved_evidence[], stale_claim_ids[]}` |
 | `operations` | `finalize.operations` | `{requests, runtime_ms, third_party_cost_usd}` |
 | `summary` | `synthesis.summarize` | Grounded summary with `method`, `brief`, `sections[]`, `sentences[]`, `unknowns[]`, `change_count`, `material_change_count`, `stale_claim_count`, `interpretation` |
+| `answers` | `answers.build_answers` | The same 11 standard questions for every company, in fixed order: `{question, answerable, answer, claim_ids, evidence_ids}`; answers use only cited claims, unknowns say why |
 | `validation_errors` | `core.validate` | Array of strings; non-empty → `run.terminal_status="failed"` |
 | `state` | `runner.envelope_state` | One of: `available`, `not_available`, `blocked`, `ambiguous`, `failed`, `not_applicable` |
 
@@ -45,6 +46,7 @@ Each JSONL envelope is produced by `core.Profile` (during research) and `runner.
 | `last_observed_at` | Retrieval timestamp of latest evidence |
 | `stale` | Boolean; set by `refresh` when a prior claim could not be re-confirmed |
 | `last_changed_at` | Set by `refresh` on material change or first observation |
+| `platform`, `signal_type` | Builderr observation labels on external claims (`observations.label_claims`): e.g. `company_site`/`company_profile` for the verified website, `job_board`/`job_posting` for NAV ads, `brreg`/`workforce_snapshot` for employee counts, `linkedin`/`profile_handle` for a declared profile |
 
 ### Family placement of registry and site fields
 
@@ -90,7 +92,7 @@ Each JSONL envelope is produced by `core.Profile` (during research) and `runner.
 | `redirect_chain` | Array of `{url, status, snapshot_id}` |
 | `source_class` | As in evidence |
 | `access_policy` | `official_open_api_NLOD_2.0`, `licensed_search_api`, `robots_checked_public_page`, `access_policy` (for robots.txt) |
-| `storage_path` | Relative path to `snapshots/<sha256>.bin.gz` (or `null` if unavailable) |
+| `storage_path` | Relative path to the raw body `snapshots/<sha256>.<ext>` (`html`, `json`, `xml`, `txt`, `bin`; legacy gzip `.bin.gz` files are still readable), or `null` if unavailable |
 | `content_type` | Response `content-type` header |
 | `last_modified` | Response `last-modified` header |
 | `etag` | Response `etag` header |
@@ -107,8 +109,8 @@ Each JSONL envelope is produced by `core.Profile` (during research) and `runner.
 | `claim_id` | Claim ID |
 | `field` | Claim field |
 | `family` | Claim family |
-| `type` | `changed`, `removed`, `first_observed`, `new_job`, `new_publication` |
-| `material` | Boolean; `false` only for `first_observed` (non-material coverage growth) |
+| `type` | Typed by field: `changed_name`, `changed_legal_form`, `changed_address`, `changed_status`, `changed_registry_website`, `changed_employee_count`, `changed_industry`, `changed_website`, `changed_role`, `changed_location`, `changed_financials`, `changed`; `new_filing` (once per newly filed year), `filing_value`; `new_role`, `removed_role`, `new_location`, `removed_location`; `new_job`, `closed_job`, `new_publication`; `first_observed` |
+| `material` | Boolean; `false` for `first_observed` (coverage growth) and `filing_value` (a further figure of an already announced filing) |
 | `previous_value` / `current_value` | Claim values before/after |
 | `previous_evidence_ids` / `current_evidence_ids` | Evidence IDs on each side |
 | `current_source_snapshot_ids` | Snapshot IDs of 200-status sources in current run |
@@ -177,7 +179,7 @@ Each JSONL envelope is produced by `core.Profile` (during research) and `runner.
       "redirect_chain": [],
       "source_class": "official_annual_accounts",
       "access_policy": "official_open_api_NLOD_2.0",
-      "storage_path": "snapshots/a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2.bin.gz",
+      "storage_path": "snapshots/a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2.json",
       "content_type": "application/json",
       "body_size_bytes": 45231,
       "cache_hit": false

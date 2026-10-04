@@ -5,8 +5,9 @@ Give FjordLens organisation numbers; it returns one terminal profile per company
 availability states, a cited summary, change tracking against the previous run, and a self-contained report
 viewer. Built for [Builderr's Signalpost challenge](https://builderr.ai/challenges/signalpost).
 
-- **No API keys, no paid services, no model calls, no packages to install.** Python 3.10+ standard library only
-  (tested on 3.11.9 and 3.14).
+- **No API keys required, no model calls, no packages to install.** Python 3.10+ standard library only
+  (tested on 3.11.9 and 3.14). One optional, evaluator-supplied key (Brave Search) adds website nomination;
+  without it nothing paid is called.
 - **Precision first.** A website, brand or contact is only published after an identity gate designed for zero
   wrong-company matches (organisation number in the site's owner position, or the full legal name plus
   independent registry corroboration). Uncertain matches are reported as `ambiguous`, never published.
@@ -34,7 +35,8 @@ whenever every envelope was written; source failures are data, not process failu
 | `report/index.html` | Self-contained viewer: search, screen companies with an inspectable filter plan, compare up to 3 companies, open the source behind any fact; works offline from `file://` on desktop and mobile |
 | `profiles/` | One readable JSON profile per company |
 | `run-report.json` | Requests, runtime, p50/p95, per-family coverage, envelope states, limits used |
-| `requests.jsonl` | Every HTTP attempt (redirects, robots.txt, retries included) |
+| `requests.jsonl` | Every HTTP attempt (redirects, robots.txt, retries included; search queries are not logged) |
+| `external-observations.jsonl` | Builderr's observation view: one row per external claim with `platform` × `signal_type` (company_site, job_board, brreg, linkedin, …), identity proof and the claim's provenance |
 | `snapshots/` | every captured response body byte-for-byte as `<sha256>.<ext>` (the file hashes to the evidence's `content_sha256`), plus metadata |
 
 ### Run budget
@@ -49,6 +51,12 @@ The agent always finishes inside the wall-clock budget and writes every envelope
 | Total HTTP attempts | `--max-requests` | `SIGNALPOST_MAX_REQUESTS` | 30 × companies (min 2000) |
 | Attempts per company | `--per-company` | `FJORDLENS_PER_COMPANY` | 40 |
 | Website workers | `--workers` | – | 32 |
+| Optional search key | – | `BRAVE_SEARCH_API_KEY` | unset (search off) |
+| API spend ceiling (USD) | – | `FJORDLENS_MAX_API_COST_USD` | 9.0 |
+
+Every request also has a hard total deadline (twice the socket timeout, never past the run budget), so a server
+that hangs or trickles bytes costs seconds, not the run; a company site that answers 429 with a long
+`Retry-After` is skipped rather than waited out.
 
 Measured on 300 random companies from the 411,160-company universe: about 8 HTTP attempts per company,
 0 failed envelopes, all within budget. Third-party API cost is **$0**.
@@ -66,19 +74,27 @@ Measured on 300 random companies from the 411,160-company universe: about 8 HTTP
 | Group | Official group structure |
 | Website | Verified official website (identity gate v2) |
 | Description | The registry's own activity and statutory-purpose text, plus the verified site's description |
-| Contact | Registry phone, mobile and e-mail of the entity and of each registered workplace; e-mail/phone on the verified company domain |
-| Social | Company profiles the verified site links whose handle carries the company or domain name |
+| Contact | Registry phone, mobile and e-mail of the entity and of each registered workplace; e-mail/phone on the verified company domain; phone numbers the verified site's contact page labels as such |
+| Social | Company profiles the verified site links, or lists as `sameAs` in its own organisation markup, whose handle carries the company or domain name |
 | Hiring | NAV's official public job feed: active ads whose employer organisation number is the company or one of its registered workplaces (ads from staffing and recruitment agencies, NACE 78, are labelled as possibly for clients); JobPosting markup and careers pages on the verified site |
-| Activity | Dated company publications (RSS/Atom, article markup) from the verified site |
+| Activity | Dated company publications from the verified site: RSS/Atom, article markup, news/blog listing pages (a link paired with the date shown next to it; the quote is the verbatim source of both), an article page's own publication date, and the site's WordPress posts API |
 
 Each envelope also has a `summary` (brief plus sections: what it does, who leads it, where it operates, latest
 filed numbers with labelled calculated ratios, hiring, recent activity, online presence, what changed, what is
-unknown and why), where every sentence cites the claim IDs it rests on.
+unknown and why), where every sentence cites the claim IDs it rests on, and an `answers` block with the same
+eleven standard questions for every company (what it does, who leads it, where it operates, latest filed
+numbers, employees, website, hiring, what changed, recent activity, online presence, financial distress), each
+answered only from cited claims or marked unanswerable with the reason.
 
 ## How identity is decided
 
 Website candidates come from the registry website and business e-mail domain, the websites and e-mail domains
-registered on the company's own subunits, NAV employer homepages and DNS-checked domains derived from the legal name.
+registered on the company's own subunits, NAV employer homepages and DNS-checked domains derived from the legal name;
+with an evaluator-supplied search key, also from a web search (organisation number first, then legal name and town)
+when no free candidate passes. Search results are never evidence: they are not stored, and a nominated site gets
+no credit for being found. A site found by our organisation number can pass only by rule A (a supplier's reference
+page also shows our number); a site found by name must carry the name in its domain and passes like a guessed
+domain (rule A or D).
 A candidate is accepted only by:
 
 - **A** our organisation number in the site's owner position (footer or the site's own organisation markup), not
@@ -103,7 +119,9 @@ Pages on a verified site that are titled after another legal entity are skipped.
 
 Running again into the same `--output` folder (or with `--previous old/envelopes.jsonl`) is a refresh: the old
 run is archived under `history/`, unchanged facts keep their first-observed time, real differences become
-typed change records citing both sides' evidence, and facts a failed source could not re-confirm are kept as
+typed change records citing both sides' evidence (`changed_name`, `changed_address`, `changed_status`,
+`changed_employee_count`, `new_filing` once per newly filed year, `new_role`/`removed_role`,
+`new_location`/`removed_location`, `new_job`/`closed_job`, `new_publication`, ...), and facts a failed source could not re-confirm are kept as
 last-known values marked stale. A failure never erases evidence; replaying identical snapshots
 (`--replay out/run`) produces no changes. Use `--fresh` to ignore an earlier run. See [REFRESH.md](REFRESH.md).
 
@@ -121,7 +139,7 @@ employer number re-checked. No other cache is used: all evidence is fetched live
 python -m fjordlens serve --data out/run/envelopes.jsonl    # optional local server
 python scripts/validate_citations.py out/run                # Builderr's citation contract: ids, URLs, times, snapshot bytes
 python scripts/audit_evidence.py out/run                    # re-open saved bytes, re-check every claim and figure
-python -m unittest discover -s tests                        # 166 tests incl. adversarial identity cases
+python -m unittest discover -s tests                        # 267 tests incl. adversarial identity and hostile-server cases
 ```
 
 ## Ask and screen
@@ -147,11 +165,15 @@ kept in the browser and results exportable as JSON.
 
 - Models: none at runtime.
 - APIs: Brønnøysund Enhetsregisteret and Regnskapsregisteret (open data, NLOD 2.0); NAV job-vacancy feed
-  (public token, [terms](https://arbeidsplassen.nav.no/vilkar-api)); company websites, fetched only where
-  robots.txt (RFC 9309) allows.
+  (public token, [terms](https://arbeidsplassen.nav.no/vilkar-api)); company websites (including a verified site's
+  own WordPress posts API), fetched only where robots.txt (RFC 9309) allows.
+- Optional: Brave Web Search API, only if the evaluator sets `BRAVE_SEARCH_API_KEY`; results are used transiently
+  to nominate candidate sites and are not stored. At most two queries for a company without a verified free
+  candidate (in practice under 1.3 queries per company), i.e. about $6 per 1,000 companies at $5 per 1,000
+  queries (`BRAVE_COST_PER_REQUEST_USD`), with a hard ceiling (`FJORDLENS_MAX_API_COST_USD`, default $9).
 - No restricted platforms are fetched (LinkedIn, Facebook, Instagram, Google, Glassdoor, Indeed, X, TikTok);
   links to company profiles are recorded only as declared by the company's own site or registry entry.
-- Credentials: none. Expected third-party cost per official run: **$0**.
+- Credentials: none required. Expected third-party cost per official run: **$0** without the optional key.
 - Code licence: see [LICENSE](LICENSE).
 
 Design notes: [planning/PLAN.md](planning/PLAN.md) · Agent policy: [AGENT.md](AGENT.md) · Crawling:

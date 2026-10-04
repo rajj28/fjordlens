@@ -120,6 +120,20 @@ class NavJobs:
         return list(dict.fromkeys(picked))[:MAX_ADS_PER_COMPANY]
 
 
+def closed_ads(nav, org, unit_orgs, names):
+    """Ads of this employer that NAV's live feed now marks as not active (positive evidence of closure)."""
+    wanted = {org} | set(unit_orgs)
+    with nav.lock:
+        live = dict(nav.live)
+    closed = {uuid for number in wanted for uuid in nav.index.get("by_org", {}).get(number, [])
+              if uuid in live and live[uuid].get("status") not in (None, "ACTIVE")}
+    name_sets = [t for t in (name_tokens(n) for n in names) if t and (len(t) > 1 or len(t[0]) >= 4)]
+    for uuid, ad in live.items():
+        if ad.get("status") not in (None, "ACTIVE") and any(contains_tokens(tokens(ad.get("business_name") or ""), needle) for needle in name_sets):
+            closed.add(uuid)
+    return sorted(closed)
+
+
 def research(profile, fetcher, nav, entity):
     """Publish active ads whose official feed entry names this company (or its workplace) as employer."""
     org = entity["organisasjonsnummer"]
@@ -128,11 +142,14 @@ def research(profile, fetcher, nav, entity):
                  if c["field"] == "registered_workplace" and isinstance(c["value"], dict) and c["value"].get("organisation_number")}
     names = [entity.get("navn") or ""] + [name for name in units.values() if name]
     nominated = nav.candidates(org, set(units), names)
-    profile.data["attempts"].append({"strategy": "nav_job_feed_v1", "nominated": len(nominated), "index_built_at": nav.index.get("built_at"),
-                                     "live_listing_complete": nav.listing_complete, "errors": nav.errors[:3]})
+    attempt = {"strategy": "nav_job_feed_v1", "nominated": len(nominated), "index_built_at": nav.index.get("built_at"),
+               "live_listing_complete": nav.listing_complete, "errors": nav.errors[:3],
+               "confirmed_active": [], "confirmed_inactive": closed_ads(nav, org, set(units), names), "unverified": []}
+    profile.data["attempts"].append(attempt)
     if not nominated:
         return 0
     if not nav.token:
+        attempt["unverified"] = sorted(nominated)
         return 0
     published = 0
     agency = str((entity.get("naeringskode1") or {}).get("kode") or "").startswith("78.")
@@ -143,8 +160,13 @@ def research(profile, fetcher, nav, entity):
         ad = (data or {}).get("ad_content") or {}
         employer = ad.get("employer") or {}
         employer_org = str(employer.get("orgnr") or "")
-        if not data or data.get("status") != "ACTIVE" or employer_org not in ({org} | set(units)) or not ad.get("title"):
+        if r.status in (404, 410) or (data and data.get("status") not in (None, "ACTIVE")):
+            attempt["confirmed_inactive"] = sorted(set(attempt["confirmed_inactive"]) | {uuid})
             continue
+        if not data or data.get("status") != "ACTIVE" or employer_org not in ({org} | set(units)) or not ad.get("title"):
+            attempt["unverified"].append(uuid)  # failed fetch, or no longer this employer's: not proof of closure
+            continue
+        attempt["confirmed_active"].append(uuid)
         locations = ad.get("workLocations") or []
         first = locations[0] if locations and isinstance(locations[0], dict) else {}
         value = {"title": ad.get("title"), "job_title": ad.get("jobtitle"), "url": ad.get("link") or f"https://arbeidsplassen.nav.no/stillinger/stilling/{uuid}",

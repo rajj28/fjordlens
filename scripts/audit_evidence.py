@@ -4,7 +4,9 @@ from decimal import Decimal
 import gzip
 import json
 from pathlib import Path
+import re
 import sys
+from urllib.parse import urlsplit
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from fjordlens.core import at, digest, validate, write_json
 from fjordlens.net import read_snapshot_bytes
@@ -12,10 +14,14 @@ from fjordlens.html import parse_html, clean
 from fjordlens.identity import node_org
 from fjordlens.net import Response
 
-def parse_snapshot(raw, snapshot):
+def snapshot_text(raw, snapshot):
+    """The page text decoded exactly as the agent decoded it (same charset rules)."""
     response = Response(snapshot['final_url'], snapshot['final_url'], body=raw,
                         headers={'content-type':snapshot.get('content_type') or 'text/html'})
-    return parse_html(response.text(), snapshot['final_url'])
+    return response.text()
+
+def parse_snapshot(raw, snapshot):
+    return parse_html(snapshot_text(raw, snapshot), snapshot['final_url'])
 
 def audit(folder):
     folder = Path(folder)
@@ -83,6 +89,30 @@ def audit(folder):
                         if e['claim_span'] not in pages[s['id']]['text'] and e['claim_span'] not in raw.decode('utf-8','replace'):
                             if proof.get('method') != 'registry_name_address_phone_v1':
                                 raise ValueError('Legal identity span not in saved source')
+                        passed = True
+                    elif selector['type'] in ('dated_link', 'article_date'):
+                        # Re-derive the publication from the saved page with the same extractor: same URL, date, quote.
+                        from fjordlens import articles
+                        text = snapshot_text(raw, s)
+                        day = e['retrieved_at'][:10]
+                        if selector['type'] == 'dated_link':
+                            found = next((item for item in articles.extract_dated_links(text, s['final_url'], day)
+                                          if item['url'] == claim['value']['url']), None)
+                        else:
+                            found = articles.article_published_date(text, day)
+                            page = urlsplit(s['final_url'])
+                            if claim['value']['url'] != f"{page.scheme}://{page.netloc}{page.path}":
+                                raise ValueError('Article date claim is not about the saved page')
+                        if not found or found['published_on'] != claim['value']['published_on'] or found['span'] != e['claim_span']:
+                            raise ValueError('Dated publication is not re-derived from the saved page')
+                        if e['claim_span'] not in text:
+                            raise ValueError('Publication quote not in saved source')
+                        passed = True
+                    elif e['extraction_method'] == 'html_contact_page_v1':
+                        text = snapshot_text(raw, s)
+                        digits = re.sub(r'\D', '', str(claim['value']))[-8:]
+                        if e['claim_span'] not in text or len(digits) != 8 or digits not in re.sub(r'\D', '', e['claim_span']):
+                            raise ValueError('Contact-page phone not in saved source')
                         passed = True
                     elif e['extraction_method'] == 'rss_atom_item_v1':
                         from xml.etree import ElementTree as ET

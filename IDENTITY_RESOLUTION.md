@@ -1,4 +1,4 @@
-# Exact legal identity — Gate v2 (FjordLens v0.2)
+# Exact legal identity — Gate v2 (FjordLens v1)
 
 The identity gate (`gate.assess`) decides whether a fetched site is the exact legal entity's own site. Designed for zero wrong-company publications: one material mismatch blocks qualification.
 

@@ -1,4 +1,4 @@
-# Refresh behavior (FjordLens v0.2)
+# Refresh behavior (FjordLens v1)
 
 ## Invocation
 
@@ -24,11 +24,17 @@ Account `record_id` alone does not create a business change.
 
 | Type | When | Material |
 | --- | --- | --- |
-| `changed` | `semantic(old_value) != semantic(new_value)` for an existing claim | Yes |
-| `removed` | Prior claim absent in current run, **and** family in `{leadership, locations}` **and** current `availability.state` in `{available, not_available}` **and** `availability.complete == true` | Yes |
-| `first_observed` | New claim, family not in `{hiring, activity}` OR `effective_at` not after previous run's `completed_at` | **No** (coverage growth, not a business change) |
-| `new_job` | New `hiring` claim with `effective_at` date after previous run's `completed_at` | Yes |
-| `new_publication` | New `activity` claim with `effective_at` date after previous run's `completed_at` | Yes |
+| `changed_name`, `changed_legal_form`, `changed_address`, `changed_status` (bankrupt/liquidating), `changed_registry_website`, `changed_employee_count`, `changed_industry`, `changed_website`, `changed_role`, `changed_location`, `changed_financials`, `changed` | `semantic(old_value) != semantic(new_value)` for an existing claim; the type follows the field | Yes |
+| `new_filing` | A filing year appears in the official filing-year claims, or a financial claim has a reporting period ending after every previous period; emitted **once per year**, never inferred from revenue, and not for a year the previous run already listed as filed (its figures are then `first_observed`) | Yes |
+| `filing_value` | A further new figure of a filing already announced in this refresh | No |
+| `new_role` / `new_location` | New official role or workplace when the official set was complete on both runs | Yes |
+| `removed_role` / `removed_location` | Prior role or workplace absent, and the current official set is complete (`availability.complete == true`, state `available`/`not_available`) | Yes |
+| `new_job` / `new_publication` | New hiring/activity claim dated after the previous run | Yes |
+| `closed_job` | A NAV ad that was active is now marked not active by NAV's feed (live status, or the ad's own entry is inactive/gone); a failed or skipped check keeps the ad as a stale last-known value | Yes |
+| `changed_employee_count` | Also when the previous run recorded "no registered employees" and a count now appears | Yes |
+| `first_observed` | Any other new claim (our coverage grew; the source does not prove the fact is new) | **No** |
+
+`refresh.changes_by_type` counts the change records by type.
 
 Change record includes: `claim_id`, `field`, `family`, `type`, `material`, `previous_value`, `current_value`, `previous_evidence_ids`, `current_evidence_ids`, `current_source_snapshot_ids`, `observed_at`, and stable `id` (`ch_` + hash).
 
@@ -49,7 +55,7 @@ Complete official roles/workplaces sets **can** establish removals (see `removed
 
 ## Evidence preservation (`runner.preserve_previous_snapshots`)
 
-- Prior snapshot bodies (`.bin.gz`) and metadata (`.json`) are copied from the previous run's `snapshots/` directory into the new output after SHA-256 verification.
+- Prior snapshot bodies (raw `<sha256>.<ext>`, or legacy `.bin.gz`) and metadata (`ss_*.json`) are copied from the previous run's `snapshots/` directory into the new output after SHA-256 verification.
 - `snapshot_path` enforces package-local relative paths (no `..`, no absolute, no drive letters, no control chars, no backslashes).
 - Required snapshots = those referenced by retained claims, changes (both sides), or current evidence.
 - If a required snapshot body is missing, corrupt, or fails hash verification:

@@ -343,6 +343,12 @@ def group_context(ctx, url, owners, pages):
     return any((set(tokens(w)) & GROUP_CONTEXT) - ours for w in windows if w)
 
 
+def postcode_window(text, postcode):
+    """Short verbatim window of parsed page text around the first writing of the registered postcode."""
+    match = re.search(r"(?<!\d)" + re.escape(postcode) + r"(?!\d)", text or "")
+    return text[max(0, match.start() - 120):match.end() + 60].strip() if match else None
+
+
 def text_window(text, number):
     """Short verbatim window of parsed page text around the first mention of `number`."""
     for found, start, end in org_mentions(text):
@@ -375,7 +381,7 @@ def assess(ctx, candidate, pages):
     if any(marker in head for marker in STRONG_PARKED) or (any(marker in low for marker in PARKED) and len(home.get("text", "")) < 4000):
         return reject("parked, for-sale, placeholder, suspended or default hosting page")
 
-    guessed = candidate["origin"] in {"dns_guess", "dns_guess_brand"}
+    guessed = candidate["origin"] in {"dns_guess", "dns_guess_brand", "search_orgnr", "search_name"}
     label = registered_domain(candidate["url"]).split(".")[0].replace("-", "")
     final_host = host(url).replace("-", "")
     # Redirecting to another registered domain is suspicious for a guessed name (parking, resale,
@@ -436,7 +442,8 @@ def assess(ctx, candidate, pages):
     signals.update(org_on_homepage_owner_position=home_strong, org_on_subpage=sub_strong, org_owner=org_owner)
 
     declared = candidate["origin"] in DECLARED_ORIGINS
-    guess = candidate["origin"] == "dns_guess"  # Brand guesses ("dns_guess_brand") can only pass by rule A.
+    # Brand guesses ("dns_guess_brand") can only pass by rule A; search nominations are treated as guesses.
+    guess = candidate["origin"] in {"dns_guess", "search_orgnr", "search_name"}
     # E4: registry contact corroboration (non-circular).
     page_digits = " ".join([all_text] + [c for p in pages for c in p.get("contacts", [])])
     phone_hit = next((ph for ph in ctx.phones if digits_pattern(ph).search(page_digits)), None)
@@ -481,6 +488,7 @@ def assess(ctx, candidate, pages):
     elif declared and name_owner and not multi_entity:
         rule = "B: company-declared site shows the full legal name in its owner strings"
     elif ((address_hit or postcode_town_hit) and not multi_entity and not superset and not groupish
+          and candidate["origin"] != "search_orgnr"
           and (name_owner or (exact_phrase and len(other_legal_names(pages, ctx)) < 2))):
         # The site names itself as us (title, site name, logo, (c) line) and shows our registered address; a name
         # written only in body text must also not sit among other companies (a manager's or a client list).
@@ -529,8 +537,23 @@ def assess(ctx, candidate, pages):
             if window:
                 proof = (index, {"type": "normalized_text", "value": window}, window)
                 break
+    if proof is None and rule.startswith("D"):
+        # Rule D's distinguishing evidence is the registered address: quote the page text around its postcode.
+        postcode = postcode_town_hit.split(" ", 1)[0] if postcode_town_hit else (address_hit[1] if address_hit else None)
+        for index, page in enumerate(pages):
+            window = postcode_window(page.get("text", ""), postcode) if postcode else None
+            if window:
+                proof = (index, {"type": "normalized_text", "value": window}, window)
+                break
     if proof is None:
         proof = (0, {"type": "normalized_text", "value": name_hit or ""}, name_hit or "")
+    if not str(proof[2] or "").strip():
+        # An acceptance whose proof cannot be quoted from the page is not published.
+        result.update(decision="ambiguous", publishable=False)
+        result.pop("scope", None)
+        result.pop("rule", None)
+        reasons.append("no verbatim proof could be quoted from the site")
+        return result
     result["proof_page_index"], result["proof_selector"], result["proof_span"] = proof
     result["proof_url"] = pages[proof[0]]["url"]
     return result

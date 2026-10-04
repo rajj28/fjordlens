@@ -1,4 +1,4 @@
-# Verification and measurement (FjordLens v0.2)
+# Verification and measurement (FjordLens v1)
 
 Do not infer a competition score from local tests. Only Builderr's checked reference pool can measure competitive recall, factual accuracy, and qualification.
 

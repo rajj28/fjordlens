@@ -62,3 +62,12 @@ class ResearchTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CareersPatternTests(unittest.TestCase):
+    def test_careers_words_match_only_as_whole_words(self):
+        from fjordlens.website import CAREERS
+        for text in ("/karriere/", "/ledige-stillinger", "Ledige stillinger", "/jobb-hos-oss", "/jobs/123", "Careers"):
+            self.assertTrue(CAREERS.search(text), text)
+        for text in ("/produkt/model-711-stol-i-sort-eik-svart-skinn-utstillingsmodell/", "/blogg/utstilling", "/forestillinger"):
+            self.assertFalse(CAREERS.search(text), text)

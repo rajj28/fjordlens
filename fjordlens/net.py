@@ -6,6 +6,7 @@ import http.client
 import io
 import ipaddress
 import json
+import math
 import os
 import re
 import socket
@@ -25,7 +26,8 @@ AGENT = "FjordLens/0.2 (+public company research; robots.txt respected)"
 ROBOTS_TOKEN = "FjordLens"
 RESTRICTED = {"linkedin.com", "facebook.com", "instagram.com", "glassdoor.com", "indeed.com", "google.com", "tiktok.com", "x.com", "twitter.com"}
 OFFICIAL = {"data.brreg.no"}
-HOST_INTERVALS = {"pam-stilling-feed.nav.no": 0.25}  # Documented bulk API; politely paced.
+HOST_INTERVALS = {"pam-stilling-feed.nav.no": 0.25,  # Documented bulk API; politely paced.
+                  "api.search.brave.com": 1.05}  # Brave's base plans allow about one query per second.
 
 class FetchError(Exception):
     pass
@@ -72,6 +74,19 @@ def resolve_public(host: str, port: int) -> str:
     if not addresses or any(not public_unicast(ip) for ip in addresses):
         raise FetchError("DNS resolved to a non-public address")
     return addresses[0]
+
+def _abort(connection, fired, live):
+    """Watchdog: a server that trickles bytes can keep every single recv inside the socket timeout, so a
+    request also has a hard total deadline; shutting the socket down wakes the blocked read. With
+    "Connection: close" the response keeps the socket after the connection drops it, so use the saved one."""
+    fired.set()
+    sock = live.get("sock") or getattr(connection, "sock", None)
+    if sock is not None:
+        try:
+            sock.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            pass
+
 
 class PinnedHTTP(http.client.HTTPConnection):
     def __init__(self, host, ip, port, timeout):
@@ -163,6 +178,12 @@ def read_snapshot_bytes(path):
 class Budget:
     def __init__(self, requests=2000, seconds=2600, per_company=20):
         self.max_requests, self.deadline, self.per_company = requests, time.monotonic() + seconds, per_company
+        try:
+            self.max_cost = float(os.environ.get("FJORDLENS_MAX_API_COST_USD") or 9.0)
+        except ValueError:
+            self.max_cost = 9.0
+        if not math.isfinite(self.max_cost) or self.max_cost < 0:
+            self.max_cost = 9.0
         self.lock = threading.RLock()
         self.total = 0
         self.counts = {}
@@ -175,18 +196,22 @@ class Budget:
             self.deadline = min(self.deadline, time.monotonic())
 
     def reserve(self, org, url, cost=0.0):
+        if not isinstance(cost, (int, float)) or isinstance(cost, bool) or not math.isfinite(cost) or cost < 0:
+            raise FetchError("Budget: invalid declared request cost")
         with self.lock:
             if time.monotonic() >= self.deadline:
                 raise FetchError("Budget: wall-clock deadline reached")
             # Shared run-level sources (e.g. the job-feed catch-up) count toward the total only.
             if self.total >= self.max_requests or (org != "_shared" and self.counts.get(org, 0) >= self.per_company):
                 raise FetchError("Budget: request allowance exhausted")
-            if self.cost + cost > 9.0:
+            if self.cost + cost > self.max_cost:
                 raise FetchError("Budget: external API spend ceiling")
             self.total += 1
             self.counts[org] = self.counts.get(org, 0) + 1
             self.cost += cost
-            receipt = {"sequence": self.total, "organisation_number": org, "url": url,
+            # The request log keeps a search endpoint without its query (search terms are not retained).
+            logged = url.split("?", 1)[0] if "api.search.brave.com" in url else url
+            receipt = {"sequence": self.total, "organisation_number": org, "url": logged,
                        "started_at": now(), "declared_cost_usd": cost}
             self.receipts.append(receipt)
             return receipt
@@ -252,6 +277,7 @@ class Fetcher:
         limit = timeout or self.timeout
         receipt = None
         connection = None
+        watchdog, fired, live = None, threading.Event(), {}
         try:
             url = safe_url(url)
             if time.monotonic() + limit > self.budget.deadline:
@@ -281,9 +307,16 @@ class Fetcher:
                 self.last_request[lane] = time.monotonic()
             connection_type = PinnedHTTPS if p.scheme == "https" else PinnedHTTP
             connection = connection_type(host, ip, p.port or (443 if p.scheme == "https" else 80), limit)
+            total = max(0.5, min(2.0 * limit, self.budget.deadline - time.monotonic()))
+            watchdog = threading.Timer(total, _abort, args=(connection, fired, live))
+            watchdog.daemon = True
+            watchdog.start()
             request_headers = {"User-Agent": AGENT, "Accept": "application/json,text/html,application/xml;q=0.9,*/*;q=0.5", "Accept-Encoding": "gzip", "Connection": "close"}
             request_headers.update(headers or {})
             connection.request("GET", p.path + ("?" + p.query if p.query else ""), headers=request_headers)
+            live["sock"] = connection.sock
+            if fired.is_set():
+                raise FetchError("Request exceeded its total time limit")
             raw = connection.getresponse()
             read_deadline = min(time.monotonic() + limit, self.budget.deadline)
             chunks, length = [], 0
@@ -291,13 +324,19 @@ class Fetcher:
                 remaining = read_deadline - time.monotonic()
                 if remaining <= 0:
                     raise FetchError("Response body read deadline exceeded")
-                if connection.sock:
-                    connection.sock.settimeout(remaining)
+                sock = live.get("sock") or connection.sock
+                if sock:
+                    try:
+                        sock.settimeout(remaining)
+                    except OSError:
+                        pass  # http.client closed it at the end of the body; the next read returns b""
                 chunk = raw.read1(min(65536, self.body_limit + 1 - length))
                 if not chunk:
                     break
                 chunks.append(chunk)
                 length += len(chunk)
+            if fired.is_set():
+                raise FetchError("Request exceeded its total time limit")  # the body may be cut short
             body = b"".join(chunks)
             hdrs = {k.lower(): v for k, v in raw.getheaders()}
             if len(body) > self.body_limit:
@@ -311,12 +350,16 @@ class Fetcher:
             receipt["status"] = raw.status
         except Exception as exc:
             message = str(exc)
-            if isinstance(exc, FetchError) and not message.startswith("Budget:"):
+            if fired.is_set():
+                message = "Request exceeded its total time limit"
+            elif isinstance(exc, FetchError) and not message.startswith("Budget:"):
                 message = "Policy: " + message
             result = Response(url, url, error=message, source_class=source_class)
             if receipt is not None:
                 receipt["error"] = message
         finally:
+            if watchdog is not None:
+                watchdog.cancel()
             if connection:
                 connection.close()
             if receipt is not None:
@@ -339,9 +382,12 @@ class Fetcher:
             return 1.5 * (attempt + 1)
         if result.status == 429:
             try:
-                return min(20.0, max(1.0, float(result.headers.get("retry-after", "2"))))
+                wait = max(1.0, float(result.headers.get("retry-after", "2")))
             except ValueError:
-                return 2.0
+                wait = 2.0
+            if not official and wait > 5.0:
+                return None  # A company site asking for a long pause is skipped, not waited out.
+            return min(20.0, wait)
         if result.status in ({500, 502, 503, 504} if official else {502, 503, 504}):
             return 1.5 if attempt == 0 else 4.0
         return None
@@ -384,7 +430,7 @@ class Fetcher:
                 return False, None  # Honouring a very long crawl-delay would exceed the run budget: skip the site.
             return policy.allowed(ROBOTS_TOKEN, url), None
 
-    def get(self, url, org, *, official=False, headers=None, cost=0.0, force=False):
+    def get(self, url, org, *, official=False, headers=None, cost=0.0, force=False, store=True):
         source_class = "official_registry" if official else "company_owned"
         initial = url
         try:
@@ -418,10 +464,11 @@ class Fetcher:
                     if wait is None or time.monotonic() + wait + self.timeout > self.budget.deadline:
                         break
                     time.sleep(wait)
-                    result = self._raw(url, org, source_class, headers if not chain else None, 0.0)
+                    result = self._raw(url, org, source_class, headers if not chain else None, cost if not chain else 0.0)
                 result.requested_url, result.redirects = initial, chain[:]
                 result.policy = "official_open_api_NLOD_2.0" if is_official else "licensed_search_api" if is_search else "robots_checked_public_page"
-                self._save(result)
+                if store:  # Licensed search results are transient: never written to disk.
+                    self._save(result)
                 if result.status not in {301, 302, 303, 307, 308}:
                     self._cache_put(initial, result)
                     return result

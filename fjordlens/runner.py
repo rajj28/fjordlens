@@ -20,6 +20,8 @@ import time
 import zlib
 from . import __version__, official, website
 from . import jobs as nav_jobs
+from .answers import build_answers
+from .observations import label_claims, write_observations
 from .core import Profile, digest, org_number, now, provenance, validate, write_json
 from .net import Budget, Fetcher, read_snapshot_bytes, snapshot_extension
 from .refresh import refresh
@@ -196,7 +198,7 @@ def resolve_limits(count, *, seconds=None, max_requests=None, per_company=None):
                 return float(env[name]) if "." in env[name] else int(env[name])
         return default
     seconds = pick(seconds, ("SIGNALPOST_TIME_BUDGET_SECONDS", "FJORDLENS_SECONDS"), 2600)
-    max_requests = pick(max_requests, ("SIGNALPOST_MAX_REQUESTS", "FJORDLENS_MAX_REQUESTS"), max(2000, 30 * max(1, count)))
+    max_requests = pick(max_requests, ("SIGNALPOST_MAX_REQUESTS", "FJORDLENS_MAX_REQUESTS"), max(2000, 20 * max(1, count)))
     per_company = pick(per_company, ("FJORDLENS_PER_COMPANY",), 40)
     if seconds <= 0 or max_requests <= 0 or per_company <= 0:
         raise ValueError("Run limits must be positive")
@@ -368,10 +370,10 @@ def snapshot_profile(profile, timeout=10.0):
             profile.lock.release()
 
 
-def finalize(job, fetcher, previous_root, *, final):
+def finalize(job, fetcher, previous_root, *, final, lock_timeout=10.0):
     """Build the terminal envelope. Each step is isolated: a failure in one step is recorded and
     never discards the claims and evidence already gathered or carried from the previous run."""
-    data = snapshot_profile(job.profile)
+    data = snapshot_profile(job.profile, timeout=lock_timeout)
     if data is None:
         data = Profile(job.org, job.profile.data["run"]["run_id"]).data
         data["errors"].append({"family": "assembly", "type": "ProfileBusy", "message": "Research state could not be copied before the deadline"})
@@ -438,6 +440,8 @@ def finalize(job, fetcher, previous_root, *, final):
     step("summary", summary)
     if "summary" not in data:
         data["summary"] = {"method": "unavailable", "sentences": [], "sections": [], "unknowns": []}
+    step("answers", lambda: data.__setitem__("answers", build_answers(data)))
+    step("labels", lambda: label_claims(data))
     step("provenance", provenance_sync)
     step("validation", validated)
     step("evidence_preservation", preserved)
@@ -564,14 +568,21 @@ def run_batch(inputs, output, *, run_id=None, previous=None, replay=None, cutoff
     while pipeline.busy() and time.monotonic() < hard_stop:
         pipeline.wait(min(hard_stop, next_provisional), 2.0)
         if time.monotonic() >= next_provisional and pipeline.busy():
-            write_envelopes(output, expand(jobs, orgs, [finalize(job, fetcher, previous_root, final=False) for job in jobs]), result_file)
+            # Provisional copies never wait long on a busy company: they are a safety net, not the result.
+            write_envelopes(output, expand(jobs, orgs, [finalize(job, fetcher, previous_root, final=False, lock_timeout=0.5) for job in jobs]), result_file)
             done = len(jobs) - pipeline.busy()
             print(f"{done}/{len(jobs)} companies | {budget.total} requests | {time.monotonic()-clock_start:.0f}s", flush=True)
             next_provisional = time.monotonic() + provisional_every
     timed_out = pipeline.busy()
     budget.close()
     pipeline.close()
-    results = expand(jobs, orgs, [finalize(job, fetcher, previous_root, final=True) for job in jobs])
+    # Final assembly shares the time left before the deadline: a busy company can never hold up the others.
+    finalize_by = clock_start + seconds - margin * 0.15
+    finals = []
+    for job in jobs:
+        finals.append(finalize(job, fetcher, previous_root, final=True,
+                               lock_timeout=max(0.05, min(10.0, finalize_by - time.monotonic()))))
+    results = expand(jobs, orgs, finals)
     for i, row in enumerate(results):
         try:
             checkpoint_org = org_number(orgs[i])
@@ -607,6 +618,10 @@ def run_batch(inputs, output, *, run_id=None, previous=None, replay=None, cutoff
               "models_at_runtime": [], "budget_passed": budget.total <= max_requests and budget.cost <= 10 and elapsed <= seconds,
               "registry_snapshot_supplied": bool(registry_snapshot),
               "cache_policy": "External evidence only when explicitly supplied via --replay or --registry-snapshot; otherwise run-local URL and robots cache only"}
+    try:
+        report["external_observations"] = write_observations(results, output / "external-observations.jsonl")
+    except Exception as exc:  # noqa: BLE001 - an export problem never blocks the envelopes
+        report["external_observations"] = {"error": f"{type(exc).__name__}: {str(exc)[:200]}"}
     try:
         from .report import write_report
         report["report"] = write_report(results, output / "report")

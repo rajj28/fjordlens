@@ -1,4 +1,4 @@
-# Research agent (FjordLens v0.2)
+# Research agent (FjordLens v1)
 
 The agent is a deadline-safe batch runner. Every input organisation number receives exactly one terminal envelope. The main thread is a watchdog: it never waits past the wall-clock budget, rewrites provisional outputs while work is in flight, and finalizes from consistent profile copies even if a worker hangs.
 
