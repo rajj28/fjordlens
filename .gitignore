@@ -1,0 +1,22 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.env.*
+!.env.example
+.DS_Store
+reference/
+planning/*response*
+planning/*.stderr.txt
+planning/claude-review-prompt.md
+out/
+state/
+artifacts/
+*.zip
+*.sqlite*
+.pytest_cache/
+node_modules/
+
+# Local only: archived scaffolding, internal planning, Builderr document copies
+_archive/
+planning/

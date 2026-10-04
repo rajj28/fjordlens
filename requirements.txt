@@ -1,0 +1,2 @@
+# Runtime: Python standard library only. No third-party packages to install.
+# Reproduction interpreter is pinned in .python-version.

@@ -1,0 +1,10 @@
+{
+  "name": "fjordlens-browser-verification",
+  "private": true,
+  "description": "Development-only browser checks of the generated report; not needed by the evaluator",
+  "scripts": {
+    "test:report": "node scripts/report_screens.cjs",
+    "test:screen": "node scripts/screen_check.cjs"
+  },
+  "devDependencies": {"playwright": "1.63.0"}
+}
