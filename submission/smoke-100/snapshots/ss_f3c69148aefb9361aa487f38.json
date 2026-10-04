@@ -1,0 +1,24 @@
+{
+  "id": "ss_f3c69148aefb9361aa487f38",
+  "requested_url": "https://brandmaker.no/feed/",
+  "final_url": "https://brandmaker.no/feed/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-04T22:30:25Z",
+  "content_sha256": "1e3746a25583cc5f7edd71cf8a0ed25facf603d0f1e5ec18c0e78499d1673b9e",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/1e3746a25583cc5f7edd71cf8a0ed25facf603d0f1e5ec18c0e78499d1673b9e.xml",
+  "content_type": "application/rss+xml; charset=UTF-8",
+  "last_modified": "Thu, 23 Apr 2026 11:25:54 GMT",
+  "etag": "\"1eacbb8cbcfb85b888a8e96c8fd210ab\"",
+  "body_size_bytes": 16906,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sun, 04 Oct 2026 22:30:25 GMT",
+    "content-type": "application/rss+xml; charset=UTF-8",
+    "last-modified": "Thu, 23 Apr 2026 11:25:54 GMT",
+    "etag": "\"1eacbb8cbcfb85b888a8e96c8fd210ab\""
+  }
+}

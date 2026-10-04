@@ -1,0 +1,22 @@
+{
+  "id": "ss_02374e900f8606c486692c12",
+  "requested_url": "https://novooi.com/about/",
+  "final_url": "https://novooi.com/about/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-04T22:30:41Z",
+  "content_sha256": "59040c84429bee8033b92fa5e6a17ddb5c37701753664f90193df7c8d424cba8",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/59040c84429bee8033b92fa5e6a17ddb5c37701753664f90193df7c8d424cba8.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 331872,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sun, 04 Oct 2026 22:30:40 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

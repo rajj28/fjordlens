@@ -1,7 +1,7 @@
 {
   "profiles": 100,
-  "claims_checked": 4473,
-  "claims_with_resolvable_evidence": 4473,
+  "claims_checked": 4474,
+  "claims_with_resolvable_evidence": 4474,
   "financial_values_checked_against_raw_source": 1842,
   "errors": [],
   "passed": true,

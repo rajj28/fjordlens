@@ -1,0 +1,23 @@
+{
+  "id": "ss_5b5063459f6838855fcf46a7",
+  "requested_url": "http://www.aelektronikk.no/kontakt.html",
+  "final_url": "http://www.aelektronikk.no/kontakt.html",
+  "http_status": 200,
+  "retrieved_at": "2026-10-04T22:30:06Z",
+  "content_sha256": "67f46a9fb7e9b32487cf00f6b6a1fd06d5bbbbcf36c53b83d2af388db0642b27",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/67f46a9fb7e9b32487cf00f6b6a1fd06d5bbbbcf36c53b83d2af388db0642b27.html",
+  "content_type": "text/html",
+  "last_modified": "Wed, 22 Oct 2008 18:25:52 GMT",
+  "etag": null,
+  "body_size_bytes": 4377,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sun, 04 Oct 2026 22:30:06 GMT",
+    "last-modified": "Wed, 22 Oct 2008 18:25:52 GMT",
+    "content-type": "text/html"
+  }
+}

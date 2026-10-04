@@ -1,0 +1,22 @@
+{
+  "id": "ss_053e516b8174f64e469ea4ab",
+  "requested_url": "https://data.brreg.no/regnskapsregisteret/regnskap/aarsregnskap/kopi/922155399/aar",
+  "final_url": "https://data.brreg.no/regnskapsregisteret/regnskap/aarsregnskap/kopi/922155399/aar",
+  "http_status": 200,
+  "retrieved_at": "2026-10-04T22:30:52Z",
+  "content_sha256": "d3cd03cd90fcf8ead9d634ead2451dfcb1810423727ef3e30655374948250f3e",
+  "redirect_chain": [],
+  "source_class": "official_registry",
+  "access_policy": "official_open_api_NLOD_2.0",
+  "storage_path": "snapshots/d3cd03cd90fcf8ead9d634ead2451dfcb1810423727ef3e30655374948250f3e.json",
+  "content_type": "application/json",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 50,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "content-type": "application/json",
+    "date": "Sun, 04 Oct 2026 22:30:52 GMT"
+  }
+}

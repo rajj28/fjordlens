@@ -1,0 +1,23 @@
+{
+  "id": "ss_0b2fd8106c074d9317567eaa",
+  "requested_url": "http://www.aelektronikk.no/",
+  "final_url": "http://www.aelektronikk.no/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-04T22:30:06Z",
+  "content_sha256": "4d941ddb7c5ee90222cd93099dd9d816268069fa99d9e7b09e17aba1e48bf2ca",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/4d941ddb7c5ee90222cd93099dd9d816268069fa99d9e7b09e17aba1e48bf2ca.html",
+  "content_type": "text/html",
+  "last_modified": "Mon, 17 Nov 2008 22:03:39 GMT",
+  "etag": null,
+  "body_size_bytes": 4390,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sun, 04 Oct 2026 22:30:05 GMT",
+    "last-modified": "Mon, 17 Nov 2008 22:03:39 GMT",
+    "content-type": "text/html"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "ss_8dd3b52d0fe36305b4696ace",
+  "requested_url": "https://data.brreg.no/regnskapsregisteret/regnskap/912825124",
+  "final_url": "https://data.brreg.no/regnskapsregisteret/regnskap/912825124",
+  "http_status": 200,
+  "retrieved_at": "2026-10-04T22:30:39Z",
+  "content_sha256": "da9a700018c38b007ac2efc45ab8763d340a3e4bb3040da57032b18679142d2d",
+  "redirect_chain": [],
+  "source_class": "official_registry",
+  "access_policy": "official_open_api_NLOD_2.0",
+  "storage_path": "snapshots/da9a700018c38b007ac2efc45ab8763d340a3e4bb3040da57032b18679142d2d.json",
+  "content_type": "application/json",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 4475,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "content-type": "application/json",
+    "date": "Sun, 04 Oct 2026 22:30:39 GMT"
+  }
+}
