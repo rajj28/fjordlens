@@ -95,13 +95,12 @@ class GateAdversarialTests(unittest.TestCase):
         result = decide("SØGNE STÅL AS", "registry_website", [page(html, "http://sognestal.no/")])
         self.assertFalse(result["publishable"], result)
 
-    def test_guess_with_name_and_registered_ceo_is_accepted(self):
+    def test_guess_with_name_and_registered_ceo_only_is_not_proof(self):
         html = ('<title>Persona Norge</title><a href="/om">Om oss</a>'
                 "<p>Persona Norge leverer rådgivning. Daglig leder Kari Nordmann svarer gjerne på spørsmål.</p>")
         context = gate.Context({"organisasjonsnummer": ORG, "navn": "PERSONA NORGE AS"}, people=["Kari Elisabeth Nordmann"])
         result = gate.assess(context, {"url": "https://personanorge.no/", "origin": "dns_guess"}, [page(html, "https://personanorge.no/")])
-        self.assertTrue(result["publishable"], result)
-        self.assertTrue(result["rule"].startswith("D2"))
+        self.assertFalse(result["publishable"], result)
 
     def test_guess_with_name_and_different_person_stays_ambiguous(self):
         html = ('<title>Persona Norge</title><a href="/om">Om oss</a>'
@@ -142,11 +141,30 @@ class GateAdversarialTests(unittest.TestCase):
         self.assertFalse(result["publishable"], result)
         self.assertTrue(result["signals"].get("redirected_to_other_domain"))
 
-    def test_positive_guess_with_name_and_registry_phone(self):
+    def test_guess_with_name_and_registry_phone_only_is_not_proof(self):
         html = ('<title>Haugetun Catering AS</title><a href="/meny">Meny</a>'
                 "<p>Ring oss på 55 12 34 56 for bestilling av mat til selskap.</p>")
         result = decide("HAUGETUN CATERING AS", "dns_guess", [page(html, "https://haugetuncatering.no/")], telefon="55123456")
+        self.assertFalse(result["publishable"], result)
+
+    def test_positive_guess_with_name_and_postcode_with_town(self):
+        html = ('<title>Haugetun Catering AS</title><a href="/meny">Meny</a>'
+                "<p>Mat til selskap. Haugetunvegen 3, 5550 Sveio.</p>")
+        result = decide("HAUGETUN CATERING AS", "dns_guess", [page(html, "https://haugetuncatering.no/")],
+                        forretningsadresse={"adresse": ["Haugetunvegen 3"], "postnummer": "5550", "poststed": "SVEIO"})
         self.assertTrue(result["publishable"], result)
+        self.assertTrue(result["rule"].startswith("D:"))
+        self.assertTrue(result["signals"]["registry_postcode_town_on_site"])
+
+    def test_fjords_travel_guide_is_not_the_fjords_da(self):
+        # Builderr's second evaluation report: fjords.com was published for THE FJORDS DA. The page named the
+        # village (also the registered "street"), but neither the organisation number, the legal name nor the
+        # registered address.
+        html = ("<title>Flåm and Aurland travel guide | fjords.com</title>"
+                "<p>Discover the fjords: Flåm Railway, Aurland lookout and cruises from Flåm. Book your fjord trip today.</p>")
+        result = decide("THE FJORDS DA", "dns_guess", [page(html, "https://www.fjords.com/")],
+                        forretningsadresse={"adresse": ["Flåm"], "postnummer": "5742", "poststed": "FLÅM"})
+        self.assertFalse(result["publishable"], result)
 
 
 class DeclaredSiteRuleTests(unittest.TestCase):
@@ -210,11 +228,18 @@ class GuessedExactNameTests(unittest.TestCase):
     """Rule D3: our exact registered name with our own legal form in the site's owner strings."""
     BODY = "<p>Vi leverer trehus, hytter og tilbygg over hele Vestlandet. Kontakt oss for et uforpliktende tilbud.</p>"
 
-    def test_d3_accepts_exact_name_with_suffix_in_copyright_line(self):
+    def test_exact_name_with_suffix_alone_is_not_proof(self):
         html = "<title>Hjem</title>" + self.BODY + "<footer>Copyright © 2006-2026 Arona Trehus AS. All rights reserved</footer>"
         result = decide("ARONA TREHUS AS", "dns_guess", [page(html, "https://www.aronatrehus.no/")])
+        self.assertFalse(result["publishable"], result)
+
+    def test_exact_name_with_registered_postcode_and_town_is_proof(self):
+        html = ("<title>Hjem</title>" + self.BODY +
+                "<footer>Copyright © 2006-2026 Arona Trehus AS. Industrivegen 2, 5550 Sveio</footer>")
+        result = decide("ARONA TREHUS AS", "dns_guess", [page(html, "https://www.aronatrehus.no/")],
+                        forretningsadresse={"adresse": ["Industrivegen 2"], "postnummer": "5550", "poststed": "SVEIO"})
         self.assertTrue(result["publishable"], result)
-        self.assertTrue(result["rule"].startswith("D3:"))
+        self.assertTrue(result["rule"].startswith("D:"))
 
     def test_d3_rejects_name_preceded_by_another_capitalised_word(self):
         html = "<title>Nye Arona Trehus AS</title>" + self.BODY
@@ -257,12 +282,19 @@ class WorkplaceDeclarationTests(unittest.TestCase):
         result = decide("AZETS INSIGHT AS", "registry_workplace_website", [page(html, "https://www.visma.no/")])
         self.assertFalse(result["publishable"], result)
 
-    def test_workplace_phone_corroborates_a_guessed_domain(self):
+    def test_workplace_phone_alone_does_not_prove_a_guessed_domain(self):
         html = "<title>Lye Bil</title>" + self.BODY + "<p>Ring 51 12 34 56</p>"
         context = gate.Context({"organisasjonsnummer": ORG, "navn": "LYE BIL AS"}, [{"telefon": "51 12 34 56"}])
         result = gate.assess(context, {"url": "https://www.lyebil.no/", "origin": "dns_guess"}, [page(html, "https://www.lyebil.no/")])
-        self.assertTrue(result["publishable"], result)
+        self.assertFalse(result["publishable"], result)
         self.assertTrue(result["signals"]["registry_phone_on_site"])
+
+    def test_workplace_postcode_with_town_proves_a_guessed_domain(self):
+        html = "<title>Lye Bil</title>" + self.BODY + "<p>Lyevegen 10, 4365 Nærbø</p>"
+        context = gate.Context({"organisasjonsnummer": ORG, "navn": "LYE BIL AS"},
+                               [{"adresse": ["Lyevegen 10"], "postnummer": "4365", "poststed": "NÆRBØ"}])
+        result = gate.assess(context, {"url": "https://www.lyebil.no/", "origin": "dns_guess"}, [page(html, "https://www.lyebil.no/")])
+        self.assertTrue(result["publishable"], result)
 
     def test_workplace_email_on_its_own_domain_is_circular(self):
         html = "<title>Hjem</title>" + self.BODY + "<p>post@lyebil.no</p>"
@@ -282,11 +314,12 @@ class RedTeamBoundaryTests(unittest.TestCase):
                 result = decide("ARONA TREHUS AS", "dns_guess", [page(html, "https://www.aronatrehus.no/")])
                 self.assertFalse(result["publishable"], result)
 
-    def test_d3_accepts_separated_and_lead_in_forms(self):
+    def test_separated_and_lead_in_forms_with_registered_postcode_are_accepted(self):
         for title in ("Hjem | Arona Trehus AS", "Forside - Arona Trehus AS", "Velkommen til Arona Trehus AS", "Om oss: Arona Trehus AS"):
             with self.subTest(title=title):
-                html = f"<title>{title}</title>" + self.BODY
-                result = decide("ARONA TREHUS AS", "dns_guess", [page(html, "https://www.aronatrehus.no/")])
+                html = f"<title>{title}</title>" + self.BODY + "<p>5550 Sveio</p>"
+                result = decide("ARONA TREHUS AS", "dns_guess", [page(html, "https://www.aronatrehus.no/")],
+                                forretningsadresse={"adresse": [], "postnummer": "5550", "poststed": "SVEIO"})
                 self.assertTrue(result["publishable"], result)
 
     def test_c_abstains_on_a_manager_page_listing_several_companies(self):

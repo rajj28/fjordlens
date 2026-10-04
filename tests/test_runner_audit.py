@@ -2,6 +2,7 @@ import contextlib
 import gzip
 import io
 import json
+import re
 from pathlib import Path
 import tempfile
 import unittest
@@ -61,7 +62,7 @@ class RunnerAuditTests(unittest.TestCase):
             self.assertTrue(current["claims"][0]["stale"])
             self.assertEqual(current["changes"], [])
             self.assertEqual(current["evidence"], old["evidence"])
-            self.assertEqual(gzip.decompress((output / snapshot["storage_path"]).read_bytes()), response.body)
+            self.assertEqual((output / snapshot["storage_path"]).read_bytes(), response.body)
             self.assertEqual(snapshot["audit_availability"]["state"], "available")
             self.assertEqual(report["failed_envelopes"], 0)
             self.assertEqual(report["requests"], 0)
@@ -162,9 +163,9 @@ class RunnerAuditTests(unittest.TestCase):
             current = rows[0]
             self.assertEqual(len(current["changes"]), 1)
             self.assertEqual(current["changes"][0]["previous_evidence_ids"], old["claims"][0]["evidence_ids"])
-            self.assertEqual(len(list((output / "snapshots").glob("*.bin.gz"))), 2)
+            self.assertEqual(len([f for f in (output / "snapshots").iterdir() if re.fullmatch(r"[0-9a-f]{64}\.[a-z]+", f.name)]), 2)
             for snapshot in current["source_snapshots"]:
-                self.assertEqual(digest(gzip.decompress((output / snapshot["storage_path"]).read_bytes())),
+                self.assertEqual(digest((output / snapshot["storage_path"]).read_bytes()),
                                  snapshot["content_sha256"])
             self.assertEqual(report["failed_envelopes"], 0)
 

@@ -162,18 +162,21 @@ def _summarize(profile):
             say(numbers, f"Annual accounts are on file for {len(values)} year(s), {values[0]}–{values[-1]}.", years[:1] if isinstance(years[0]["value"], list) else years)
 
     hiring = section("hiring", "Hiring")
-    postings = by_field.get("job_posting", [])
-    if postings:
-        titles = [str(c["value"].get("title")) for c in postings if isinstance(c["value"], dict) and c["value"].get("title")]
-        dated = sorted({c["value"].get("published") for c in postings if isinstance(c["value"], dict) and c["value"].get("published")})
-        agency = any(isinstance(c["value"], dict) and c["value"].get("posting_context") == "employment_agency" for c in postings)
-        say(hiring, f"{len(postings)} active job ad(s) name this company as employer"
+    postings = [c for c in by_field.get("job_posting", []) if isinstance(c["value"], dict)]
+    nav = [c for c in postings if c["value"].get("status") == "active"]
+    site_posts = [c for c in postings if c not in nav]
+    if nav:
+        titles = [str(c["value"].get("title")) for c in nav if c["value"].get("title")]
+        dated = sorted({c["value"].get("published") for c in nav if c["value"].get("published")})
+        agency = any(c["value"].get("posting_context") == "employment_agency" for c in nav)
+        say(hiring, f"{len(nav)} job ad(s) marked active in NAV's official job feed name this company as employer"
                     + (" (it is an employment or recruitment agency, so positions may be with its clients)" if agency else "")
                     + (f", published between {dated[0]} and {dated[-1]}" if dated else "")
-                    + (": " + "; ".join(titles[:5]) + ("; …" if len(titles) > 5 else "") if titles else "") + ".", postings)
-    careers = by_field.get("careers_page", [])
-    if careers:
-        say(hiring, "The verified website links a careers page (this alone does not show an open position).", careers[:1])
+                    + (": " + "; ".join(titles[:5]) + ("; …" if len(titles) > 5 else "") if titles else "") + ".", nav)
+    if site_posts:
+        titles = [str(c["value"].get("title")) for c in site_posts if c["value"].get("title")]
+        say(hiring, f"{len(site_posts)} job posting(s) are published on the verified website with this company as employer"
+                    + (": " + "; ".join(titles[:5]) if titles else "") + " (as published by the company; current availability is not confirmed).", site_posts)
 
     activity = section("public_activity", "Recent public activity")
     publications = sorted([c for c in by_field.get("company_publication", []) if isinstance(c["value"], dict)],
@@ -191,6 +194,9 @@ def _summarize(profile):
     profiles = [c for c in by_field.get("company_profile", []) + by_field.get("company_linked_profile", []) if isinstance(c["value"], dict)]
     if profiles:
         say(online, "Company-linked profiles: " + ", ".join(f"{c['value'].get('platform')} ({c['value'].get('url')})" for c in profiles[:6]) + ".", profiles[:6])
+    careers = by_field.get("careers_page_url", [])
+    if careers:
+        say(online, f"The verified website links a careers page: {careers[0]['value'].get('url')} (not by itself evidence of an open position).", careers[:1])
     contacts = by_field.get("website_email", [])[:2] + by_field.get("website_phone", [])[:2]
     if contacts:
         say(online, "Contact details published on the verified website: " + ", ".join(str(c["value"]) for c in contacts) + ".", contacts)

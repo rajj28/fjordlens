@@ -77,6 +77,14 @@ def raw_json_quote(response, pointer, max_len=4000):
         return text[start:end]
     return text[start:start + max_len]  # Verbatim prefix of an over-long value; never re-serialised.
 
+PROVENANCE_FIELDS = ("source_url", "retrieved_at", "content_sha256", "claim_span", "source_class", "snapshot_path")
+
+
+def provenance(evidence):
+    """Claim-level copy of one evidence record's provenance (Builderr reads these on the claim itself)."""
+    return {"primary_evidence_id": evidence["id"], **{key: evidence.get(key) for key in PROVENANCE_FIELDS}}
+
+
 class Profile:
     def __init__(self, org: str, run_id: str):
         self.lock = threading.RLock()  # Stages of one company may run on different threads.
@@ -162,7 +170,7 @@ class Profile:
                 or at(record, "/virksomhet/organisasjonsnummer") != canonical_org):
                 raise ValueError("Financial claim does not match source amount, identity, currency, period or scope")
         self.snapshot(response)
-        evid = {"snapshot_id": response.snapshot_id, "source_url": response.url,
+        evid = {"snapshot_id": response.snapshot_id, "snapshot_path": response.storage_path, "source_url": response.url,
                 "source_class": source_class, "retrieved_at": response.retrieved_at,
                 "content_sha256": response.sha256, "extraction_method": method,
                 "selector": selector or ({"type": "json_pointer", "value": pointer} if method == "json_pointer_v1" else {"type": "normalized_text", "value": span}),
@@ -179,6 +187,8 @@ class Profile:
                  "confidence": 1.0 if source_class.startswith("official") else 0.97,
                  "evidence_ids": [evid["id"]], "effective_at": effective_at, "reporting_period": reporting_period,
                  "first_observed_at": response.retrieved_at, "last_observed_at": response.retrieved_at, "stale": False}
+        # Canonical, self-contained claim: the provenance of the record that directly supports it travels with it.
+        claim.update(provenance(evid))
         previous = next((c for c in self.data["claims"] if c["id"] == claim["id"]), None)
         if previous:
             if previous["value"] == value:

@@ -20,8 +20,8 @@ import time
 import zlib
 from . import __version__, official, website
 from . import jobs as nav_jobs
-from .core import Profile, digest, org_number, now, validate, write_json
-from .net import Budget, Fetcher
+from .core import Profile, digest, org_number, now, provenance, validate, write_json
+from .net import Budget, Fetcher, read_snapshot_bytes, snapshot_extension
 from .refresh import refresh
 from .synthesis import summarize
 
@@ -154,20 +154,20 @@ def preserve_previous_snapshots(profile, previous, previous_root, fetcher):
             source = snapshot_path(previous_root, stored_path)
             if not source.is_file():
                 raise ValueError("Saved snapshot body is missing from the previous package")
-            compressed = source.read_bytes()
-            body = gzip.decompress(compressed)
+            body = read_snapshot_bytes(source)
             sha = snapshot.get("content_sha256", "")
             if not isinstance(sha, str) or not re.fullmatch(r"[0-9a-f]{64}", sha) or digest(body) != sha:
                 raise ValueError("Saved snapshot body failed SHA-256 verification")
-            destination_relative = f"snapshots/{sha}.bin.gz"
+            # Re-stored raw, so the preserved file hashes to its content_sha256 like every new capture.
+            destination_relative = f"snapshots/{sha}.{snapshot_extension(snapshot.get('content_type'))}"
             destination = snapshot_path(fetcher.root, destination_relative)
             with fetcher.host_lock(sha):
                 if destination.exists():
-                    if digest(gzip.decompress(destination.read_bytes())) != sha:
+                    if digest(destination.read_bytes()) != sha:
                         raise ValueError("Destination snapshot body failed SHA-256 verification")
                 else:
                     destination.parent.mkdir(parents=True, exist_ok=True)
-                    destination.write_bytes(compressed)
+                    destination.write_bytes(body)
             snapshot["storage_path"] = destination_relative
             snapshot["audit_availability"] = {"state": "available", "reason": "Saved body retained and SHA-256 verified"}
         except (OSError, ValueError, TypeError, EOFError, zlib.error) as exc:
@@ -418,13 +418,30 @@ def finalize(job, fetcher, previous_root, *, final):
         if final and job.previous and previous_root is not None:
             preserve_previous_snapshots(data, job.previous, previous_root, fetcher)
 
+    def provenance_sync():
+        # Every evidence record points at the file that holds its bytes in THIS run's folder, and every
+        # claim (including stale claims carried from the previous run) carries its primary record's provenance.
+        paths = {s.get("id"): s.get("storage_path") for s in data.get("source_snapshots", [])}
+        evidence = {}
+        for record in data.get("evidence", []):
+            if record.get("snapshot_id") in paths:
+                record["snapshot_path"] = paths[record["snapshot_id"]]
+            evidence[record["id"]] = record
+        for claim in data.get("claims", []):
+            primary = evidence.get(claim.get("primary_evidence_id")) or next(
+                (evidence[i] for i in claim.get("evidence_ids", []) if i in evidence), None)
+            if primary:
+                claim.update(provenance(primary))
+
     step("operations", operations)
     step("refresh", refreshed)
     step("summary", summary)
     if "summary" not in data:
         data["summary"] = {"method": "unavailable", "sentences": [], "sections": [], "unknowns": []}
+    step("provenance", provenance_sync)
     step("validation", validated)
     step("evidence_preservation", preserved)
+    step("provenance_after_preservation", provenance_sync)
     try:
         data["state"] = envelope_state(data)
     except Exception:  # noqa: BLE001

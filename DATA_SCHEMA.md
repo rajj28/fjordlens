@@ -37,6 +37,8 @@ Each JSONL envelope is produced by `core.Profile` (during research) and `runner.
 | `scope` | `legal_entity`, `consolidated_group`, `registered_subunit`, `relationship`, `site_declared_link`, `company_published_content`, etc. |
 | `confidence` | `1.0` for official sources, `0.97` for company-owned sources |
 | `evidence_ids` | Array of evidence `id` strings supporting this claim |
+| `primary_evidence_id` | The evidence record that directly supports the claim; its provenance is copied onto the claim |
+| `source_url`, `retrieved_at`, `content_sha256`, `claim_span`, `source_class`, `snapshot_path` | Claim-level provenance copied from the primary evidence record, so each claim is self-contained |
 | `effective_at` | ISO date for roles, job postings, publications |
 | `reporting_period` | `{fraDato, tilDato}` for financials |
 | `first_observed_at` | Retrieval timestamp of first evidence |
@@ -51,10 +53,10 @@ Each JSONL envelope is produced by `core.Profile` (during research) and `runner.
 | contact | `registered_phone`, `registered_mobile`, `registered_email` (entity), `workplace_phone`, `workplace_mobile`, `workplace_email` (each registered subunit, key `subunit_orgnr:value`), `website_email`, `website_phone`, `website_contact_address` (verified site only) |
 | description | `registered_activity` (`/aktivitet`), `statutory_purpose` (`/vedtektsfestetFormaal`), both verbatim registry line arrays; `business_description` (verified site meta/about text) |
 | locations | `registered_workplace`: `{organisation_number, name, address, industry, employees}` plus `phone`, `mobile`, `email`, `website` when the subunit registers them |
-| website | `official_website` only after the identity gate accepts the site; the registry `hjemmeside` stays an identity fact (`registry_website_candidate`) |
+| website | `official_website` only after the identity gate accepts the site; `careers_page_url` (a careers link on the verified site, not a hiring fact); the registry `hjemmeside` stays an identity fact (`registry_website_candidate`) |
 | workforce | `employees` (`/antallAnsatte`, effective at the Aa-registeret registration date), `employees_registered_on`, `workplace_employees` (per registered subunit); `not_available` with the reason when the registry holds no registered employees |
 | identity (brand) | `public_brand` from the verified homepage (`og:site_name`, else the site's own Organization/WebSite `name`), labelled company-reported |
-| hiring | `job_posting` (NAV official feed; `posting_context: "employment_agency"` and a `note` when the employer is in NACE 78, because the position may be with a client), `careers_page` |
+| hiring | `job_posting` only (NAV official feed items marked ACTIVE, or JobPosting markup on the verified site that has not expired; `posting_context: "employment_agency"` and a `note` when the employer is in NACE 78, because the position may be with a client), `careers_page` |
 
 ## Evidence object
 
@@ -62,6 +64,7 @@ Each JSONL envelope is produced by `core.Profile` (during research) and `runner.
 | --- | --- |
 | `id` | `ev_` + SHA-256 of the evidence record |
 | `snapshot_id` | `ss_` + 24-char hash of `[url, content_sha256, retrieved_at, status]` |
+| `snapshot_path` | Relative path (inside the run folder) of the captured body; its SHA-256 equals `content_sha256` |
 | `source_url` | Final URL after redirects |
 | `source_class` | One of `SOURCE_CLASSES`: `official_registry`, `official_roles`, `official_subunits`, `official_annual_accounts`, `official_group_structure`, `company_owned`, `public_job_feed` |
 | `retrieved_at` | ISO timestamp of fetch |

@@ -15,11 +15,11 @@ from .core import org_number
 from .html import structured_nodes
 
 LEGAL_SUFFIXES = {"as", "asa", "ans", "da", "sa", "ba", "nuf", "ks", "enk", "iks", "bbl", "brl", "sti", "kf", "fli", "ab", "ltd", "inc", "gmbh"}
-DECLARED_ORIGINS = {"registry_website", "registry_email_domain", "registry_workplace_website", "registry_workplace_email_domain",
-                    "wikidata_official_website", "nav_employer_homepage"}
-# Declarations made by the company itself (registry entries, its own job ads); Wikidata is community-edited.
-OWN_DECLARATIONS = {"registry_website", "registry_email_domain", "registry_workplace_website", "registry_workplace_email_domain",
-                    "nav_employer_homepage"}
+# Domains the company itself filed with the registry (entity or subunit website / business e-mail domain). Builderr's
+# evaluation names exactly three kinds of website proof: our organisation number on the page; the exact legal name
+# with the registered street or the postcode written with its town; or a domain the company filed with the registry.
+DECLARED_ORIGINS = {"registry_website", "registry_email_domain", "registry_workplace_website", "registry_workplace_email_domain"}
+OWN_DECLARATIONS = DECLARED_ORIGINS
 REGISTERED_SITES = {"registry_website", "registry_workplace_website"}
 # Words that may stand right before a legal name in a title or (c) line without being part of it.
 NAME_LEAD_INS = {"copyright", "velkommen", "welcome", "til", "to", "fra", "from", "om", "about", "kontakt", "contact", "logo",
@@ -176,6 +176,9 @@ class Context:
                     phones.append(digits)
         self.phones = sorted(set(phones))
         self.email = str(entity.get("epostadresse") or "").strip().lower()
+        self.postcode_towns = sorted({(str(a.get("postnummer")), fold(str(a.get("poststed") or "")).lower().split()[0])
+                                      for a in [entity.get("forretningsadresse") or {}, entity.get("postadresse") or {}] + [w for w in workplaces if isinstance(w, dict)]
+                                      if re.fullmatch(r"\d{4}", str(a.get("postnummer") or "")) and str(a.get("poststed") or "").strip()})
         self.emails = sorted({e for e in [self.email] + [str((w or {}).get("epostadresse") or "").strip().lower()
                                                          for w in workplaces if isinstance(w, dict)] if "@" in e})
         name_words = tokens(self.name)
@@ -212,7 +215,11 @@ def owner_strings(page):
                page.get("meta", {}).get("og:title", ""), page.get("meta", {}).get("application-name", "")]
     strings += page.get("logo_alts", [])
     strings += [line for line in page.get("lines", []) if "©" in line or re.search(r"copyright", line, re.I)][:10]
-    for node, _ in structured_nodes(page.get("jsonld", [])):
+    for node, path in structured_nodes(page.get("jsonld", [])):
+        # Only the site's own top-level organisation/website nodes name the owner: an Article's "about", a
+        # case study's client or a review's subject inside the markup is a mention, not ownership.
+        if not OWNER_NODE_PATH.match(path or "/0"):
+            continue
         types = node.get("@type")
         types = {types} if isinstance(types, str) else set(t for t in types if isinstance(t, str)) if isinstance(types, list) else set()
         if types & {"Organization", "Corporation", "LocalBusiness", "ProfessionalService", "Store", "Restaurant", "WebSite", "AutoDealer",
@@ -439,7 +446,11 @@ def assess(ctx, candidate, pages):
     candidate_domain = registered_domain(candidate["url"])
     email_hit = any(e in page_digits.lower() for e in ctx.emails
                     if not (candidate["origin"].endswith("email_domain") and registered_domain("http://" + e.rsplit("@", 1)[-1]) == candidate_domain))
-    signals.update(registry_phone_on_site=bool(phone_hit), registry_address_on_site=bool(address_hit), registry_email_on_site=email_hit)
+    folded_text = fold(all_text).lower()
+    postcode_town_hit = next((f"{pc} {town}" for pc, town in ctx.postcode_towns
+                              if re.search(r"(?<!\d)" + pc + r"\s*,?\s*" + re.escape(town) + r"\b", folded_text)), None)
+    signals.update(registry_phone_on_site=bool(phone_hit), registry_address_on_site=bool(address_hit), registry_email_on_site=email_hit,
+                   registry_postcode_town_on_site=bool(postcode_town_hit))
     page_tokens = tokens(all_text)
     # A person counts as independent evidence only if a name token we must match on the page (first
     # or last name) is not part of the company's own name: "Daniel Olsen" proves nothing for DANIEL
@@ -469,15 +480,11 @@ def assess(ctx, candidate, pages):
         rule = "A: our organisation number is in the site's owner position"
     elif declared and name_owner and not multi_entity:
         rule = "B: company-declared site shows the full legal name in its owner strings"
-    elif guess and name_owner and contact and not multi_entity:
-        rule = "D: guessed domain shows the full legal name and registry contact details"
-    elif guess and name_owner and person_hit and not multi_entity:
-        rule = "D2: guessed domain shows the full legal name and the registered CEO/chair/owner by full name"
-    elif (guess and name_owner and not superset and not multi_entity and exact_owner_name(owners, ctx) and len(other_legal_names(pages, ctx)) < 2
-          and urlsplit(url).hostname in {registered_domain(url), "www." + registered_domain(url)}):
-        # Registered company names are unique in Norway, so our exact name WITH our legal form in the
-        # site's own title, site name, logo or (c) line identifies us; chain subdomains are excluded.
-        rule = "D3: guessed domain's owner strings carry our exact registered name with its legal form"
+    elif ((address_hit or postcode_town_hit) and not multi_entity and not superset and not groupish
+          and (name_owner or (exact_phrase and len(other_legal_names(pages, ctx)) < 2))):
+        # The site names itself as us (title, site name, logo, (c) line) and shows our registered address; a name
+        # written only in body text must also not sit among other companies (a manager's or a client list).
+        rule = "D: the site names the company and shows its registered street or postcode with town"
     elif (candidate["origin"] in OWN_DECLARATIONS and signals["org_anywhere"] and all_numbers == {ctx.org}
           and exact_phrase and not superset and (contact or person_hit)):
         rule = "A2: company-declared site shows our organisation number (no other), the exact legal name and registry contact details"
@@ -490,8 +497,8 @@ def assess(ctx, candidate, pages):
     if not rule:
         if not name_owner and not signals["org_anywhere"]:
             reasons.append("neither the legal name nor the organisation number identifies the site owner")
-        elif guess and not contact:
-            reasons.append("guessed domain shows the name but no registry contact detail or organisation number")
+        elif not declared and not (address_hit or postcode_town_hit):
+            reasons.append("the name is shown, but without the registered street, postcode with town, or organisation number")
         elif signals["org_anywhere"]:
             reasons.append("organisation number appears only outside an owner position")
         return result

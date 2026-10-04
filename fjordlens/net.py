@@ -138,6 +138,28 @@ class Response:
                 "last_modified": self.headers.get("last-modified"), "etag": self.headers.get("etag"),
                 "body_size_bytes": len(self.body), "cache_hit": self.cache_hit, "error": self.error}
 
+def snapshot_extension(content_type):
+    """File extension for a stored response body, from its declared content type."""
+    kind = str(content_type or "").split(";", 1)[0].strip().lower()
+    if "html" in kind:
+        return "html"
+    if "json" in kind:
+        return "json"
+    if "xml" in kind or "rss" in kind or "atom" in kind:
+        return "xml"
+    if kind.startswith("text/"):
+        return "txt"
+    if kind == "application/pdf":
+        return "pdf"
+    return "bin"
+
+
+def read_snapshot_bytes(path):
+    """Captured body bytes; accepts the raw files written now and gzip files written by earlier versions."""
+    data = Path(path).read_bytes()
+    return gzip.decompress(data) if str(path).endswith(".gz") else data
+
+
 class Budget:
     def __init__(self, requests=2000, seconds=2600, per_company=20):
         self.max_requests, self.deadline, self.per_company = requests, time.monotonic() + seconds, per_company
@@ -213,12 +235,14 @@ class Fetcher:
             return self.locks.setdefault(key, threading.RLock())
 
     def _save(self, response):
+        # The captured body is stored byte-for-byte, named by its SHA-256, so any verifier can hash the file at
+        # `snapshot_path` and compare it with `content_sha256` (Builderr's citation-validator contract).
         folder = self.root / "snapshots"
         folder.mkdir(parents=True, exist_ok=True)
-        dest = folder / (response.sha256 + ".bin.gz")
+        dest = folder / (response.sha256 + "." + snapshot_extension(response.headers.get("content-type")))
         with self.host_lock(response.sha256):
             if not dest.exists():
-                dest.write_bytes(gzip.compress(response.body, mtime=0))
+                dest.write_bytes(response.body)
         response.storage_path = "snapshots/" + dest.name
         record = response.metadata()
         record["headers"] = {k: v for k, v in response.headers.items() if k in {"content-type", "etag", "last-modified", "date"}}
@@ -426,7 +450,7 @@ class Fetcher:
         m = self.replay_index.get(url)
         if not m:
             return Response(url, url, error="Replay: no saved response for URL")
-        body = gzip.decompress((self.replay / m["storage_path"]).read_bytes())
+        body = read_snapshot_bytes(self.replay / m["storage_path"])
         if digest(body) != m["content_sha256"]:
             return Response(url, url, error="Replay: snapshot integrity failure")
         result = Response(m["requested_url"], m["final_url"], m["http_status"], body, m.get("headers", {}),

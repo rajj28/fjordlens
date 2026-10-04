@@ -91,10 +91,11 @@ def handle_matches_company(handle, legal_name, site_url):
     """A site-declared profile is kept only if its handle carries the company or domain name, which
     excludes the web agency's or a partner's profile linked from the same footer."""
     compact = re.sub(r"[^a-z0-9]", "", gate.fold(handle))
-    words = [t for t in gate.name_tokens(legal_name) if len(t) >= 3]
+    words = [t for t in gate.name_tokens(legal_name) if t not in discovery.GENERIC]
     label = registered_domain(site_url).split(".")[0].replace("-", "")
-    return bool(compact) and (any(t in compact for t in words) or (len(label) >= 3 and label in compact)
-                              or (words and "".join(words) in compact))
+    # Every distinctive word of the legal name, or the full domain label: a single shared word lets an agency
+    # or partner account through ("bergenwebdesign" for BERGEN BYGG AS).
+    return bool(compact) and ((bool(words) and all(t in compact for t in words)) or (len(label) >= 4 and label in compact))
 
 
 def names_other_entity(page, legal_name):
@@ -113,7 +114,7 @@ PLACEHOLDER_BRANDS = re.compile(r"^(hjem|home|forside|startside|velkommen|welcom
                                 r"just another wordpress site|min nettside|my site|untitled|index)$", re.I)
 
 
-def public_brand(profile, org, page, response, proof):
+def public_brand(profile, org, page, response, proof, entity_name=""):
     """The name the verified site uses for itself (og:site_name, else its own Organization or WebSite
     markup). A public brand is labelled as such; it never replaces the registered legal name."""
     if any(c["field"] == "public_brand" for c in profile.data["claims"]):
@@ -128,9 +129,15 @@ def public_brand(profile, org, page, response, proof):
         if isinstance(node.get("name"), str) and (("WebSite" in types) or (types & {"Organization", "Corporation", "LocalBusiness"} and node_org(node) in {None, org})):
             candidates.append((node["name"], "jsonld_name_v1", {"type": "parsed_html_pointer", "value": "/jsonld" + path + "/name"},
                                jsonld_quote(page, path + "/name") or node["name"]))
+    legal_words = {w for w in gate.name_tokens(entity_name) if w not in discovery.GENERIC and len(w) >= 3}
+    label = domain.split(".")[0].replace("-", "")
     for raw, method, selector, span in candidates:
         brand = clean(re.sub(r"<[^>]+>", " ", raw))
         if not (2 <= len(brand) <= 80) or PLACEHOLDER_BRANDS.match(brand) or brand.lower().removeprefix("www.") in {domain, host(page["url"])}:
+            continue
+        brand_words = set(gate.tokens(brand))
+        # A brand is reported only when it carries a distinctive word of the legal name or the domain label.
+        if not (brand_words & legal_words or (len(label) >= 4 and label in "".join(brand_words))):
             continue
         add_web(profile, "public_brand", brand, response, "identity", proof, span=span, method=method, selector=selector, scope="company_reported")
         return
@@ -177,7 +184,7 @@ def extract(profile, entity, page, response, proof):
                         method="html_first_paragraph_v1", selector={"type": "parsed_html_pointer", "value": f"/lines/{index}"})
                 break
     if urlsplit(page["url"]).path.strip("/") == "" and host(page["url"]) == host(proof["url"]):
-        public_brand(profile, org, page, response, proof)
+        public_brand(profile, org, page, response, proof, entity.get("navn") or "")
     for index, link in enumerate(page["links"]):
         profile_url = social_profile_url(link["url"])
         if profile_url and handle_matches_company(profile_url[1], entity.get("navn") or "", proof["url"]):
@@ -186,8 +193,9 @@ def extract(profile, entity, page, response, proof):
             add_web(profile, "company_linked_profile", value, response, "social_profiles", proof,
                     span=link.get("href") or link["url"], key=url, scope="site_declared_link", method="html_href_v1", selector={"type": "parsed_html_pointer", "value": f"/links/{index}/href"})
         if re.search(r"career|karriere|ledig|stilling|jobb|/jobs", link["url"] + " " + link["text"], re.I) and host(link["url"]) == host(proof["url"]):
-            add_web(profile, "careers_page", {"url": link["url"], "title": link["text"] or "Careers", "active_jobs": None}, response,
-                    "hiring", proof, span=link.get("href") or link["url"], key=link["url"], method="html_href_v1", selector={"type": "parsed_html_pointer", "value": f"/links/{index}/href"})
+            # A careers page is not a hiring fact (only a job-feed item or a posting is): it is part of the website.
+            add_web(profile, "careers_page_url", {"url": link["url"], "title": link["text"] or "Careers"}, response,
+                    "website", proof, span=link.get("href") or link["url"], key=link["url"], method="html_href_v1", selector={"type": "parsed_html_pointer", "value": f"/links/{index}/href"})
     for node, path in structured_nodes(page["jsonld"]):
         types = jsonld_types(node)
         if "JobPosting" in types:
@@ -202,6 +210,9 @@ def extract(profile, entity, page, response, proof):
             posted = valid_date(node.get("datePosted"))
             if not node.get("title") or not posted:
                 continue
+            expires = valid_date(node.get("validThrough"))
+            if expires and expires < response.retrieved_at[:10]:
+                continue  # Expired on the company's own page: no longer a hiring fact.
             target = node.get("url") or page["url"]
             if not isinstance(target, str):
                 continue

@@ -19,11 +19,9 @@ The identity gate (`gate.assess`) decides whether a fetched site is the exact le
 | --- | --- | --- |
 | **A** | `org_owner` is true: our organisation number is in the site's owner position (homepage footer/structured/labels, or subpage with `name_owner`) | `gate.assess` |
 | **B** | `declared` AND `name_owner` AND NOT `multi_entity`: company-declared site shows full legal name in owner strings | `gate.assess` |
-| **D** | `guess` AND `name_owner` AND `contact` AND NOT `multi_entity`: guessed domain shows full legal name AND registry contact detail | `gate.assess` |
-| **D2** | `guess` AND `name_owner` AND `person_hit` AND NOT `multi_entity`: guessed domain shows full legal name AND registered CEO/chair/owner by full name | `gate.assess` |
+| **D** | the site names itself as us (`name_owner`), or the exact legal name is in the text with fewer than two other legal names on the pages, AND the registered street with house number + postcode (`registry_address_on_site`) or the registered postcode written with its town (`registry_postcode_town_on_site`), NOT `multi_entity`, no longer legal name containing ours, no group words. Applies to every origin. Phone, e-mail or a registered person alone never accept a derived domain (Builderr evaluation report, 13 Sep). | `gate.assess` |
 | **A2** | company's own declaration (registry website or e-mail domain, subunit website or e-mail domain, NAV employer homepage) AND our organisation number anywhere on the site AND no other organisation number AND our exact legal name AND a registry contact or registered person | `gate.assess` |
 | **C** | registry-declared website (entity or subunit) AND our exact legal name on the site AND a registry contact or registered person AND no longer legal name containing ours, no group words in owner strings or domain, no group wording around our name (`gate.group_context`), NOT `multi_entity` | `gate.assess` |
-| **D3** | `guess` AND `name_owner` AND an owner string (title, site name, logo, (c) line) writes our exact registered name WITH our own legal-form suffix, not preceded by another capitalised word (`gate.exact_owner_name`), AND no longer legal name containing ours, NOT `multi_entity`, host is the registered domain or www (no chain subdomains). Registered company names are unique in Foretaksregisteret. | `gate.assess` |
 
 Anything else → `decision="ambiguous"`, `publishable=False`.
 

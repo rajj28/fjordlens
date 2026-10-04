@@ -7,6 +7,7 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from fjordlens.core import at, digest, validate, write_json
+from fjordlens.net import read_snapshot_bytes
 from fjordlens.html import parse_html, clean
 from fjordlens.identity import node_org
 from fjordlens.net import Response
@@ -37,7 +38,7 @@ def audit(folder):
                 path = folder / (s['storage_path'] or 'MISSING')
                 try:
                     if e['content_sha256'] not in bodies:
-                        raw = gzip.decompress(path.read_bytes())
+                        raw = read_snapshot_bytes(path)
                         if digest(raw) != e['content_sha256']:
                             raise ValueError('Content hash mismatch')
                         bodies[e['content_sha256']] = raw

@@ -35,7 +35,7 @@ whenever every envelope was written; source failures are data, not process failu
 | `profiles/` | One readable JSON profile per company |
 | `run-report.json` | Requests, runtime, p50/p95, per-family coverage, envelope states, limits used |
 | `requests.jsonl` | Every HTTP attempt (redirects, robots.txt, retries included) |
-| `snapshots/` | gzip-compressed immutable response bodies plus metadata, referenced by every claim |
+| `snapshots/` | every captured response body byte-for-byte as `<sha256>.<ext>` (the file hashes to the evidence's `content_sha256`), plus metadata |
 
 ### Run budget
 
@@ -78,19 +78,21 @@ unknown and why), where every sentence cites the claim IDs it rests on.
 ## How identity is decided
 
 Website candidates come from the registry website and business e-mail domain, the websites and e-mail domains
-registered on the company's own subunits, NAV employer homepages and DNS-checked domains derived from the legal name. A candidate is accepted only by:
+registered on the company's own subunits, NAV employer homepages and DNS-checked domains derived from the legal name.
+A candidate is accepted only by:
 
 - **A** our organisation number in the site's owner position (footer or the site's own organisation markup), not
   inside a supplier credit; or
-- **B** a company-declared candidate (registry website or e-mail domain) whose owner strings (title, site name,
-  logo, © line) carry the full legal name, on a site that shows no other legal entity; or
-- **D** a name-derived domain with the full legal name **and** registry contact details or the registered
-  CEO/chair/owner on the site; or
-- **D3** a name-derived domain whose own title, site name, logo or © line writes our exact registered name with
-  our legal form ("Arona Trehus AS"); registered names are unique in Norway; or
-- **A2 / C** a company-declared site (registry or subunit website, e-mail domain, NAV employer homepage) that shows
-  our exact legal name plus registry contact details, with our organisation number (A2) or without any group
-  framing (C).
+- **D** the site names itself as the company (title, site name, logo or © line; or the exact legal name in the text
+  with no other companies around it) **and** shows the registered street address or the registered postcode
+  written with its town; or
+- **B / C / A2** a domain the company itself filed with the registry (entity or subunit website, business e-mail
+  domain) whose owner strings carry the full legal name (B), or whose pages show the exact legal name with registry
+  contact details and no group framing (C), or our organisation number with no other (A2).
+
+These are the three kinds of proof Builderr's evaluation names: the organisation number on the page; the legal
+name with the registered address; or a domain the company filed with the registry. A name alone, a name with a
+phone number, or a name with a registered person is never enough for a domain we derived ourselves.
 
 Longer legal names containing ours ("Bergen Bil Eiendom AS" for BERGEN BIL AS), group words, parked pages,
 directories, other entities' organisation numbers, article subjects and agency credits all block acceptance.
@@ -117,8 +119,9 @@ employer number re-checked. No other cache is used: all evidence is fetched live
 ```bash
 # The run already wrote out/run/report/index.html: open it in any browser (no server needed).
 python -m fjordlens serve --data out/run/envelopes.jsonl    # optional local server
-python scripts/audit_evidence.py out/run                    # re-open saved bytes, re-check every claim
-python -m unittest discover -s tests                        # 142 tests incl. adversarial identity cases
+python scripts/validate_citations.py out/run                # Builderr's citation contract: ids, URLs, times, snapshot bytes
+python scripts/audit_evidence.py out/run                    # re-open saved bytes, re-check every claim and figure
+python -m unittest discover -s tests                        # 166 tests incl. adversarial identity cases
 ```
 
 ## Ask and screen

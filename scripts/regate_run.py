@@ -15,7 +15,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from fjordlens import gate  # noqa: E402
 from fjordlens.html import parse_html  # noqa: E402
-from fjordlens.net import Response  # noqa: E402
+from fjordlens.net import Response, read_snapshot_bytes  # noqa: E402
 
 
 def context_for(envelope):
@@ -38,7 +38,7 @@ def site_pages(folder, envelope, url):
             continue
         if gate.registered_domain(snapshot["final_url"]) != domain or snapshot["final_url"].endswith("robots.txt"):
             continue
-        body = gzip.decompress((Path(folder) / snapshot["storage_path"]).read_bytes())
+        body = read_snapshot_bytes(Path(folder) / snapshot["storage_path"])
         response = Response(snapshot["final_url"], snapshot["final_url"], 200, body, {"content-type": snapshot.get("content_type") or "text/html"})
         page = parse_html(response.text(), snapshot["final_url"])
         if snapshot["final_url"].rstrip("/") == url.rstrip("/"):
