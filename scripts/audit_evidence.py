@@ -115,11 +115,21 @@ def audit(folder):
                             raise ValueError('Contact-page phone not in saved source')
                         passed = True
                     elif e['extraction_method'] == 'rss_atom_item_v1':
-                        from xml.etree import ElementTree as ET
-                        root = ET.fromstring(raw)
-                        target = claim['value']['url']
-                        if target not in raw.decode('utf-8','replace'):
-                            raise ValueError('Publication URL not in feed')
+                        from fjordlens.core import Profile
+                        from fjordlens.website import feed
+                        replay = Profile(profile['organisation_number'], 'feed-evidence-audit')
+                        # Preserve the original dedupe context so a later valid item is not
+                        # hidden behind the feed's per-company publication limit.
+                        replay.data['claims'] = [c for c in profile['claims'] if c['id'] != claim['id']]
+                        captured = Response(s['final_url'], s['final_url'], 200, raw,
+                                            {'content-type': s.get('content_type') or 'application/xml'}, e['retrieved_at'])
+                        feed(replay, profile['legal_identity'], captured, e['identity_proof'])
+                        regenerated = next((c for c in replay.data['claims'] if c['id'] == claim['id']), None)
+                        if not regenerated or any(regenerated['value'].get(k) != claim['value'].get(k)
+                                                  for k in ('title', 'url', 'published_on', 'published_at')):
+                            raise ValueError('Feed publication title, URL and date are not re-derived from saved bytes')
+                        if e['claim_span'] not in snapshot_text(raw, s):
+                            raise ValueError('Feed publication quote not in saved source')
                         passed = True
                     else:
                         raise ValueError('Unsupported evidence selector for audit')

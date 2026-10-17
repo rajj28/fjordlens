@@ -178,6 +178,41 @@ class SitemapTests(unittest.TestCase):
 
 
 class FeedTests(unittest.TestCase):
+    def test_catalog_feed_is_not_company_publication(self):
+        xml = ('<feed xmlns="http://www.w3.org/2005/Atom"><entry><title>Tea product 500g</title>'
+               '<link href="/new-item"/><published>2026-10-09T11:18:18+02:00</published></entry></feed>')
+        for path in ("collections/all.atom", "products.atom", "?feed=rss2&post_type=product"):
+            with self.subTest(path=path):
+                profile = Profile(ORG, "catalog-test")
+                feed(profile, ENTITY, response(xml, path, "application/atom+xml"), proof())
+                self.assertEqual(publications(profile), [])
+
+    def test_mixed_feed_keeps_genuine_blog_entry_and_skips_product(self):
+        xml = ('<feed xmlns="http://www.w3.org/2005/Atom"><entry><title>Tea product 500g</title>'
+               '<link href="/products/tea-500g"/><published>2026-10-09</published></entry>'
+               '<entry><title>A guide to products from Norway</title><link href="/blogs/news/products-from-norway"/>'
+               '<published>2026-10-08</published></entry></feed>')
+        profile = Profile(ORG, "catalog-test")
+        feed(profile, ENTITY, response(xml, "blog.atom", "application/atom+xml"), proof())
+        self.assertEqual([c["value"]["url"] for c in publications(profile)], [SITE + "blogs/news/products-from-norway"])
+
+    def test_shopify_product_metadata_is_rejected_even_on_unusual_urls(self):
+        xml = ('<feed xmlns="http://www.w3.org/2005/Atom" xmlns:s="http://jadedpixel.com/-/spec/shopify">'
+               '<entry><title>Tea product 500g</title><link href="/tea-500g"/><published>2026-10-09</published>'
+               '<s:vendor>Tea producer</s:vendor></entry></feed>')
+        profile = Profile(ORG, "catalog-test")
+        feed(profile, ENTITY, response(xml, "feed", "application/atom+xml"), proof())
+        self.assertEqual(publications(profile), [])
+
+    def test_product_page_generic_article_metadata_is_not_news(self):
+        page = response('<h1>Tea product 500g</h1><meta property="og:type" content="article">'
+                        '<meta property="article:published_time" content="2026-10-09">'
+                        '<script type="application/ld+json">{"@type":"Article","headline":"Tea product 500g",'
+                        '"datePublished":"2026-10-09"}</script>', "products/tea-500g")
+        profile = Profile(ORG, "catalog-test")
+        extract(profile, ENTITY, parse_html(page.text(), page.url), page, proof())
+        self.assertEqual(publications(profile), [])
+
     def test_wordpress_comment_feed_is_not_company_activity(self):
         xml = ('<rss><channel><title>Kommentarer til NOVOOI</title><item>'
                '<title>Kommentar til BRUTALIST mug, Naaz Ceramics av Novooi</title>'

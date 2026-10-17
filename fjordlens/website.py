@@ -217,7 +217,7 @@ def article_page(profile, page, response, proof):
     """A single article on the verified site that states its own publication date (meta, JSON-LD or time element)."""
     parts = urlsplit(response.url)
     segments = [x for x in parts.path.split("/") if x]
-    if not segments or host(response.url) != host(proof["url"]):
+    if not segments or host(response.url) != host(proof["url"]) or catalog_url(response.url):
         return
     if PAGINATION.search(parts.path + ("?" + parts.query if parts.query else "")) or segments[-1].isdigit():
         return
@@ -248,7 +248,7 @@ def dated_links(profile, page, response, proof):
     if not (LISTING_PAGE.search(path) or path.strip("/") == "") or host(page["url"]) != host(proof["url"]):
         return
     for item in articles.extract_dated_links(response.text(), response.url, response.retrieved_at[:10]):
-        if known_publication(profile, item["url"]):
+        if catalog_url(item["url"]) or known_publication(profile, item["url"]):
             continue
         value = {"title": item["title"], "url": item["url"], "published_on": item["published_on"],
                  "source_kind": "company_owned", "independent_sentiment": False}
@@ -365,7 +365,7 @@ def wordpress_posts(profile, fetcher, org, home, proof):
         link, published = post.get("link"), valid_date(post.get("date"))
         title = clean(re.sub(r"<[^>]+>", " ", str((post.get("title") or {}).get("rendered") or "") if isinstance(post.get("title"), dict) else ""))
         title = stdlib_html.unescape(title)
-        if not isinstance(link, str) or host(link) != host(home.url) or not published or not title:
+        if not isinstance(link, str) or host(link) != host(home.url) or catalog_url(link) or not published or not title:
             continue
         if title.strip().lower() in WORDPRESS_PLACEHOLDERS:
             continue  # WordPress's default first post is not company activity.
@@ -481,7 +481,7 @@ def extract(profile, entity, page, response, proof):
             if not isinstance(target, str) or not headline or not date:
                 continue
             target = urljoin(page["url"], target)
-            if host(target) != host(proof["url"]):
+            if host(target) != host(proof["url"]) or catalog_url(target):
                 continue
             if date > response.retrieved_at[:10] or known_publication(profile, target):
                 continue
@@ -509,8 +509,16 @@ def comment_feed_url(url):
                 or query.get("withcomments") == "1")
 
 
+def catalog_url(url):
+    """Product and collection URLs carry catalog creation dates, not publication dates."""
+    parts = urlsplit(url)
+    query = dict(parse_qsl(parts.query))
+    return bool(re.search(r"^/(?:[a-z]{2}(?:-[a-z]{2})?/)?(?:products?|produkter?|produkt|collections|catalog|catalogue)(?:/|\.|$)",
+                          parts.path, re.I) or query.get("post_type") in {"product", "product_variation"})
+
+
 def feed(profile, entity, response, proof):
-    if host(response.url) != host(proof["url"]) or comment_feed_url(response.url):
+    if host(response.url) != host(proof["url"]) or comment_feed_url(response.url) or catalog_url(response.url):
         return
     try:
         if b"<!DOCTYPE" in response.body.upper() or b"<!ENTITY" in response.body.upper():
@@ -529,6 +537,8 @@ def feed(profile, entity, response, proof):
         if item.tag.split("}")[-1] not in {"item", "entry"}:
             continue
         position += 1
+        if any(child.tag == "{http://jadedpixel.com/-/spec/shopify}vendor" for child in item):
+            continue  # A Shopify product entry, even if its feed or link uses an unusual URL.
         values = {child.tag.split("}")[-1]: (child.text or "").strip() for child in item}
         title = clean(re.sub(r"<[^>]+>", " ", stdlib_html.unescape(values.get("title") or "")))
         target = values.get("link")
@@ -536,7 +546,7 @@ def feed(profile, entity, response, proof):
             target = next((c.attrib.get("href") for c in item if c.tag.split("}")[-1] == "link"
                            and c.attrib.get("rel", "alternate") == "alternate"), None)
         target = urljoin(response.url, target) if target else None
-        if target and (re.match(r"(?:comments?|reviews?)(?:[-_]|$)", urlsplit(target).fragment, re.I)
+        if target and (catalog_url(target) or re.match(r"(?:comments?|reviews?)(?:[-_]|$)", urlsplit(target).fragment, re.I)
                        or COMMENT_FEED_TITLE.search(title)):
             continue
         # Atom's updated date is a revision date, not evidence of publication.
@@ -882,7 +892,7 @@ def research(profile, fetcher, entity, max_pages=12, caches=None):
     feeds, visited = crawl_site(profile, fetcher, org, entity, home, proof, pages, responses, max_pages)
     probe_missing(profile, fetcher, org, entity, home, proof, visited)
     wordpress_posts(profile, fetcher, org, home, proof)
-    for url in [url for url in dict.fromkeys(feeds) if not comment_feed_url(url)][:2]:
+    for url in [url for url in dict.fromkeys(feeds) if not comment_feed_url(url) and not catalog_url(url)][:2]:
         if registered_domain(url) != registered_domain(home.url):
             continue
         r = fetcher.get(url, org)
