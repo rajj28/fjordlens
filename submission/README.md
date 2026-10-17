@@ -1,4 +1,10 @@
-# 100-company smoke test
+# Submission evidence
+
+Latest: [Version 2 / FjordLens 1.1.0](revision-2/README.md), validated on 17 October 2026.
+
+The original October 5 artifact remains below for comparison.
+
+# Version 1: 100-company smoke test
 
 `smoke-100/` is the result of one run of the submitted agent on Builderr's public 100-company sample
 (`select_entry_batch.py` from the starter kit, default seed 20260823, over `signalpost-company-universe-2025.jsonl.gz`).

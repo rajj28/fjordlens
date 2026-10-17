@@ -1,0 +1,22 @@
+{
+  "id": "ss_2aaa2f477c9951a175ed9cc2",
+  "requested_url": "https://brandmaker.no/om-oss/",
+  "final_url": "https://brandmaker.no/om-oss/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:09Z",
+  "content_sha256": "a35426c988466953b2a77a6af9c2ad481dde8d619440a6151ecb1735a240becd",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/a35426c988466953b2a77a6af9c2ad481dde8d619440a6151ecb1735a240becd.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 111201,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:14 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "ss_a8353ae7f60129d2c8289166",
+  "requested_url": "https://novooi.com/produkt/ami/",
+  "final_url": "https://novooi.com/produkt/ami/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:29Z",
+  "content_sha256": "cf0ad660d93951ee20609567fa2e43ee6fc68e9f8b1e7cdadf36fa5d921e69bc",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/cf0ad660d93951ee20609567fa2e43ee6fc68e9f8b1e7cdadf36fa5d921e69bc.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 503095,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:34 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "ss_dbee0d4fc4fbfa49f319b6e1",
+  "requested_url": "https://supermercado.no/blogs/news.atom",
+  "final_url": "https://supermercado.no/blogs/news.atom",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:22Z",
+  "content_sha256": "41974ba812de44659d102ff185f27caea139608a304970bd629ddbb0a3a86557",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/41974ba812de44659d102ff185f27caea139608a304970bd629ddbb0a3a86557.xml",
+  "content_type": "application/atom+xml; charset=utf-8",
+  "last_modified": null,
+  "etag": "W/\"page_cache:75822006410:BlogDetailsController:66660574290f8b59e48c4596db85fdb1\"",
+  "body_size_bytes": 175419,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:28 GMT",
+    "content-type": "application/atom+xml; charset=utf-8",
+    "etag": "W/\"page_cache:75822006410:BlogDetailsController:66660574290f8b59e48c4596db85fdb1\""
+  }
+}

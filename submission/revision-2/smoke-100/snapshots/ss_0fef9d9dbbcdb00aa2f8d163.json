@@ -1,0 +1,28 @@
+{
+  "id": "ss_0fef9d9dbbcdb00aa2f8d163",
+  "requested_url": "https://minkrypto.no/",
+  "final_url": "https://www.minkrypto.no/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:02Z",
+  "content_sha256": "10d6e68d60d079e73a5c3a3902d2d3f459e26f0131fbc39937f01edfab29bf26",
+  "redirect_chain": [
+    {
+      "url": "https://minkrypto.no/",
+      "status": 301,
+      "snapshot_id": "ss_18c37d9b442e3e013699b30e"
+    }
+  ],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/10d6e68d60d079e73a5c3a3902d2d3f459e26f0131fbc39937f01edfab29bf26.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 1511000,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:07 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

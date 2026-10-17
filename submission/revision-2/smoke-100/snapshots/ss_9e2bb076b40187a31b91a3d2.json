@@ -1,0 +1,22 @@
+{
+  "id": "ss_9e2bb076b40187a31b91a3d2",
+  "requested_url": "https://www.aiota.no/losninger/applikasjoner",
+  "final_url": "https://www.aiota.no/losninger/applikasjoner",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:20Z",
+  "content_sha256": "1994ffed3064f410340f4579577175ea76bbb6e229a6a81769eaa13a8630ed33",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/1994ffed3064f410340f4579577175ea76bbb6e229a6a81769eaa13a8630ed33.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 58357,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:26 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

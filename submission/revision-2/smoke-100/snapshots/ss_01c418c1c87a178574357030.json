@@ -1,0 +1,22 @@
+{
+  "id": "ss_01c418c1c87a178574357030",
+  "requested_url": "https://brandmaker.no/isbil/",
+  "final_url": "https://brandmaker.no/isbil/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:21Z",
+  "content_sha256": "e43aaf690dd8bc2a5f16262aa626b160d8605f1b25c1e4f0bd9a6f8c9871f669",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/e43aaf690dd8bc2a5f16262aa626b160d8605f1b25c1e4f0bd9a6f8c9871f669.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 210753,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:26 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

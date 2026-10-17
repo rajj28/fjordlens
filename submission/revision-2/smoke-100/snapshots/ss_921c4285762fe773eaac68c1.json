@@ -1,0 +1,22 @@
+{
+  "id": "ss_921c4285762fe773eaac68c1",
+  "requested_url": "https://brandmaker.no/referanser/",
+  "final_url": "https://brandmaker.no/referanser/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:11Z",
+  "content_sha256": "6058be079e856d585a19077351fd0b45244fbf19c18853cdb4774711b99107eb",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/6058be079e856d585a19077351fd0b45244fbf19c18853cdb4774711b99107eb.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 103049,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:17 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

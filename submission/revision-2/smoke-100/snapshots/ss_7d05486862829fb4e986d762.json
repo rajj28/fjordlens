@@ -1,0 +1,22 @@
+{
+  "id": "ss_7d05486862829fb4e986d762",
+  "requested_url": "https://brandmaker.no/kontakt/",
+  "final_url": "https://brandmaker.no/kontakt/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:04Z",
+  "content_sha256": "d17491e5a91cde622e10abfe21b92c321164c738f27310fc710ce0ca8f01056b",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/d17491e5a91cde622e10abfe21b92c321164c738f27310fc710ce0ca8f01056b.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 103800,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:09 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

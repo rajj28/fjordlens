@@ -1,0 +1,22 @@
+{
+  "id": "ss_678ed0a673076d4474edfac3",
+  "requested_url": "https://www.minkrypto.no/post/har-du-minet-krypto-slik-fører-du-miningkostnadene-for-å-få-fradraget-du-har-rett-på",
+  "final_url": "https://www.minkrypto.no/post/har-du-minet-krypto-slik-f%C3%B8rer-du-miningkostnadene-for-%C3%A5-f%C3%A5-fradraget-du-har-rett-p%C3%A5",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:09Z",
+  "content_sha256": "d8fe300a8804dd8f55305457d1d7d164e30667202c8654855a9e241b592519ac",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/d8fe300a8804dd8f55305457d1d7d164e30667202c8654855a9e241b592519ac.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 1001679,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:14 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

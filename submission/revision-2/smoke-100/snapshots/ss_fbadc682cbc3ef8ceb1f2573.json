@@ -1,0 +1,22 @@
+{
+  "id": "ss_fbadc682cbc3ef8ceb1f2573",
+  "requested_url": "https://brandmaker.no/konseputvikling/",
+  "final_url": "https://brandmaker.no/konseputvikling/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:25Z",
+  "content_sha256": "3942686dcbde688094feec0730aebe47368da9c1dfa6c61a355ad6029d9d578e",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/3942686dcbde688094feec0730aebe47368da9c1dfa6c61a355ad6029d9d578e.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 112199,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:30 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

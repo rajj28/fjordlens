@@ -1,0 +1,22 @@
+{
+  "id": "ss_c45292b603bab7e12da01502",
+  "requested_url": "https://www.aiota.no/b/aiota-er-naa-integrert-med-tripletex",
+  "final_url": "https://www.aiota.no/b/aiota-er-naa-integrert-med-tripletex",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:23Z",
+  "content_sha256": "5439def2a37f461fc12af71578df500ebabeaf76d5e7836ea627879e539130f6",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/5439def2a37f461fc12af71578df500ebabeaf76d5e7836ea627879e539130f6.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 18773,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:28 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

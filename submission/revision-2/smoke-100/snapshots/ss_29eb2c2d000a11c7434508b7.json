@@ -1,0 +1,22 @@
+{
+  "id": "ss_29eb2c2d000a11c7434508b7",
+  "requested_url": "https://www.aiota.no/produkter/integrasjoner",
+  "final_url": "https://www.aiota.no/produkter/integrasjoner",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:22Z",
+  "content_sha256": "3b0f08605d1dd8dfb7ff9847ea22af99f0ac17beff93d4712ab353302a3c250c",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/3b0f08605d1dd8dfb7ff9847ea22af99f0ac17beff93d4712ab353302a3c250c.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 38259,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:28 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

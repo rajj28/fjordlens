@@ -1,0 +1,22 @@
+{
+  "id": "ss_e36c54ddbd2b37af9b5f8749",
+  "requested_url": "https://novooi.com/produkt/kloss-stikkontakt-rund/",
+  "final_url": "https://novooi.com/produkt/kloss-stikkontakt-rund/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:42Z",
+  "content_sha256": "ad7006d8dc2812dd4ed3169ae08531351b15d0f719303488ffa48004dd584e23",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/ad7006d8dc2812dd4ed3169ae08531351b15d0f719303488ffa48004dd584e23.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 503862,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:48 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

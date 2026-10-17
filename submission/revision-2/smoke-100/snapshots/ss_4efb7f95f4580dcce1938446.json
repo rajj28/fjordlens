@@ -1,0 +1,23 @@
+{
+  "id": "ss_4efb7f95f4580dcce1938446",
+  "requested_url": "https://supermercado.no/",
+  "final_url": "https://supermercado.no/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:12Z",
+  "content_sha256": "52fb8bcbaa0f6dfcbca3ff5e7f47768556b34e9fab403dcca89f19cd1ca14200",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/52fb8bcbaa0f6dfcbca3ff5e7f47768556b34e9fab403dcca89f19cd1ca14200.html",
+  "content_type": "text/html; charset=utf-8",
+  "last_modified": null,
+  "etag": "W/\"page_cache:75822006410:IndexController:6130fff82b8abd49837b588ec468413d:0cf5dedbc9c987d8ebd0905cc4ebc7fc\"",
+  "body_size_bytes": 1564447,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:18 GMT",
+    "content-type": "text/html; charset=utf-8",
+    "etag": "W/\"page_cache:75822006410:IndexController:6130fff82b8abd49837b588ec468413d:0cf5dedbc9c987d8ebd0905cc4ebc7fc\""
+  }
+}

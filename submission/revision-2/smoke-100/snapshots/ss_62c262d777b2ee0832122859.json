@@ -1,0 +1,29 @@
+{
+  "id": "ss_62c262d777b2ee0832122859",
+  "requested_url": "https://rbproffpartner.no/",
+  "final_url": "https://www.rbproffpartner.no/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:30Z",
+  "content_sha256": "5012d8a02917ab492ca01c23111ea37d59c1d3657f60c5818c08e7319b7091ce",
+  "redirect_chain": [
+    {
+      "url": "https://rbproffpartner.no/",
+      "status": 301,
+      "snapshot_id": "ss_8aa0445d4f0ea77c513af286"
+    }
+  ],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/5012d8a02917ab492ca01c23111ea37d59c1d3657f60c5818c08e7319b7091ce.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": "Sat, 17 Oct 2026 03:55:59 GMT",
+  "etag": null,
+  "body_size_bytes": 80916,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:35 GMT",
+    "content-type": "text/html; charset=UTF-8",
+    "last-modified": "Sat, 17 Oct 2026 03:55:59 GMT"
+  }
+}

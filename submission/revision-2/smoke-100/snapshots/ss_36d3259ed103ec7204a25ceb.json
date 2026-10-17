@@ -1,0 +1,23 @@
+{
+  "id": "ss_36d3259ed103ec7204a25ceb",
+  "requested_url": "https://supermercado.no/pages/om-oss",
+  "final_url": "https://supermercado.no/pages/om-oss",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:15Z",
+  "content_sha256": "e324b8e4b748e02423b0cb89040e972bd8ad7c558801b4e011d60e1131e1a069",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/e324b8e4b748e02423b0cb89040e972bd8ad7c558801b4e011d60e1131e1a069.html",
+  "content_type": "text/html; charset=utf-8",
+  "last_modified": null,
+  "etag": "W/\"page_cache:75822006410:PageDetailsController:ac42b887bb1c4aef6e2beb05bdf9f3b6:5b9ca1c28e09d679f1e53a8a4f1852be\"",
+  "body_size_bytes": 216886,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:21 GMT",
+    "content-type": "text/html; charset=utf-8",
+    "etag": "W/\"page_cache:75822006410:PageDetailsController:ac42b887bb1c4aef6e2beb05bdf9f3b6:5b9ca1c28e09d679f1e53a8a4f1852be\""
+  }
+}

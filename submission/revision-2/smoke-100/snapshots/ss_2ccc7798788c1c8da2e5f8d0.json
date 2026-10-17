@@ -1,0 +1,22 @@
+{
+  "id": "ss_2ccc7798788c1c8da2e5f8d0",
+  "requested_url": "https://www.aiota.no/personvern-og-cookies",
+  "final_url": "https://www.aiota.no/personvern-og-cookies",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:18Z",
+  "content_sha256": "2fa5a14aa8014e4aef288a5c6a25ab61c553703c53e0bd3a72b857c6af9b078a",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/2fa5a14aa8014e4aef288a5c6a25ab61c553703c53e0bd3a72b857c6af9b078a.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 40776,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:24 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

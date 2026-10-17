@@ -1,0 +1,22 @@
+{
+  "id": "ss_8c65cc66b19216279aeb509f",
+  "requested_url": "https://novooi.com/produkt/stressless-adam-power-disc-paloma-new-cognac-eik-utstillingsmodell/",
+  "final_url": "https://novooi.com/produkt/stressless-adam-power-disc-paloma-new-cognac-eik-utstillingsmodell/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:40Z",
+  "content_sha256": "c509b5f23d22882be4a4bbd6f6e04d5bbe42ff137f8b520a41dc9b521f403397",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/c509b5f23d22882be4a4bbd6f6e04d5bbe42ff137f8b520a41dc9b521f403397.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 481967,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:46 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

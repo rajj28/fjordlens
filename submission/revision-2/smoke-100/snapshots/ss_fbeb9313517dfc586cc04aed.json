@@ -1,0 +1,22 @@
+{
+  "id": "ss_fbeb9313517dfc586cc04aed",
+  "requested_url": "https://www.minkrypto.no/post/sånn-fører-du-skatt-på-krypto-i-skattemeldingen-din",
+  "final_url": "https://www.minkrypto.no/post/s%C3%A5nn-f%C3%B8rer-du-skatt-p%C3%A5-krypto-i-skattemeldingen-din",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:05Z",
+  "content_sha256": "e97714f2a18db1804ced12330236ba63536b9c552f28a2e0aa8bda1eae41d1fb",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/e97714f2a18db1804ced12330236ba63536b9c552f28a2e0aa8bda1eae41d1fb.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 998672,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:10 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

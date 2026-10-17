@@ -1,0 +1,22 @@
+{
+  "id": "ss_c46adee778af28122df4d3d9",
+  "requested_url": "https://www.minkrypto.no/post/sånn-fungerer-skatt-på-krypto",
+  "final_url": "https://www.minkrypto.no/post/s%C3%A5nn-fungerer-skatt-p%C3%A5-krypto",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:04Z",
+  "content_sha256": "7341c6f3bcf7e620e53d09ae8a797d2598b34a4571ea7483c3d014dae4e8a018",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/7341c6f3bcf7e620e53d09ae8a797d2598b34a4571ea7483c3d014dae4e8a018.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 1007292,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:09 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

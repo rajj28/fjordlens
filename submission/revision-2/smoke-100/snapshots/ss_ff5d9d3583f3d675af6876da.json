@@ -1,0 +1,24 @@
+{
+  "id": "ss_ff5d9d3583f3d675af6876da",
+  "requested_url": "https://novooi.com/feed/",
+  "final_url": "https://novooi.com/feed/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:31:05Z",
+  "content_sha256": "9ae84e0460136985d9573dd678f5dee1c1c8e1a658ef4472ffa6aaccdc591b69",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/9ae84e0460136985d9573dd678f5dee1c1c8e1a658ef4472ffa6aaccdc591b69.xml",
+  "content_type": "application/rss+xml; charset=UTF-8",
+  "last_modified": "Fri, 16 Oct 2026 13:09:37 GMT",
+  "etag": "\"36a847204ce2fc5d5b121aa5a56e8ca7\"",
+  "body_size_bytes": 39210,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:31:10 GMT",
+    "content-type": "application/rss+xml; charset=UTF-8",
+    "last-modified": "Fri, 16 Oct 2026 13:09:37 GMT",
+    "etag": "\"36a847204ce2fc5d5b121aa5a56e8ca7\""
+  }
+}

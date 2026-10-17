@@ -1,0 +1,23 @@
+{
+  "id": "ss_82998c293e38724ca3e45df0",
+  "requested_url": "https://supermercado.no/policies/legal-notice",
+  "final_url": "https://supermercado.no/policies/legal-notice",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:13Z",
+  "content_sha256": "38ea87a5ee57818ec0a5905833afd1b41a3f06f0b8809b4b789a28ea047c6134",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/38ea87a5ee57818ec0a5905833afd1b41a3f06f0b8809b4b789a28ea047c6134.html",
+  "content_type": "text/html; charset=utf-8",
+  "last_modified": null,
+  "etag": "W/\"page_cache:75822006410:PolicyDetailsController:d45ff0ff111751252665eca13fdff083:0b99d30a24b2f910fd2d1e474d2e6d8f\"",
+  "body_size_bytes": 210913,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:19 GMT",
+    "content-type": "text/html; charset=utf-8",
+    "etag": "W/\"page_cache:75822006410:PolicyDetailsController:d45ff0ff111751252665eca13fdff083:0b99d30a24b2f910fd2d1e474d2e6d8f\""
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "ss_6e4f578909c07229cf0283cd",
+  "requested_url": "https://www.aiota.no/om-oss",
+  "final_url": "https://www.aiota.no/om-oss",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:19Z",
+  "content_sha256": "a07268d8e79f033ee53abe5c0426c532bcc4bcfe438439237a904ae900603a32",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/a07268d8e79f033ee53abe5c0426c532bcc4bcfe438439237a904ae900603a32.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 22925,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:25 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

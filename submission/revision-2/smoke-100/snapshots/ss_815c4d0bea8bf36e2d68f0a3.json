@@ -1,0 +1,22 @@
+{
+  "id": "ss_815c4d0bea8bf36e2d68f0a3",
+  "requested_url": "https://www.aiota.no/kontakt",
+  "final_url": "https://www.aiota.no/kontakt",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:17Z",
+  "content_sha256": "da83245a2e49438ec382f279cb4c38c59d18e7c1a8f98664de493a821497ae10",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/da83245a2e49438ec382f279cb4c38c59d18e7c1a8f98664de493a821497ae10.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 22369,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:23 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

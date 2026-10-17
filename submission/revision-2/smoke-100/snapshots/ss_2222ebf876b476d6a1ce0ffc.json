@@ -1,0 +1,22 @@
+{
+  "id": "ss_2222ebf876b476d6a1ce0ffc",
+  "requested_url": "https://www.aiota.no/",
+  "final_url": "https://www.aiota.no/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:16Z",
+  "content_sha256": "84f892b4606d68e3b42be6db3497ecb9eaf87ee101119e60e200da796d526a3b",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/84f892b4606d68e3b42be6db3497ecb9eaf87ee101119e60e200da796d526a3b.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 26244,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:22 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

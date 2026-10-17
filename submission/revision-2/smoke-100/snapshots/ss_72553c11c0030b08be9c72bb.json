@@ -1,0 +1,22 @@
+{
+  "id": "ss_72553c11c0030b08be9c72bb",
+  "requested_url": "https://novooi.com/wp-json/wp/v2/posts?per_page=10&_fields=id,date,link,title",
+  "final_url": "https://novooi.com/wp-json/wp/v2/posts?per_page=10&_fields=id,date,link,title",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:31:01Z",
+  "content_sha256": "7ae4046b0c1d9c71f3564d08941f72a16d3a7d3e52553ff7e8d3e5b007ab6f56",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/7ae4046b0c1d9c71f3564d08941f72a16d3a7d3e52553ff7e8d3e5b007ab6f56.json",
+  "content_type": "application/json; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 1359,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:31:06 GMT",
+    "content-type": "application/json; charset=UTF-8"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "ss_aaab10cc35750f39adccccf0",
+  "requested_url": "https://www.minkrypto.no/post/forvaltningskostnader-det-du-trenger-å-vite-for-å-få-riktig-fradrag",
+  "final_url": "https://www.minkrypto.no/post/forvaltningskostnader-det-du-trenger-%C3%A5-vite-for-%C3%A5-f%C3%A5-riktig-fradrag",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:05Z",
+  "content_sha256": "e88965c4514ebd529c6d07476447d21d33d0687c190da859f79234501b8bf8b0",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/e88965c4514ebd529c6d07476447d21d33d0687c190da859f79234501b8bf8b0.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 999197,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:11 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "ss_f6cf1eccb5287dec2559caa1",
+  "requested_url": "https://brandmaker.no/2022/09/23/profil-for-villsau/",
+  "final_url": "https://brandmaker.no/2022/09/23/profil-for-villsau/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:14Z",
+  "content_sha256": "02e3a19784a3cb7aafabfd02f0bdb37f82e19ba3e25a99ca0bf7e244d00decef",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/02e3a19784a3cb7aafabfd02f0bdb37f82e19ba3e25a99ca0bf7e244d00decef.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 108995,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:19 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

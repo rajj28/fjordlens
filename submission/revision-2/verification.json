@@ -1,0 +1,27 @@
+{
+  "source_commit": "b6ead4fc9739ef6bc27666c88aed6f5ae6905dc8",
+  "version": "1.1.0",
+  "unit_tests": {
+    "passed": 346,
+    "failed": 0
+  },
+  "browser_tasks": {
+    "desktop": "passed",
+    "mobile": "passed",
+    "selected_profile_top_px": {
+      "desktop": 16.1875,
+      "mobile": 16
+    },
+    "scope": "Local researcher workflows; not Builderr undisclosed six-task score"
+  },
+  "static_api_answer_parity": {
+    "queries_per_viewport": 22,
+    "viewports": [
+      "desktop",
+      "mobile"
+    ],
+    "passed": true
+  },
+  "official_score": null,
+  "notes": "Fresh clone and empty stdlib-only environment. Live sources can change; heldout coverage unchanged. No search API key supplied."
+}

@@ -1,0 +1,22 @@
+{
+  "id": "ss_9492e8cf961c832f0ed8943b",
+  "requested_url": "https://www.aiota.no/b/bic-code-gjenkjenning-hos-kristiansund-base",
+  "final_url": "https://www.aiota.no/b/bic-code-gjenkjenning-hos-kristiansund-base",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:25Z",
+  "content_sha256": "5d3c22e3a0dffba264f9fd56c9cba9fbe00443150c4840d4559c9dee3c84cf66",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/5d3c22e3a0dffba264f9fd56c9cba9fbe00443150c4840d4559c9dee3c84cf66.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 19378,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:30 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

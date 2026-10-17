@@ -1,0 +1,28 @@
+{
+  "id": "ss_0e5a7b511f2af40f238bbea9",
+  "requested_url": "https://www.rbproffpartner.no/personvern",
+  "final_url": "https://www.rbproffpartner.no/personvern/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:32Z",
+  "content_sha256": "bfe0cf3c036f5c0ec4d77f0fe4eee09a02b4180da440aab1de063e0f00c60e36",
+  "redirect_chain": [
+    {
+      "url": "https://www.rbproffpartner.no/personvern",
+      "status": 301,
+      "snapshot_id": "ss_5eff0b391e929a4844ccbc77"
+    }
+  ],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/bfe0cf3c036f5c0ec4d77f0fe4eee09a02b4180da440aab1de063e0f00c60e36.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 46140,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:37 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

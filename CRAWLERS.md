@@ -53,6 +53,11 @@
   is not a total HTTP cap: robots, redirects, rejected candidates, sitemap documents, missing-family probes,
   WordPress API calls and up to two eligible feeds also consume the shared run/per-company request budgets.
 
+An unverified registry-declared root may nominate up to two same-host company-section links whose visible
+text exactly names the legal entity. Hidden and customer/supplier/reference links are excluded. Each section
+must pass its own A/D owner proof without registry-origin shortcuts or root-page evidence. A verified section
+publishes only its section URL; facts from the surrounding site are not attributed to the company.
+
 ### Extraction on a verified site (`website.extract`, one fact per source key; the first extractor wins)
 - Descriptions (meta description on home/about pages, first substantive paragraph), public brand (`og:site_name`
   or the site's own Organization/WebSite markup).
@@ -78,7 +83,8 @@
   Unicode/percent-encoded paths do not create duplicate articles. Encoded slashes remain distinct.
 - Publication-date safeguards: modification labels such as `Updated`, `modified`, `oppdatert` and `dateModified`
   do not become publication dates. Atom `updated` alone is insufficient. Comment/review feeds, their channel
-  titles, and item links into comment anchors are excluded. Feed evidence stays tied to the captured feed bytes;
+  titles, and item links into comment anchors are excluded. Product/catalog/collection URLs and Shopify
+  product feed entries are excluded from publications. Feed evidence stays tied to the captured feed bytes;
   its article link is a separate content URL, not a claim that the article itself was fetched. `published_on`
   retains the source's calendar date. When meta, JSON-LD, WordPress, feed or article-time evidence includes a time,
   `published_at` preserves the original ISO or RFC timestamp; a missing timezone is not invented or converted.

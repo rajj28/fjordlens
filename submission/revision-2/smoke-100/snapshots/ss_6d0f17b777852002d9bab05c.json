@@ -1,0 +1,22 @@
+{
+  "id": "ss_6d0f17b777852002d9bab05c",
+  "requested_url": "https://brandmaker.no/2018/08/15/zachens-fasade-oppgraderes/",
+  "final_url": "https://brandmaker.no/2018/08/15/zachens-fasade-oppgraderes/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:23Z",
+  "content_sha256": "fa72a4e8311e66426a41dbbdd030a44d2d9a39d34d665ea5c1c45b1647700453",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/fa72a4e8311e66426a41dbbdd030a44d2d9a39d34d665ea5c1c45b1647700453.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 93842,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:28 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

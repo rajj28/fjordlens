@@ -1,0 +1,23 @@
+{
+  "id": "ss_5097597e17f2197cf7131bed",
+  "requested_url": "https://supermercado.no/blogs/news",
+  "final_url": "https://supermercado.no/blogs/news",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:15Z",
+  "content_sha256": "bb047bdbe735271bdffc12ec8138b066d3e411a1134ef5f71fb06dc7e0ab5fd9",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/bb047bdbe735271bdffc12ec8138b066d3e411a1134ef5f71fb06dc7e0ab5fd9.html",
+  "content_type": "text/html; charset=utf-8",
+  "last_modified": null,
+  "etag": "W/\"page_cache:75822006410:BlogDetailsController:4adcd3969a681d4edc5d0d8b144dd223:ae6d283a9290b4dd2ad9a55bdd227698\"",
+  "body_size_bytes": 259805,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:21 GMT",
+    "content-type": "text/html; charset=utf-8",
+    "etag": "W/\"page_cache:75822006410:BlogDetailsController:4adcd3969a681d4edc5d0d8b144dd223:ae6d283a9290b4dd2ad9a55bdd227698\""
+  }
+}

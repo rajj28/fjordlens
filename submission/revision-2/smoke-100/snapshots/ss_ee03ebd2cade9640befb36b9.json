@@ -1,0 +1,22 @@
+{
+  "id": "ss_ee03ebd2cade9640befb36b9",
+  "requested_url": "https://brandmaker.no/hjem/logodesign/",
+  "final_url": "https://brandmaker.no/hjem/logodesign/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:16Z",
+  "content_sha256": "64fa560c19aa255d1cbd3c4f0a54c3e36c8548dc2a164941e19d4d42984a1e2c",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/64fa560c19aa255d1cbd3c4f0a54c3e36c8548dc2a164941e19d4d42984a1e2c.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 183533,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:21 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "ss_3ed1d9da70ceac886e9b8266",
+  "requested_url": "https://www.aiota.no/b/stoeyovervaaking-hos-myklebust-verft",
+  "final_url": "https://www.aiota.no/b/stoeyovervaaking-hos-myklebust-verft",
+  "http_status": 200,
+  "retrieved_at": "2026-10-17T07:30:24Z",
+  "content_sha256": "bf14f4ade0a966003024c82114524aed9d3e0d9b058cce023e90a4864e67ab1b",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/bf14f4ade0a966003024c82114524aed9d3e0d9b058cce023e90a4864e67ab1b.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 18939,
+  "cache_hit": false,
+  "error": null,
+  "headers": {
+    "date": "Sat, 17 Oct 2026 07:30:30 GMT",
+    "content-type": "text/html; charset=UTF-8"
+  }
+}
