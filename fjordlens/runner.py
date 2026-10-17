@@ -18,7 +18,7 @@ import statistics
 import threading
 import time
 import zlib
-from . import __version__, official, website
+from . import __version__, official, website, news, search
 from . import jobs as nav_jobs
 from .answers import build_answers
 from .observations import label_claims, write_observations
@@ -330,6 +330,15 @@ class Pipeline:
             website.research(job.profile, self.fetcher, job.entity, self.max_pages)
         except Exception as exc:
             job.failure("website", exc)
+        # Independent articles can identify the company even when its own site
+        # is absent or inaccessible. A connector failure must preserve existing facts.
+        try:
+            news.research(job.profile, self.fetcher, job.entity,
+                          nominated_urls=getattr(job.profile, "news_candidates", ()))
+        except Exception as exc:
+            with job.profile.lock:
+                job.profile.data["attempts"].append({"strategy": "independent_news_v1", "state": "failed",
+                                                     "error": f"{type(exc).__name__}: {str(exc)[:200]}"})
 
     def start(self):
         threading.Thread(target=self.nav_refresh, name="job-feed", daemon=True).start()
@@ -368,6 +377,38 @@ def snapshot_profile(profile, timeout=10.0):
     finally:
         if acquired:
             profile.lock.release()
+
+
+def coverage_diagnostics(results):
+    """Separate source breadth from registry completeness; counts are unique companies."""
+    from collections import Counter, defaultdict
+    unique = {r["organisation_number"]: r for r in results}
+    source_companies, publication_companies = defaultdict(set), set()
+    website_outcomes, publication_sources = Counter(), Counter()
+    search_attempts = 0
+    for org, row in unique.items():
+        availability = row.get("availability", {}).get("website", {})
+        reason, state = availability.get("reason", ""), availability.get("state", "not_available")
+        outcome = ("verified" if state == "available" else "no_candidate" if "candidate exists" in reason
+                   else "identity_unverified" if state == "ambiguous" else "fetch_or_access_failure"
+                   if reason == "Candidate sites could not be fetched" else state)
+        website_outcomes[outcome] += 1
+        search_attempts += sum(a.get("strategy", "").startswith("search_nomination") for a in row.get("attempts", []))
+        for claim in row.get("claims", []):
+            if claim.get("availability") != "available" or claim.get("stale"):
+                continue
+            source = claim.get("source_class", "unknown")
+            source_companies[(source, claim.get("family", "unknown"))].add(org)
+            if claim.get("field") == "company_publication":
+                publication_companies.add(org)
+                publication_sources[source] += 1
+    return {"unique_companies": len(unique), "website_outcomes": dict(sorted(website_outcomes.items())),
+            "source_family_company_coverage": [{"source_class": source, "family": family, "companies": len(orgs)}
+                                                for (source, family), orgs in sorted(source_companies.items())],
+            "publication_companies": len(publication_companies), "publication_records_by_source": dict(publication_sources),
+            "website_search_batches": search_attempts,
+            "search_configured": search.enabled(),
+            "scope": "Observed coverage, not a count of all real-world opportunities or an official recall score"}
 
 
 def finalize(job, fetcher, previous_root, *, final, lock_timeout=10.0):
@@ -606,6 +647,7 @@ def run_batch(inputs, output, *, run_id=None, previous=None, replay=None, cutoff
               "p50_company_runtime_ms": statistics.median(durations) if durations else 0,
               "p95_company_runtime_ms": durations[min(len(durations)-1, int(len(durations)*.95))] if durations else 0,
               "family_company_coverage": coverage, "published_claims": sum(len(r["claims"]) for r in results),
+              "coverage_diagnostics": coverage_diagnostics(results),
               "evidence_validation_errors": sum(len(r.get("validation_errors") or []) for r in results),
               "failed_envelopes": sum(r["run"]["terminal_status"] == "failed" for r in results),
               "changes": sum(len(r["changes"]) for r in results),

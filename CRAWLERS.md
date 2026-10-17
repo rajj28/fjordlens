@@ -1,4 +1,4 @@
-# Connectors and access policy (FjordLens v1.1)
+# Connectors and access policy (FjordLens v1.2)
 
 | Connector | Published facts | Rights/access basis |
 | --- | --- | --- |
@@ -8,7 +8,8 @@
 | Regnskapsregisteret (`official.financials`) | Filed amounts, currency, account type, reporting period, filing-year availability | Official public annual-accounts API |
 | Group structure (`official.group`) | Direct parent/child relationships involving the target | Official open API |
 | Verified company sites (`website.research`) | Descriptions, exact-company structured jobs, dated publications, site-declared social/contact links | Public pages, conservative robots handling; no authentication or paywall bypass |
-| Optional web search (`search.nomination_batches`) | Nothing directly: nominates candidate sites for the identity gate | Brave Web Search API with an evaluator-supplied key only; results used transiently, never stored |
+| Optional web search (`search.nomination_batches`) | Nothing directly: nominates candidates for identity and article evidence checks | Brave Web Search API with an evaluator-supplied key only; results used transiently, never stored |
+| Independent news (`news.research`) | Article title, direct URL, publication date and publisher; exact company bound in the article body | Licensed search or verified-site press links nominate public HTML; ordinary robots/TLS/budget checks apply |
 | NAV job feed (`jobs.research`) | Active job ads where the official feed names the company (or its workplace) as employer | Official public feed (arbeidsplassen.no); terms at https://arbeidsplassen.nav.no/vilkar-api |
 
 ## Website discovery
@@ -26,11 +27,11 @@
 7. Only when none of the free candidates passes the gate and an evaluator-supplied `BRAVE_SEARCH_API_KEY` (or
    `BRAVE_API_KEY`) is set: `search.nomination_batches` queries the organisation number
    (`"923609016" OR "923 609 016"`), then `"legal name" town` if no first-batch candidate is verified.
-   The second query is allowed even when the first found candidates that the gate rejected. Each query nominates
-   at most 3 site roots; a verified candidate stops iteration. A name-search result's domain must carry the name's
-   longest distinctive word after generic business and profession descriptors are excluded. Directories and social
-   platforms are excluded. A deep result retains its `verification_url`, which may supply a previously unvisited
-   proof page on an already-tried domain. Name-search nominations pass like DNS guesses (rule A or D);
+   The second query is allowed even when the first found candidates that the gate rejected. Registered-workplace
+   brand and organisation-number/legal-proof queries can follow, up to four total. Each query nominates at most
+   three roots; a verified candidate stops iteration. Brand/acronym domains need not spell the legal name, but still
+   face the full identity gate. Directories and social platforms are excluded. Up to three `verification_urls`
+   preserve deep legal/contact results on a domain. Name-search nominations pass like DNS guesses (rule A or D);
    organisation-number nominations only by rule A, because a supplier's or customer's page also shows our number.
 
 ### Verification and bounded traversal
@@ -39,7 +40,9 @@
   are requested. Legal notices, imprint pages and contact-information pages take priority, followed by contact,
   privacy, general terms and about pages; intent groups are interleaved to avoid exhausting the limit on variants
   of one page. A homepage with an owner-name match permits up to five proof pages; otherwise the cap is three.
-  A same-host deep search result is tried first. Any hard rejection stops that candidate's verification.
+  Same-host deep search results are tried first. Contact pages can nominate nested legal/contact pages within the
+  same three/five-request cap. Conventional paths are tried after linked pages are exhausted only when the owner
+  name matches and proof is missing. Any hard rejection stops that candidate's verification.
 - A verified section of a larger site is published as that section's URL. Site-wide descriptions, jobs, profiles
   and publications are withheld for a section so they are not attributed to the subsidiary or tenant.
 - `--max-pages` defaults to 12. `crawl_site` counts the accepted homepage and its fetched verification pages
@@ -88,6 +91,9 @@ publishes only its section URL; facts from the surrounding site are not attribut
   its article link is a separate content URL, not a claim that the article itself was fetched. `published_on`
   retains the source's calendar date. When meta, JSON-LD, WordPress, feed or article-time evidence includes a time,
   `published_at` preserves the original ISO or RFC timestamp; a missing timezone is not invented or converted.
+  Visible HTML times require `itemprop=datePublished` or a local publication label such as Published/Publisert.
+  Hidden, comment, footer, sidebar and event times cannot supply publication dates. URL-less Article markup
+  with a headline that differs from the page's headline cannot lend its date to that page.
 - Missing-type probe: when the link-driven crawl leaves publications or contacts empty, up to two conventional pages
   per missing family (`/nyheter`, `/aktuelt`, `/blogg`, `/news`; `/kontakt`, `/kontakt-oss`, `/contact`).
 - Hiring: JobPosting markup on the verified site (expired `validThrough` skipped); careers pages are recorded as part
@@ -119,6 +125,11 @@ Official API reference: https://data.brreg.no/enhetsregisteret/api/dokumentasjon
 - `Robots.from_response` implements the full policy in `robots.py`.
 
 ### Retries
+
+- Robots resolution gets one retry across its entire redirect chain for transient timeout/429/5xx failures.
+  Temporary robots and ordinary URL failures expire after 30 seconds on later demand, extended by Retry-After.
+  Explicit denials, TLS/policy failures and replay outcomes do not become allowed through retries. HTTP-date
+  Retry-After values are supported; waits that exceed the deadline or permitted delay are skipped.
 - Official endpoints: up to 2 retries on 5xx, 429 (respects `Retry-After`), and transient network errors.
 - Other endpoints: 1 retry on same conditions.
 - Retry waits: 1.5s × (attempt+1) for network errors; `Retry-After` (max 20 s) or 2s for 429; 1.5s/4s for 5xx.
@@ -146,6 +157,25 @@ Hard-blocked on every request (including robots.txt redirects): `linkedin.com`, 
 - `net.safe_url`: validates scheme (http/https), standard ports (80/443), no credentials, no local/private hosts, no non-public IPs.
 - `net.resolve_public`: DNS lookup; all returned addresses must be public unicast (not multicast, reserved, link-local, 6to4/NAT64). Connection pins the first public IP while retaining original TLS SNI and Host header.
 - Every redirect hop is revalidated through `safe_url`. Official endpoints cannot redirect outside `data.brreg.no`.
+
+## Independent news and coverage diagnostics
+
+`news.research` runs after website research even when no company site was verified. It consumes up to three
+article candidates from a verified site's outbound press links, or nominates them with at most two additional
+Brave Web queries. All search and page requests share the company/run/cost budgets. Search snippets, titles and
+dates never become evidence. No JavaScript, paywall or restricted-platform bypass is used.
+
+An accepted article needs a same-page publication date and headline, one visible article/main body, the target
+company in the headline, and its exact legal name in a local body block corroborated by its labeled organisation
+number, explicit registered address, or a link to an already identity-verified company root. Registry e-mail or
+unverified homepage domains cannot alone corroborate news identity. Navigation, footer, comments, related stories,
+modification dates and mismatched article metadata cannot supply proof. Title/date/identity spans are retained
+against fetched bytes and re-derived by `audit_evidence.py` using the saved official identity response.
+
+Records use `source_class=third_party_publication`, exported as `platform=news, signal_type=public_mention`.
+Answers and summaries label them third-party reports; no sentiment or independent editorial quality is inferred.
+The run report separates company coverage by source/family, publication records from publication companies, and
+website outcomes. These diagnostics are not official recall scores.
 
 ## NAV feed index + runtime catch-up (`jobs.py`, `scripts/build_nav_index.py`)
 - Shipped index: `fjordlens/data/nav-index.json.gz` (or parent `data/`) with `by_org` mapping from organisation number to ad UUIDs, and a `cursor` for live catch-up.

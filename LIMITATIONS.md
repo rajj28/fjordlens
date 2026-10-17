@@ -1,4 +1,4 @@
-# Known limits and honest abstention (FjordLens 1.1)
+# Known limits and honest abstention (FjordLens 1.2)
 
 ## What is not covered
 
@@ -11,6 +11,7 @@
 - **No CAPTCHA solving, no authentication bypass, no paywall bypass**.
 - **No browser automation / Playwright at runtime**: Playwright is an optional dev dependency only.
 - **No sentiment analysis, review scoring, popularity ranking, or predicted official score**.
+- **Independent news remains conservative and search-dependent**: without an evaluator-supplied search key, only outbound press links discovered on verified company pages are nominated. Unsupported markup or missing exact-company corroboration causes abstention. Live search-enabled coverage still needs measurement with approved credentials.
 - **A careers page link does not prove current hiring**; a social link does not independently verify ownership of the destination account; a company publication is self-reported content.
 - **Standard-library HTML extraction cannot recover every malformed or dynamic page**.
 - **Request budgets can leave bounded research incomplete**, with explicit state/reason recorded in `availability`.

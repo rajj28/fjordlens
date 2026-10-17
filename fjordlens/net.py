@@ -15,8 +15,9 @@ import threading
 import time
 import urllib.parse
 from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from collections import OrderedDict
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 from .core import digest, now, write_json
@@ -222,8 +223,10 @@ class Fetcher:
         self.replay, self.cutoff = replay, cutoff
         self.cutoff_instant = utc_timestamp(cutoff) if cutoff else None
         self.cache = OrderedDict()  # Byte-bounded LRU; bodies are also saved to disk.
+        self.cache_retry_at = {}
         self.cache_bytes, self.cache_limit = 0, int(os.environ.get("FJORDLENS_CACHE_BYTES", 256_000_000))
         self.robots = {}
+        self.robots_retry_at = {}
         self.locks = {}
         self.lock = threading.RLock()
         self.last_request = {}
@@ -236,6 +239,12 @@ class Fetcher:
 
     def _cache_get(self, key):
         with self.lock:
+            retry_at = self.cache_retry_at.get(key)
+            if retry_at is not None and time.monotonic() >= retry_at:
+                old = self.cache.pop(key, None)
+                if old is not None:
+                    self.cache_bytes -= len(old.body or b"")
+                self.cache_retry_at.pop(key, None)
             result = self.cache.get(key)
             if result is not None:
                 self.cache.move_to_end(key)
@@ -250,9 +259,13 @@ class Fetcher:
             if old is not None:
                 self.cache_bytes -= len(old.body or b"")
             self.cache[key] = result
+            self.cache_retry_at.pop(key, None)
+            if self._transient(result):
+                self.cache_retry_at[key] = time.monotonic() + self._failure_cooldown(result)
             self.cache_bytes += size
             while self.cache_bytes > self.cache_limit and self.cache:
-                _, evicted = self.cache.popitem(last=False)
+                evicted_key, evicted = self.cache.popitem(last=False)
+                self.cache_retry_at.pop(evicted_key, None)
                 self.cache_bytes -= len(evicted.body or b"")
 
     def host_lock(self, key):
@@ -374,54 +387,99 @@ class Fetcher:
 
     TRANSIENT = ("timed out", "Connection reset", "Remote end closed", "EOF occurred", "Connection aborted", "RemoteDisconnected", "IncompleteRead")
 
+    def _transient(self, result):
+        if result.error:
+            if result.error.startswith(("Policy:", "Budget:", "Robots:", "Cutoff:", "Replay:")):
+                return False
+            # A certificate failure must never be treated as a temporary socket failure.
+            if "certificate" in result.error.lower() or "cert_verify" in result.error.lower():
+                return False
+            return any(t.lower() in result.error.lower() for t in self.TRANSIENT)
+        return result.status == 429 or 500 <= result.status <= 599
+
+    def _retry_after(self, result):
+        value = result.headers.get("retry-after")
+        if value is None:
+            return None
+        try:
+            seconds = float(value)
+        except (TypeError, ValueError):
+            try:
+                date = parsedate_to_datetime(value)
+                if date.tzinfo is None:
+                    return None
+                seconds = (date - datetime.now(timezone.utc)).total_seconds()
+            except (TypeError, ValueError, OverflowError):
+                return None
+        if not math.isfinite(seconds):
+            return None
+        return max(0.0, seconds)
+
+    def _failure_cooldown(self, result):
+        # Keep short failures from poisoning a URL/origin for the whole batch, without
+        # letting repeated paths hammer a failed host or ignore a long Retry-After.
+        return max(30.0, self._retry_after(result) or 0.0)
+
+    def _can_retry(self, org, wait, timeout, cost=0.0):
+        with self.budget.lock:
+            return (math.isfinite(wait) and wait >= 0
+                    and time.monotonic() + wait + timeout < self.budget.deadline
+                    and self.budget.total < self.budget.max_requests
+                    and (org == "_shared" or self.budget.counts.get(org, 0) < self.budget.per_company)
+                    and isinstance(cost, (int, float)) and not isinstance(cost, bool)
+                    and math.isfinite(cost) and cost >= 0
+                    and self.budget.cost + cost <= self.budget.max_cost)
+
     def _retry_wait(self, result, official, attempt):
         """Seconds to wait before retrying a transient failure, or None to stop."""
+        if not self._transient(result):
+            return None
         if result.error:
-            if result.error.startswith(("Budget:", "Robots:", "Cutoff:", "Replay:")) or not any(t in result.error for t in self.TRANSIENT):
-                return None
             return 1.5 * (attempt + 1)
-        if result.status == 429:
-            try:
-                wait = max(1.0, float(result.headers.get("retry-after", "2")))
-            except ValueError:
-                wait = 2.0
-            if not official and wait > 5.0:
-                return None  # A company site asking for a long pause is skipped, not waited out.
-            return min(20.0, wait)
-        if result.status in ({500, 502, 503, 504} if official else {502, 503, 504}):
-            return 1.5 if attempt == 0 else 4.0
-        return None
+        delay = self._retry_after(result)
+        wait = max(1.0, delay) if delay is not None else (2.0 if result.status == 429 else 1.5 if attempt == 0 else 4.0)
+        if wait > (20.0 if official else 5.0):
+            return None  # Do not wait out, or retry earlier than, a long server-requested pause.
+        return wait
 
     def _robots_allowed(self, url, org):
         p = urllib.parse.urlsplit(url)
         origin = p.scheme + "://" + p.netloc
         with self.host_lock("robots:" + origin):
+            retry_at = self.robots_retry_at.get(origin)
+            if retry_at is not None and time.monotonic() >= retry_at:
+                self.robots.pop(origin, None)
+                self.robots_retry_at.pop(origin, None)
             if origin not in self.robots:
                 # RFC 9309 2.3.1: follow up to five redirects (even across hosts; every hop is
                 # re-validated as a public URL by _raw), 2xx = parse, 4xx = "unavailable" (allow
                 # all), 429/5xx/network or TLS failure = "unreachable" (disallow all).
                 target = origin + "/robots.txt"
-                r = self._raw(target, org, "access_policy")
-                if r.error and any(t in r.error for t in self.TRANSIENT) and time.monotonic() + 2 * self.timeout + 1 < self.budget.deadline:
-                    # One patient retry: a slow or briefly overloaded small-business server is not
-                    # "unreachable", and treating it so would withhold the whole site.
+                retries, redirects = 0, 0
+                while True:
+                    r = self._raw(target, org, "access_policy")
+                    wait = self._retry_wait(r, False, 0)
+                    retry_timeout = self.timeout * 1.5 if r.error else self.timeout
+                    if not retries and wait is not None and self._can_retry(org, wait, retry_timeout):
+                        self._save(r)
+                        time.sleep(wait)
+                        retries += 1
+                        r = self._raw(target, org, "access_policy", timeout=retry_timeout)
                     self._save(r)
-                    time.sleep(1.0)
-                    r = self._raw(target, org, "access_policy", timeout=int(self.timeout * 1.5))
-                for _ in range(5):
-                    if r.status not in {301, 302, 303, 307, 308} or not r.headers.get("location"):
+                    if r.status not in {301, 302, 303, 307, 308} or not r.headers.get("location") or redirects >= 5:
                         break
-                    self._save(r)
                     try:
                         target = safe_url(urllib.parse.urljoin(target, r.headers.get("location", "")))
                     except FetchError as exc:
                         r.error = "Robots: unsafe redirect " + str(exc)
+                        self._save(r)
                         break
-                    r = self._raw(target, org, "access_policy")
-                self._save(r)
+                    redirects += 1
                 policy = Robots.from_response(None if r.error else r.status, r.body, error=bool(r.error))
                 failure = (r.error or f"HTTP {r.status}") if policy.state == "unreachable" else None
                 self.robots[origin] = (policy, r.snapshot_id, failure)
+                if policy.state == "unreachable" and self._transient(r):
+                    self.robots_retry_at[origin] = time.monotonic() + self._failure_cooldown(r)
             policy, _, failure = self.robots[origin]
             if policy.state == "unreachable":
                 return False, failure
@@ -430,20 +488,35 @@ class Fetcher:
                 return False, None  # Honouring a very long crawl-delay would exceed the run budget: skip the site.
             return policy.allowed(ROBOTS_TOKEN, url), None
 
-    def get(self, url, org, *, official=False, headers=None, cost=0.0, force=False, store=True):
+    @staticmethod
+    def _response_for_source(result, source_class):
+        # Ownership is relative to the researched company: a saved page can be owned
+        # evidence for one profile and a third-party publication for another. Keep
+        # acquisition metadata and cached responses intact; profile metadata is authoritative.
+        return replace(result, source_class=source_class, headers=dict(result.headers),
+                       redirects=[dict(hop) for hop in result.redirects])
+
+    def get(self, url, org, *, official=False, headers=None, cost=0.0, force=False, store=True, source_class=None):
+        requested_class = source_class
         source_class = "official_registry" if official else "company_owned"
         initial = url
         try:
+            if requested_class is not None:
+                if official or requested_class not in {"company_owned", "public_job_feed", "third_party_publication"}:
+                    raise FetchError("Invalid nonofficial source class override")
+                source_class = requested_class
             url = safe_url(url)
+            if official and urllib.parse.urlsplit(url).hostname not in OFFICIAL:
+                raise FetchError("Official API URL is outside its trusted host")
             if self.replay:
-                return self._replay(url)
+                return self._response_for_source(self._replay(url), source_class)
             if self.registry_fetcher and official and re.fullmatch(r"https://data\.brreg\.no/enhetsregisteret/api/enheter/[0-9]{9}", url):
-                return self.registry_fetcher._replay(url)
+                return self._response_for_source(self.registry_fetcher._replay(url), source_class)
             if self.cutoff_instant and utc_timestamp(now()) > self.cutoff_instant:
                 return Response(url, url, error="Cutoff: live evidence would be after the supplied cutoff", source_class=source_class)
             cached = None if force else self._cache_get(url)
             if cached is not None:
-                return cached
+                return self._response_for_source(cached, source_class)
             chain = []
             for _ in range(5):
                 p = urllib.parse.urlsplit(url)
@@ -461,7 +534,8 @@ class Fetcher:
                 result = self._raw(url, org, source_class, headers if not chain else None, cost if not chain else 0.0)
                 for attempt in range(2 if is_official else 1):
                     wait = self._retry_wait(result, is_official, attempt)
-                    if wait is None or time.monotonic() + wait + self.timeout > self.budget.deadline:
+                    retry_cost = cost if not chain else 0.0
+                    if wait is None or not self._can_retry(org, wait, self.timeout, retry_cost):
                         break
                     time.sleep(wait)
                     result = self._raw(url, org, source_class, headers if not chain else None, cost if not chain else 0.0)
@@ -471,7 +545,7 @@ class Fetcher:
                     self._save(result)
                 if result.status not in {301, 302, 303, 307, 308}:
                     self._cache_put(initial, result)
-                    return result
+                    return self._response_for_source(result, source_class)
                 chain.append({"url": url, "status": result.status, "snapshot_id": result.snapshot_id})
                 next_url = safe_url(urllib.parse.urljoin(url, result.headers.get("location", "")))
                 if official and urllib.parse.urlsplit(next_url).hostname not in OFFICIAL:

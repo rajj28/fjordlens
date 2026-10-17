@@ -170,10 +170,11 @@ kept in the browser and results exportable as JSON.
   (public token, [terms](https://arbeidsplassen.nav.no/vilkar-api)); company websites (including a verified site's
   own WordPress posts API), fetched only where robots.txt (RFC 9309) allows.
 - Optional: Brave Web Search API, only if the evaluator sets `BRAVE_SEARCH_API_KEY`; results are used transiently
-  to nominate candidate sites and are not stored. At most two queries for a company without a verified free
-  candidate, at a configured $0.005 per query (`BRAVE_COST_PER_REQUEST_USD`), with a hard ceiling
+  to nominate candidates and are not stored. At most four website-discovery and two independent-news queries
+  per company, at a configured $0.005 per query (`BRAVE_COST_PER_REQUEST_USD`), with a hard ceiling
   (`FJORDLENS_MAX_API_COST_USD`, default $9). A rejected first batch permits the second query;
-  a verified candidate stops further searching. Search-enabled live recall has not been benchmarked here.
+  a verified website stops further website searching. Independent articles require their own exact-company proof.
+  Search-enabled live recall has not been benchmarked here.
 - No restricted platforms are fetched (LinkedIn, Facebook, Instagram, Google, Glassdoor, Indeed, X, TikTok);
   links to company profiles are recorded only as declared by the company's own site or registry entry.
 - Credentials: none required. Expected third-party cost per official run: **$0** without the optional key.

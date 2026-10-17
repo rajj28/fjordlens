@@ -354,7 +354,7 @@ class TestArticlePublishedDate(unittest.TestCase):
         <body>
             <article>
                 <h1>Article H1</h1>
-                <time datetime="2025-03-14">14. mars 2025</time>
+                Publisert: <time datetime="2025-03-14">14. mars 2025</time>
             </article>
         </body>
         </html>
@@ -494,6 +494,55 @@ if __name__ == '__main__':
     unittest.main()
 
 class ArticlePageBindingTests(unittest.TestCase):
+    def test_unbound_jsonld_with_different_headline_cannot_supply_date(self):
+        html = ('<article><h1>New contract announced</h1></article><script type="application/ld+json">'
+                '{"@type":"NewsArticle","headline":"A different company closes its office","datePublished":"2025-03-01"}</script>')
+        self.assertIsNone(article_published_date(html, '2025-06-01', 'https://firma.no/news/new'))
+
+    def test_unbound_jsonld_with_matching_headline_and_publisher_suffix(self):
+        html = ('<title>New contract announced | News Publisher</title><script type="application/ld+json">'
+                '{"@type":"NewsArticle","headline":"New contract announced","datePublished":"2025-03-01"}</script>')
+        self.assertEqual(article_published_date(html, '2025-06-01', 'https://firma.no/news/new')['published_on'], '2025-03-01')
+
+    def test_article_time_requires_visible_local_publication_semantics(self):
+        body = '<time datetime="2025-03-14">14 March 2025</time>'
+        hostile = [body, '<p>Meeting on ' + body + '</p>', '<p>Published:</p><p>Meeting on ' + body + '</p>',
+                   '<div class="comments">Published: ' + body + '</div>',
+                   '<div class="related-posts">Published: ' + body + '</div>',
+                   '<div hidden>Published: ' + body + '</div>',
+                   '<div aria-hidden="true">Published: ' + body + '</div>',
+                   '<div style="display:none">Published: ' + body + '</div>',
+                   '<div style="visibility: hidden">Published: ' + body + '</div>',
+                   '<footer>Published: ' + body + '</footer>', '<nav>Published: ' + body + '</nav>',
+                   '<aside>Published: ' + body + '</aside>',
+                   'Published: ' + body.replace('<time ', '<time hidden '),
+                   'Published: ' + body.replace('<time ', '<time itemprop="startDate" '),
+                   'Published: ' + body.replace('<time ', '<time itemprop="dateModified" ')]
+        for value in hostile:
+            with self.subTest(value=value):
+                self.assertIsNone(article_published_date('<article><h1>New contract announced</h1>' + value + '</article>', '2025-06-01'))
+
+    def test_publication_labels_and_datepublished_property_remain_supported(self):
+        body = '<time datetime="2025-03-14">14 March 2025</time>'
+        supported = ['Published: ' + body, '<p><span>Publisert den </span><span>' + body + '</span></p>',
+                     body.replace('<time ', '<time itemprop="datePublished" '),
+                     body.replace('14 March 2025', 'Published on March 14, 2025')]
+        for value in supported:
+            with self.subTest(value=value):
+                html = '<article><h1>New contract announced</h1>' + value + '</article>'
+                found = article_published_date(html, '2025-06-01')
+                self.assertEqual(found['published_on'], '2025-03-14')
+                self.assertIn(found['span'], html)
+
+    def test_hidden_date_before_valid_publication_does_not_override_it(self):
+        html = ('<article><h1>New contract announced</h1><div class="comments"><time datetime="2025-03-20">Published 20 March</time></div>'
+                '<p>Published: <time datetime="2025-03-14">14 March</time></p></article>')
+        self.assertEqual(article_published_date(html, '2025-06-01')['published_on'], '2025-03-14')
+
+    def test_excessively_nested_article_markup_is_abstained(self):
+        html = '<article><h1>New contract announced</h1>' + '<div>' * 150 + 'Published: <time datetime="2025-03-14">14 March</time>' + '</div>' * 150 + '</article>'
+        self.assertIsNone(article_published_date(html, '2025-06-01'))
+
     def test_jsonld_article_about_another_page_is_not_this_pages_date(self):
         html = ('<h1>New contract announced</h1><script type="application/ld+json">'
                 '{"@type": "Article", "url": "https://other.no/old", "datePublished": "2021-01-01"}</script>')

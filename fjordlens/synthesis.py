@@ -279,7 +279,8 @@ def _summarize(profile):
     publications = sorted([c for c in by_field.get("company_publication", []) if isinstance(c["value"], dict)],
                           key=lambda c: c["value"].get("published_on") or "", reverse=True)
     for claim in publications[:3]:
-        say(activity, f"{claim['value'].get('published_on')}: “{str(claim['value'].get('title'))[:160]}” (company-published).", [claim])
+        publisher = "third-party report" if claim.get("source_class") == "third_party_publication" else "company-published"
+        say(activity, f"{claim['value'].get('published_on')}: “{str(claim['value'].get('title'))[:160]}” ({publisher}).", [claim])
     events = sorted([c for c in by_field.get("registry_event", []) if isinstance(c["value"], dict)], key=lambda c: c.get("effective_at") or "", reverse=True)
     for claim in events[:3]:
         say(activity, f"{claim.get('effective_at')}: {claim['value'].get('description', 'registry update')} (official registry).", [claim])

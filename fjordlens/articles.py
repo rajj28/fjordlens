@@ -38,6 +38,10 @@ TEXT_CAP = 3000           # characters of text kept per element (bigger elements
 ACTION_LABEL = re.compile(r"^(?:les mer|les hele (?:saken|artikkelen)|read more|read (?:the )?(?:article|story)|continue reading|se mer)(?:\b|[.›»])", re.I)
 DATE_LABEL = re.compile(r"dateModified|datePublished|\b(?:updated|modified|oppdatert|endret|published|posted|publisert|offentliggjort)\b", re.I)
 MODIFICATION_LABELS = {"datemodified", "updated", "modified", "oppdatert", "endret"}
+ARTICLE_NOISE = re.compile(r"(?:^|[\s_-])(?:footer|copyright|comment\w*|review\w*|related|recommend\w*|sidebar|share)(?:$|[\s_-])", re.I)
+PUBLICATION_PREFIX = re.compile(r"(?:^|[\s:|])(?:published|publisert|offentliggjort)(?:\s+(?:on|at|den))?\s*[:\-]?\s*$", re.I)
+PUBLICATION_TEXT = re.compile(rf"^\s*(?:published|publisert|offentliggjort)(?:\s+(?:on|at|den))?\s*[:\-]?\s*(?:\d|(?:{_MONTH})\b)", re.I)
+ARTICLE_BLOCKS = {"article", "main", "section", "div", "p", "li", "header", "footer", "aside", "nav", "blockquote", "h1", "h2", "h3"}
 
 
 def modification_date(text):
@@ -301,10 +305,28 @@ class _Article(HTMLParser):
         self.in_article = self.article_count = 0
         self.h1, self.title, self.script = [], [], []
         self.static_page, self.current_time, self.article_text = False, None, ""
+        self.stack = []
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
         self.static_page = self.static_page or static_page_template(tag, attrs)
+        hidden = ((self.stack and self.stack[-1]["hidden"]) or tag in {"style", "template", "noscript", "nav", "aside", "footer", "form", "svg"}
+                  or "hidden" in attrs or str(attrs.get("aria-hidden", "")).lower() == "true"
+                  or bool(re.search(r"display\s*:\s*none|visibility\s*:\s*hidden", attrs.get("style", ""), re.I))
+                  or bool(ARTICLE_NOISE.search(attrs.get("class", "") + " " + attrs.get("id", ""))))
+        context = ""
+        for parent in reversed(self.stack):
+            if parent["tail"].strip():
+                context = parent["tail"][-80:]
+                break
+            if parent["tag"] in ARTICLE_BLOCKS:
+                break
+        if tag not in VOID:
+            if len(self.stack) >= MAX_DEPTH:
+                raise ValueError("Article markup exceeds nesting limit")
+            self.stack.append({"tag": tag, "hidden": bool(hidden), "tail": ""})
+        if hidden:
+            return
         if tag == "meta":
             key = (attrs.get("property") or attrs.get("name") or "").strip().lower()
             if key and attrs.get("content") is not None:
@@ -315,8 +337,11 @@ class _Article(HTMLParser):
             self.in_article += 1
             self.article_count += 1
         elif tag == "time" and self.in_article and attrs.get("datetime"):
+            props = str(attrs.get("itemprop", "")).lower().split()
             self.current_time = {"value": attrs["datetime"], "tag": self.get_starttag_text(),
-                                 "context": self.article_text[-80:], "text": []}
+                                 "context": context, "text": [], "closed": False,
+                                 "publication_property": "datepublished" in props,
+                                 "other_date_property": bool(set(props) & {"datemodified", "startdate", "enddate"})}
             self.times.append(self.current_time)
         elif tag == "h1":
             self.in_h1 = True
@@ -324,6 +349,18 @@ class _Article(HTMLParser):
             self.in_title = True
 
     def handle_endtag(self, tag):
+        index = next((i for i in range(len(self.stack) - 1, -1, -1) if self.stack[i]["tag"] == tag), None)
+        if index is None:
+            return
+        closed = self.stack[index:]
+        del self.stack[index:]
+        hidden = closed[0]["hidden"]
+        if hidden:
+            return
+        if tag in ARTICLE_BLOCKS:
+            # A publication label in a different paragraph must not label an event's time.
+            for parent in self.stack:
+                parent["tail"] = ""
         if tag == "script" and self.in_script:
             self.scripts.append("".join(self.script))
             self.in_script = False
@@ -334,12 +371,25 @@ class _Article(HTMLParser):
         elif tag == "title":
             self.in_title = False
         elif tag == "time":
+            if self.current_time is not None:
+                self.current_time["closed"] = True
             self.current_time = None
 
+    def handle_startendtag(self, tag, attrs):
+        self.handle_starttag(tag, attrs)
+        if tag not in VOID:
+            self.handle_endtag(tag)
+
     def handle_data(self, data):
+        if self.stack and self.stack[-1]["hidden"]:
+            return
         if self.in_script:
             self.script.append(data)
             return
+        if any(e["tag"] == "script" for e in self.stack):
+            return
+        for parent in self.stack:
+            parent["tail"] = (parent["tail"] + data)[-160:]
         if self.in_article:
             self.article_text = (self.article_text + data)[-1000:]
         if self.current_time is not None:
@@ -381,6 +431,16 @@ def _same_page(url, page_url):
             and functional_query(a.query) == functional_query(b.query))
 
 
+def _compatible_headline(headline, title):
+    if not isinstance(headline, str) or not headline.strip() or not title:
+        return True
+    normalized = lambda value: " ".join(re.findall(r"\w+", value.casefold()))
+    if normalized(headline) == normalized(title):
+        return True
+    # Publishers commonly suffix their name to the visible page title.
+    return any(normalized(headline) == normalized(part) for part in re.split(r"\s+[|\u2013\u2014-]\s+", title)[:1])
+
+
 def article_published_date(html: str, today: str = "9999-12-31", page_url: str | None = None) -> dict | None:
     """The page's own publication date: page-level meta, a JSON-LD article node about this page (or the only one),
     or the time element of the page's single <article>."""
@@ -389,7 +449,7 @@ def article_published_date(html: str, today: str = "9999-12-31", page_url: str |
         parser.feed(html or "")
         parser.close()
     except Exception:  # noqa: BLE001
-        pass
+        return None
     title = " ".join((parser.meta.get("og:title") or "".join(parser.h1) or "".join(parser.title)).split())
     site_name = " ".join(parser.meta.get("og:site_name", "").split())
     if site_name:
@@ -403,7 +463,8 @@ def article_published_date(html: str, today: str = "9999-12-31", page_url: str |
         nodes.extend((node, raw) for node in _article_nodes(data))
     own_nodes = [(node, raw) for node, raw in nodes
                  if ((_node_url(node) and (not page_url or _same_page(_node_url(node), page_url)))
-                     or (not _node_url(node) and len(nodes) == 1))]
+                     or (not _node_url(node) and len(nodes) == 1
+                         and _compatible_headline(node.get("headline"), title)))]
     explicit_article = parser.meta.get("og:type", "").lower() == "article" or bool(own_nodes)
     strong_nodes = [node for node, _ in own_nodes if any(isinstance(kind, str) and kind in {"NewsArticle", "BlogPosting", "PressRelease"}
                     for kind in (node.get("@type") if isinstance(node.get("@type"), list) else [node.get("@type")]))]
@@ -430,7 +491,12 @@ def article_published_date(html: str, today: str = "9999-12-31", page_url: str |
     if parser.article_count == 1:
         for entry in parser.times:
             value, tag_text = entry["value"], entry["tag"]
-            if modification_date(entry["context"] + " " + (tag_text or "") + " " + "".join(entry["text"])):
+            text = "".join(entry["text"])
+            if (not entry["closed"] or entry["other_date_property"] or not
+                    (entry["publication_property"] or PUBLICATION_PREFIX.search(entry["context"])
+                     or PUBLICATION_TEXT.search(text))):
+                continue
+            if modification_date(entry["context"] + " " + (tag_text or "") + " " + text):
                 continue
             iso = _iso_prefix(value, today)
             if iso and tag_text and tag_text in html:

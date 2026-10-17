@@ -16,7 +16,7 @@ STATES = {"available", "not_available", "blocked", "not_applicable", "ambiguous"
 FAMILIES = ("identity", "financials", "leadership", "locations", "group", "filing_history",
             "website", "description", "contact", "social_profiles", "hiring", "activity", "workforce")
 OFFICIAL_CLASSES = {"official_registry", "official_roles", "official_subunits", "official_annual_accounts", "official_group_structure"}
-SOURCE_CLASSES = OFFICIAL_CLASSES | {"company_owned", "public_job_feed"}
+SOURCE_CLASSES = OFFICIAL_CLASSES | {"company_owned", "public_job_feed", "third_party_publication"}
 
 def now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
@@ -143,6 +143,11 @@ class Profile:
             raise ValueError("Official provenance requires the exact-company official endpoint")
         if source_class == "company_owned" and (not identity_proof or not identity_proof.get("publishable") or identity_proof.get("organisation_number") != canonical_org):
             raise ValueError("Company-owned claims require an accepted exact-entity proof")
+        if source_class == "third_party_publication":
+            if (field != "company_publication" or family != "activity" or scope != "legal_entity"
+                    or method != "independent_news_v1" or not identity_proof
+                    or not identity_proof.get("publishable") or identity_proof.get("organisation_number") != canonical_org):
+                raise ValueError("Third-party publications require an accepted exact-company article proof")
         verbatim = None
         if method == "json_pointer_v1":
             missing = object()
@@ -244,6 +249,14 @@ def validate(profile: dict) -> list[str]:
                 errors.append("unknown evidence source class")
             if e.get("source_class") in OFFICIAL_CLASSES and parsed.hostname != "data.brreg.no":
                 errors.append("official provenance host mismatch")
+            if e.get("source_class") == "third_party_publication":
+                proof = e.get("identity_proof") or {}
+                if (c.get("field") != "company_publication" or c.get("family") != "activity"
+                        or c.get("scope") != "legal_entity" or not proof.get("publishable")
+                        or proof.get("organisation_number") != profile.get("organisation_number")
+                        or e.get("extraction_method") != "independent_news_v1"
+                        or e.get("selector", {}).get("type") != "independent_news_article"):
+                    errors.append("invalid independent news identity evidence")
             if not e.get("claim_span") or e.get("claim_span") == "null":
                 errors.append("empty evidence span")
             snap = snapshots.get(e.get("snapshot_id"), {})

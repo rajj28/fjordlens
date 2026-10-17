@@ -71,6 +71,8 @@ def _alt_fold(name):
 
 
 def guess_domains(legal_name, limit=6):
+    if limit <= 0:
+        return []
     toks = name_tokens(legal_name)
     if not toks:
         return []
@@ -82,6 +84,11 @@ def guess_domains(legal_name, limit=6):
     core = [t for t in toks if t not in GENERIC | DOMAIN_DESCRIPTORS]
     if core and core != toks and len("".join(core)) >= 4:
         out.append("".join(core) + ".no")
+    # Initialisms are only hypotheses. Many multi-word legal names trade under three
+    # or four initials; requiring a full name token in the host misses those sites.
+    # Avoid two-letter combinations, which are especially broad and rarely useful.
+    if 3 <= len(toks) <= 5 and all(len(t) > 1 and t.isalpha() for t in toks):
+        out.append("".join(t[0] for t in toks) + ".no")
     if re.search(r"[æøåÆØÅ]", legal_name or ""):
         alt = name_tokens(_alt_fold(legal_name))
         alt_core = [alternate for original, alternate in zip(toks, alt) if original not in GENERIC | DOMAIN_DESCRIPTORS] if len(toks) == len(alt) else []
@@ -103,6 +110,43 @@ def guess_domains(legal_name, limit=6):
         out.extend((joined + "as.no", hyphen + "-as.no"))
     valid = [d for d in dict.fromkeys(out) if 3 <= len(d.split(".")[0]) <= 63 and re.fullmatch(r"[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}", d)]
     return valid[:limit]
+
+
+def registered_brands(entity, brands=(), limit=2):
+    """Bounded name hints from registered workplaces, without granting ownership.
+
+    A workplace may be registered as ``LEGAL NAME AS AVD TRADING NAME``. Keep the
+    useful suffix instead of discarding every name containing a branch marker.
+    Known location-only suffixes and repeats of the legal name add no discovery value.
+    """
+    legal = set(name_tokens(entity.get("navn")))
+    address = entity.get("forretningsadresse") or {}
+    places = {tuple(name_tokens(address.get(key))) for key in ("poststed", "kommune")}
+    places.discard(())
+    out, seen = [], set()
+    for value in brands or ():
+        if not isinstance(value, str):
+            continue
+        name = " ".join(value.split())[:200]
+        branch = re.split(r"\s+\b(?:avd(?:eling)?|filial|kontor)\.?\s+", name, maxsplit=1, flags=re.I)
+        if len(branch) == 2:
+            prefix_tokens = name_tokens(branch[0])
+            suffix_tokens = name_tokens(branch[1])
+            if prefix_tokens and not set(prefix_tokens) <= legal:
+                name = branch[0].strip()  # TRADING NAME AVD TOWN retains the trading name.
+            elif suffix_tokens and tuple(suffix_tokens) not in places:
+                name = branch[1].strip()
+            else:
+                continue
+        tokens_ = name_tokens(name)
+        key = tuple(tokens_)
+        if not tokens_ or set(tokens_) <= legal or key in places or key in seen:
+            continue
+        seen.add(key)
+        out.append(name)
+        if len(out) >= max(0, limit):
+            break
+    return out if limit > 0 else []
 
 
 def candidates(entity, *, caches=None, dns=True, max_guesses=6, brands=None, workplaces=None):
@@ -157,11 +201,7 @@ def candidates(entity, *, caches=None, dns=True, max_guesses=6, brands=None, wor
         # Trading names of registered workplaces ("RESTAURANT FJORD" under HOLDING X AS). Such a
         # site cannot carry the legal name, so only our organisation number in its owner position
         # (gate rule A) can ever accept it.
-        legal = set(name_tokens(entity.get("navn")))
-        for brand in brands or []:
-            tokens_ = name_tokens(brand)
-            if not tokens_ or set(tokens_) <= legal or re.search(r"\bavd(eling)?\b|\bfilial\b|\bkontor\b", brand, re.I):
-                continue
+        for brand in registered_brands(entity, brands):
             for name_domain in guess_domains(brand, 2):
                 if registered_domain(name_domain) not in seen and name_domain.endswith(".no") and resolves(name_domain):
                     add("https://" + name_domain + "/", "dns_guess_brand", guessed_from="registered_workplace_name", brand=brand)

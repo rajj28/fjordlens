@@ -1,4 +1,4 @@
-# Research agent (FjordLens v1)
+# Research agent (FjordLens v1.2)
 
 The agent is a deadline-safe batch runner. Every input organisation number receives exactly one terminal envelope. The main thread is a watchdog: it never waits past the wall-clock budget, rewrites provisional outputs while work is in flight, and finalizes from consistent profile copies even if a worker hangs.
 
@@ -6,7 +6,7 @@ The agent is a deadline-safe batch runner. Every input organisation number recei
 
 Pipeline per company (see `runner.Pipeline`):
 
-1. **Official stage** (`official_stage`): `official.identity` fetches the exact-org entity from `data.brreg.no`. On success, four parallel official-family fetches are submitted: `financials`, `leadership`, `locations`, `group`. The slow filing-history lane (`filings_stage`) is submitted to a single-worker executor. The website stage is submitted to the web pool.
+1. **Official stage** (`official_stage`): `official.identity` fetches the exact-org entity from `data.brreg.no`. On success, `financials`, `leadership`, `locations` and `group` run within that company worker. Companies run concurrently. The slow filing-history lane (`filings_stage`) is submitted to a single-worker executor. The website stage is submitted to the web pool.
 
 2. **Website stage** (`website_stage`): `website.research` discovers candidate URLs (registry website, registry email domain, Wikidata, NAV employer homepage, DNS guess), fetches the homepage, runs the exact-entity identity gate (`gate.assess`), and if the gate passes, performs a bounded same-site crawl extracting description, contact, social profiles, hiring (JSON-LD JobPosting + careers links), and activity (JSON-LD articles + feeds).
 
@@ -14,7 +14,9 @@ Pipeline per company (see `runner.Pipeline`):
 
 4. **Hiring stage** (`hiring_stage`): `jobs.research` publishes active job ads whose official feed entry names the company's organisation number (or a registered workplace's number) as employer.
 
-5. **Finalize** (`finalize`): At the deadline or when all work completes, each job's profile is snapshotted (`snapshot_profile`), operations are tallied, semantic refresh runs (`refresh.refresh`), the grounded summary is generated (`synthesis.summarize`), validation errors are collected (`core.validate`), and prior-run snapshots are preserved (`runner.preserve_previous_snapshots`). The envelope `state` is derived (`runner.envelope_state`).
+5. **Independent news** (`news.research`): After website research, fetch bounded public article candidates from licensed search or verified-site press links. Missing own-site verification does not block this stage. Exact-company article proof, title and publication date are required. Failures preserve previously supported activity.
+
+6. **Finalize** (`finalize`): At the deadline or when all work completes, each job's profile is snapshotted (`snapshot_profile`), operations are tallied, semantic refresh runs (`refresh.refresh`), the grounded summary is generated (`synthesis.summarize`), validation errors are collected (`core.validate`), and prior-run snapshots are preserved (`runner.preserve_previous_snapshots`). The envelope `state` is derived (`runner.envelope_state`).
 
 ## Thread pools
 
@@ -40,4 +42,4 @@ Page text, HTML, JSON-LD, and feed content are treated as data only. They never 
 
 ## No model in the publication path
 
-All extraction, validation, gate decisions, refresh diffing, and summarization are pure Python functions with no external ML/LLM calls. The only network calls are to the documented official APIs and public company web pages.
+All extraction, validation, gate decisions, refresh diffing, and summarization are pure Python functions with no external ML/LLM calls. Network calls use the documented official APIs, public company pages, optional licensed search and permitted public article pages.

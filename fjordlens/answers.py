@@ -299,8 +299,10 @@ def build_answers(envelope: dict[str, Any]) -> list[dict[str, Any]]:
     posts = sorted([c for c in by_field.get("company_publication", []) if isinstance(c.get("value"), dict)],
                    key=lambda c: str(c["value"].get("published_on") or ""), reverse=True)[:3]
     if posts:
-        answered(QUESTIONS[8], "; ".join(f"{c['value'].get('published_on')}: {c['value'].get('title')} ({c['value'].get('url', 'company publication')})" for c in posts)
-                 + ". These are company-published items; the dates shown are publication dates.", posts)
+        def publication_label(claim):
+            return "third-party report" if claim.get("source_class") == "third_party_publication" else "company-published"
+        answered(QUESTIONS[8], "; ".join(f"{c['value'].get('published_on')}: {c['value'].get('title')} ({c['value'].get('url', 'publication')}; {publication_label(c)})" for c in posts)
+                 + ". The dates shown are publication dates.", posts)
     else:
         unknown(QUESTIONS[8], "No dated public activity is established: " + reason("activity", "no dated company publication was found") + ".")
 

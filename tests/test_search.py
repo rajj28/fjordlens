@@ -57,14 +57,14 @@ class SearchTests(unittest.TestCase):
         self.assertEqual((org, kwargs["store"], kwargs["headers"]["X-Subscription-Token"]), (ORG, False, "k"))
         self.assertGreater(kwargs["cost"], 0)
 
-    def test_name_query_needs_the_name_in_the_domain(self):
+    def test_name_query_does_not_discard_brand_or_acronym_domains(self):
         with mock.patch.dict(os.environ, {"BRAVE_SEARCH_API_KEY": "k"}, clear=True):
             fetcher = FakeFetcher([[], ["https://www.byggfirma.no/", "https://fjordkraft-teknikk.no/", "https://teknikk.no/"]])
             found = search.nominate(fetcher, ENTITY)
         self.assertEqual(len(fetcher.calls), 2)
         self.assertIn("BERGEN".title(), query_of(fetcher.calls[1]))
         urls = [c["url"] for c in found]
-        self.assertEqual(urls, ["https://fjordkraft-teknikk.no/"])  # "teknikk.no" lacks the distinctive "fjordkraft".
+        self.assertEqual(urls, ["https://www.byggfirma.no/", "https://fjordkraft-teknikk.no/", "https://teknikk.no/"])
         self.assertTrue(all(c["origin"] == "search_name" for c in found))
 
     def test_already_tried_domains_are_not_renominated(self):
@@ -73,11 +73,11 @@ class SearchTests(unittest.TestCase):
             found = search.nominate(fetcher, ENTITY, exclude={"fjordkraftteknikk.no"})
         self.assertEqual([c["url"] for c in found], ["https://annen.no/"])
 
-    def test_profession_descriptor_does_not_hide_the_distinctive_name(self):
+    def test_nomination_without_host_name_match_still_needs_page_proof(self):
         entity = {**ENTITY, "navn": "ARKITEKTFIRMA FJORDVIK AS"}
         self.assertTrue(search.usable("https://fjordvik.no/", entity, True, ()))
-        self.assertFalse(search.usable("https://arkitektfirma.no/", entity, True, ()))
-        self.assertFalse(search.usable("https://unrelated.no/", entity, True, ()))
+        self.assertTrue(search.usable("https://arkitektfirma.no/", entity, True, ()))
+        self.assertTrue(search.usable("https://unrelated.no/", entity, True, ()))
         # Nomination is still not proof: the untouched identity gate rejects a bare name.
         page = parse_html("<title>Arkitektfirma Fjordvik AS</title><p>Architecture services in Norway.</p>" * 3, "https://fjordvik.no/")
         result = gate.assess(gate.Context(entity), {"url": "https://fjordvik.no/", "origin": "search_name"}, [page])

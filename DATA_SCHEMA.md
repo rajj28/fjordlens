@@ -127,7 +127,7 @@ snapshot path remain available for verification.
 | `snapshot_id` | `ss_` + 24-char hash of `[url, content_sha256, retrieved_at, status]` |
 | `snapshot_path` | Relative path (inside the run folder) of the captured body; its SHA-256 equals `content_sha256` |
 | `source_url` | Final URL after redirects |
-| `source_class` | One of `SOURCE_CLASSES`: `official_registry`, `official_roles`, `official_subunits`, `official_annual_accounts`, `official_group_structure`, `company_owned`, `public_job_feed` |
+| `source_class` | One of `SOURCE_CLASSES`: `official_registry`, `official_roles`, `official_subunits`, `official_annual_accounts`, `official_group_structure`, `company_owned`, `public_job_feed`, `third_party_publication` |
 | `retrieved_at` | ISO timestamp of fetch |
 | `content_sha256` | SHA-256 of decompressed response body (64 hex chars) |
 | `extraction_method` | `json_pointer_v1`, `html_text_v1`, `html_contact_v1`, `html_href_v1`, `html_meta_description_v1`, `jsonld_jobposting_v1`, `jsonld_article_v1`, `jsonld_organization_v1`, `rss_atom_item_v1`, `identity_gate_v2`, `employer_orgnr_in_official_job_feed` |

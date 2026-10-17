@@ -395,6 +395,21 @@ def extract(profile, entity, page, response, proof):
         profile.data["attempts"].append({"strategy": "page_scope_gate_v2", "url": response.url, "state": "ambiguous",
                                          "reason": "Page title or heading names a different legal entity"})
         return
+    # A verified company's press page can nominate external coverage without a
+    # search key. These links are never claims: news.research fetches the article
+    # and establishes its own exact-company, title and publication-date evidence.
+    nominations = getattr(profile, "news_candidates", [])
+    press_context = bool(re.search(r"news|nyhet|aktuelt|press|presse|media|omtale", urlsplit(page["url"]).path, re.I))
+    for link in page.get("links", []):
+        if len(nominations) >= 5:
+            break
+        url = link.get("url", "")
+        label = link.get("text", "")
+        if (registered_domain(url) != registered_domain(proof["url"]) and len(label) >= 12
+                and (press_context or re.search(r"news|nyhet|press|presse|les saken|read.*article|omtale", label, re.I))
+                and url not in nominations and not discovery.social_platform(url)):
+            nominations.append(url)
+    profile.news_candidates = nominations
     for index, contact in enumerate(page["contacts"]):
         kind, value = contact.split(":", 1)
         value = value.split("?", 1)[0].strip()
@@ -663,26 +678,42 @@ def try_candidates(profile, fetcher, org, ctx, candidates, last_state):
         verdict = gate.assess(ctx, cand, pages)
         if not verdict["hard_reject"] and not verdict["signals"].get("org_on_homepage_owner_position"):
             links = verification_links(page, r.url)
-            original = cand.get("verification_url")
-            if original and host(original) == host(r.url) and url_key(original) != url_key(r.url):
-                links.insert(0, {"url": original, "text": "Search result proof page"})
-            if not links and verdict["signals"].get("name_owner"):
-                links = [{"url": urljoin(r.url, path), "text": "Conventional legal proof page"}
-                         for path in ("/kontakt", "/personvern")]
+            originals = [cand.get("verification_url"), *cand.get("verification_urls", [])]
+            deep_links = [{"url": original, "text": "Search result proof page"} for original in originals
+                          if original and host(original) == host(r.url) and url_key(original) != url_key(r.url)]
+            links = deep_links + links
             verified = {url_key(r.url)}
             proof_limit = 5 if verdict["signals"].get("name_owner") else 3
-            for link in links[:proof_limit]:
+            proof_requests = 0
+            conventional_added = False
+            while proof_requests < proof_limit:
+                # Contact/about pages frequently link to a legal notice that is absent
+                # from the homepage. Follow that bounded frontier before guessing paths.
+                if not links and not conventional_added and verdict["signals"].get("name_owner") and not verdict["publishable"]:
+                    links = [{"url": urljoin(r.url, path), "text": "Conventional legal proof page"}
+                             for path in ("/kontakt", "/personvern", "/contact", "/privacy")]
+                    conventional_added = True
+                if not links:
+                    break
+                link = links.pop(0)
                 if url_key(link["url"]) in verified:
                     continue
                 verified.add(url_key(link["url"]))
+                proof_requests += 1
                 sub = fetch_page(profile, fetcher, org, link["url"])
                 subpage = html_page(sub)
                 if subpage and registered_domain(sub.url) == registered_domain(r.url):
+                    verified.add(url_key(sub.url))
                     pages.append(subpage)
                     responses.append(sub)
                     verdict = gate.assess(ctx, cand, pages)
                     if verdict["hard_reject"] or (verdict["publishable"] and verdict["signals"].get("org_owner")):
                         break
+                    # New explicit owner-proof links outrank remaining generic pages.
+                    links = verification_links(subpage, r.url) + links
+            profile.data["attempts"].append({"strategy": "owner_proof_frontier_v3", "url": r.url,
+                                             "requests": proof_requests, "limit": proof_limit,
+                                             "state": "available" if verdict["publishable"] else "ambiguous"})
         profile.data["identity_assessments"].append(verdict)
         if verdict["publishable"]:
             return (verdict, pages, responses), last_state
@@ -849,7 +880,8 @@ def research(profile, fetcher, entity, max_pages=12, caches=None):
     if not accepted and search.enabled():
         # Optional licensed search (only with an evaluator-supplied key): nominations face the same gate.
         found_nomination = False
-        for nominated in search.nomination_batches(fetcher, entity, exclude={registered_domain(c["url"]) for c in sites[:5]}, allow_verification=True):
+        for nominated in search.nomination_batches(fetcher, entity, exclude={registered_domain(c["url"]) for c in sites[:5]},
+                                                   allow_verification=True, brands=brands):
             profile.data["attempts"].append({"strategy": "search_nomination_v2", "state": "available" if nominated else "not_available",
                                              "candidates": [c["url"] for c in nominated]})
             if nominated:

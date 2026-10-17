@@ -34,8 +34,8 @@ class SearchBatchTests(unittest.TestCase):
 
     @mock.patch.dict(os.environ, {'BRAVE_SEARCH_API_KEY': 'test-only'}, clear=True)
     def test_proof_page_does_not_bypass_restricted_host_filter(self):
-        fetcher = FakeFetcher([['https://www.facebook.com/fjordkraftteknikk'], []])
-        self.assertEqual(list(search.nomination_batches(fetcher, ENTITY, allow_verification=True)), [[], []])
+        fetcher = FakeFetcher([['https://www.facebook.com/fjordkraftteknikk'], [], []])
+        self.assertEqual(list(search.nomination_batches(fetcher, ENTITY, allow_verification=True)), [[], [], []])
 
 
 if __name__ == '__main__':

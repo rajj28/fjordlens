@@ -33,6 +33,8 @@ def platform_and_signal(claim):
         platform = NETWORKS.get(str(value.get("platform") or "").lower()) if isinstance(value, dict) else None
     elif claim.get("field") == "job_posting":
         platform = ("job_board" if "NAV" in str(value.get("source") or "") else "company_site") if isinstance(value, dict) else None
+    elif claim.get("field") == "company_publication" and claim.get("source_class") == "third_party_publication":
+        platform, signal = "news", "public_mention"
     return (platform, signal) if platform else None
 
 
@@ -77,6 +79,9 @@ def to_observations(envelope):
             identity = {"type": "website_identity_gate", "status": "exact", "rule": str(proof.get("rule") or "")[:200]}
         elif proof.get("method"):
             identity = {"type": str(proof["method"]), "organisation_number": org}
+            if claim["source_class"] == "third_party_publication":
+                identity.update({key: proof[key] for key in ("rule", "article_url", "evidence_span", "registry_snapshot_id")
+                                 if key in proof})
         else:
             identity = {"type": "exact_org_endpoint", "organisation_number": org}
         value = claim.get("value")
@@ -99,6 +104,11 @@ def to_observations(envelope):
             "effective_at": claim.get("effective_at"), "reporting_period": claim.get("reporting_period"),
             "metrics": _metrics(claim.get("field"), claim.get("value")),
         })
+        if claim["source_class"] == "third_party_publication":
+            observations[-1]["supporting_evidence"] = [
+                {"evidence_id": eid, **{key: evidence[eid].get(key) for key in
+                 ("source_url", "retrieved_at", "content_sha256", "snapshot_path", "claim_span", "selector")}}
+                for eid in claim.get("evidence_ids", []) if eid in evidence]
     return observations
 
 

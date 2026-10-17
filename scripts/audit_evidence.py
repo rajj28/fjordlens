@@ -90,6 +90,30 @@ def audit(folder):
                             if proof.get('method') != 'registry_name_address_phone_v1':
                                 raise ValueError('Legal identity span not in saved source')
                         passed = True
+                    elif selector['type'] == 'independent_news_article':
+                        from fjordlens import news
+                        identity_snapshot = snapshots.get(profile.get('legal_identity', {}).get('source_snapshot_id'))
+                        if not identity_snapshot or not identity_snapshot.get('storage_path'):
+                            raise ValueError('Independent news requires saved official identity evidence')
+                        identity_raw = read_snapshot_bytes(folder / identity_snapshot['storage_path'])
+                        if digest(identity_raw) != identity_snapshot['content_sha256']:
+                            raise ValueError('Official identity snapshot hash mismatch')
+                        entity = json.loads(identity_raw)
+                        if (entity.get('organisasjonsnummer') != profile['organisation_number']
+                                or urlsplit(identity_snapshot['final_url']).hostname != 'data.brreg.no'):
+                            raise ValueError('Independent news identity is not the exact official entity')
+                        if selector.get('entity') != news.entity_context(entity):
+                            raise ValueError('Article identity context differs from the registry snapshot')
+                        domains = news.company_domains(profile, entity)
+                        if not set(selector.get('company_domains', [])).issubset(domains):
+                            raise ValueError('Article domain corroboration is not supported by company evidence')
+                        found = news.extract_article(snapshot_text(raw, s), s['final_url'], entity,
+                                                     e['retrieved_at'][:10], company_domains=selector.get('company_domains', []))
+                        if (not found or found['value'] != claim['value']
+                                or found['spans'].get(selector.get('part')) != e['claim_span']
+                                or e['claim_span'] not in snapshot_text(raw, s)):
+                            raise ValueError('Independent news title, date or entity proof cannot be re-derived')
+                        passed = True
                     elif selector['type'] in ('dated_link', 'article_date'):
                         # Re-derive the publication from the saved page with the same extractor: same URL, date, quote.
                         from fjordlens import articles
@@ -99,9 +123,9 @@ def audit(folder):
                             found = next((item for item in articles.extract_dated_links(text, s['final_url'], day)
                                           if item['url'] == claim['value']['url']), None)
                         else:
-                            found = articles.article_published_date(text, day)
-                            page = urlsplit(s['final_url'])
-                            if claim['value']['url'] != f"{page.scheme}://{page.netloc}{page.path}":
+                            from fjordlens.website import url_key
+                            found = articles.article_published_date(text, day, page_url=s['final_url'])
+                            if url_key(claim['value']['url']) != url_key(s['final_url']):
                                 raise ValueError('Article date claim is not about the saved page')
                         if not found or found['published_on'] != claim['value']['published_on'] or found['span'] != e['claim_span']:
                             raise ValueError('Dated publication is not re-derived from the saved page')

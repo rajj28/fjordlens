@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fjordlens"
-version = "1.1.0"
+version = "1.2.0"
 description = "Evidence-first Norwegian company research agent for Builderr Signalpost"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -21,7 +21,7 @@ packages = ["fjordlens"]
 fjordlens = ["web/*", "data/*.json.gz"]
 
 [tool.fjordlens]
-strategy_version = "2026-10-17-v4"
+strategy_version = "2026-10-17-v5"
 default_wall_seconds = 2600
 default_requests_per_company = 40
 default_total_requests_per_company = 30
