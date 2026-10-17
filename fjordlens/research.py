@@ -9,6 +9,8 @@ from __future__ import annotations
 from decimal import Decimal, InvalidOperation
 import re
 
+from .answers import QUESTIONS, build_answers, financial_insights, financial_period_claims
+
 UNSUPPORTED_SCREEN_TERMS = {
     "sentiment": "sentiment is not qualified: no labelled Norwegian evaluation corpus has been run",
     "glassdoor": "Glassdoor data is not available through a permitted connector",
@@ -107,8 +109,7 @@ def _claims(envelope, field):
 
 
 def _latest_amount(envelope, field):
-    items = [c for c in _claims(envelope, field) if c.get("scope") == "legal_entity" and isinstance(c.get("value"), dict)]
-    items.sort(key=lambda c: (c.get("reporting_period") or {}).get("tilDato", ""), reverse=True)
+    items = [c for c in financial_period_claims(envelope) if c.get("field") == field and c["value"].get("currency") == "NOK"]
     if not items:
         return None, None
     try:
@@ -169,7 +170,7 @@ def citation(envelope, claim):
         e = evidence.get(eid)
         if e:
             return {"claim_id": claim["id"], "field": claim["field"], "source_url": e.get("source_url"), "retrieved_at": e.get("retrieved_at"),
-                    "content_sha256": e.get("content_sha256"), "quote": (e.get("claim_span") or "")[:300]}
+                    "content_sha256": e.get("content_sha256"), "quote": (e.get("claim_span") or "")[:300], "evidence_id": eid}
     return None
 
 
@@ -211,36 +212,84 @@ def screen_profiles(envelopes, query):
     return {"query": query, "plan": plan, "results": results, "result_count": len(results), "abstained": False}
 
 
-TOPICS = (("financials", r"financ|account|revenue|income|profit|result|debt|asset|equity|regnskap|omsetning|numbers"),
-          ("leadership", r"lead|role|ceo|board|chair|director|manage|leder|styre|runs"),
-          ("locations", r"location|where|subunit|office|workplace|address|operat"),
-          ("hiring", r"hir|job|vacanc|career|stilling|recruit|working"),
-          ("activity", r"news|activ|publication|announc|nyhet"),
-          ("online", r"web|site|social|contact|email|phone|linkedin|facebook"),
-          ("identity", r"industry|purpose|describ|employee|founded|legal form|registered|what (?:does|do) (?:it|they|the company|this company) do|about (?:it|the company|this company)"))
-TOPIC_FAMILIES = {"financials": {"financials", "filing_history"}, "leadership": {"leadership"}, "locations": {"locations"}, "hiring": {"hiring"},
-                  "activity": {"activity"}, "online": {"website", "contact", "social_profiles", "description"}, "identity": {"identity", "description", "workforce"}}
+# These regex routes are exported to the static report, so hosted and downloaded answers agree.
+# Use syntax shared by Python and JavaScript; exact standard questions take precedence.
+ONLINE_QUESTION = "What is its online presence?"
+OVERVIEW_QUESTION = "Give me a company overview."
+ANSWER_ROUTES = [
+    (QUESTIONS[10], r"\b(?:distress|bankrupt\w*|insolven\w*|solven\w*|liquidat\w*|financial risk)\b"),
+    (QUESTIONS[7], r"\b(?:chang\w*|refresh\w*|since the last|since last|updates?)\b"),
+    (QUESTIONS[6], r"\b(?:employees?|headcount|workforce|how many people|employs?|ansatte)\b"),
+    (QUESTIONS[1], r"\b(?:lead\w*|roles?|ceo|board|chair\w*|director\w*|manag\w*|leder|styre|runs?)\b"),
+    (QUESTIONS[2], r"\b(?:locations?|where|subunits?|offices?|workplaces?|address\w*|operates?|operating locations)\b"),
+    (QUESTIONS[4], r"\b(?:hir\w*|jobs?|vacanc\w*|careers?|stilling\w*|recruit\w*|working)\b"),
+    (QUESTIONS[8], r"\b(?:news|activity|publications?|announc\w*|nyhet\w*)\b"),
+    (QUESTIONS[9], r"\b(?:contact\w*|e-?mail|phone|telephone)\b"),
+    (ONLINE_QUESTION, r"\b(?:social\w*|linkedin|facebook|instagram|online presence)\b"),
+    (QUESTIONS[5], r"\b(?:websites?|web sites?|domains?)\b"),
+    (QUESTIONS[3], r"\b(?:financ\w*|accounts?|revenue|income|profit\w*|results?|debt|assets?|equity|regnskap|omsetning|numbers|margins?|growth|growing|trends?)\b"),
+    (QUESTIONS[0], r"\b(?:industry|purpose|describ\w*|business|what (?:does|do) .+ do)\b"),
+    (OVERVIEW_QUESTION, r"\b(?:overview|summari[sz]e|summary|about (?:it|them|the company|this company))\b"),
+]
+UNSUPPORTED_ANSWER_ROUTES = [
+    (r"\b(?:sentiment|glassdoor|reviews?|buzz|traffic|fraud\w*)\b", "This is not established by the qualified sources collected for this company."),
+    (r"\b(?:predict\w*|forecast\w*|will it|should I invest|buy (?:its |the )?shares|share price)\b", "The captured public records do not support predictions or investment recommendations."),
+]
+
+
+def answer_question_keys(question):
+    q = str(question or "").strip()
+    if any(re.search(pattern, q, re.I) for pattern, _ in UNSUPPORTED_ANSWER_ROUTES):
+        return []
+    known = list(QUESTIONS) + [ONLINE_QUESTION, OVERVIEW_QUESTION]
+    exact = next((item for item in known if item.casefold().rstrip("?. ") == q.casefold().rstrip("?. ")), None)
+    if exact:
+        return [exact]
+    found = [key for key, pattern in ANSWER_ROUTES if re.search(pattern, q, re.I)]
+    if QUESTIONS[10] in found:
+        found = [key for key in found if key != QUESTIONS[3]]
+    return list(dict.fromkeys(found))
 
 
 def answer_profile(envelope, question):
-    """Cited facts for one company: every fact carries its source URL, retrieval time and SHA-256."""
+    """Direct, current answers plus the exact supporting records and source citations."""
     q = str(question or "")
-    if any(term in q.casefold() for term in ("sentiment", "glassdoor", "review", "buzz", "traffic", "fraud")):
-        return {"organisation_number": envelope.get("organisation_number"), "question": q, "facts": [], "abstained": True,
-                "unsupported_or_uncertain": [m for t, m in UNSUPPORTED_SCREEN_TERMS.items() if t in q.casefold()] or ["Not supported by qualified sources."]}
-    topics = [name for name, pattern in TOPICS if re.search(pattern, q, re.I)] or [name for name, _ in TOPICS]
-    families = set().union(*(TOPIC_FAMILIES[t] for t in topics))
-    facts, gaps = [], []
-    for claim in envelope.get("claims", []):
-        if claim.get("family") in families and claim.get("availability") == "available":
-            cited = citation(envelope, claim)
-            if cited:
-                facts.append({"claim": claim["field"], "value": claim["value"], "family": claim["family"], "scope": claim.get("scope"),
-                              "reporting_period": claim.get("reporting_period"), "stale": bool(claim.get("stale")), **cited})
-    for family in sorted(families):
-        state = (envelope.get("availability") or {}).get(family) or {}
-        if state.get("state") and state["state"] != "available":
-            gaps.append(f"{family}: {state.get('state')} - {state.get('reason')}")
+    keys = answer_question_keys(q)
+    blocked = [message for pattern, message in UNSUPPORTED_ANSWER_ROUTES if re.search(pattern, q, re.I)]
+    standard = {a["question"]: a for a in build_answers(envelope)}
+    picked = [standard[key] for key in keys if key in standard]
+    if ONLINE_QUESTION in keys or OVERVIEW_QUESTION in keys:
+        from .synthesis import summarize
+        summary = summarize(envelope)
+        if ONLINE_QUESTION in keys:
+            online = [sentence for section in summary["sections"] if section["key"] == "online_presence" for sentence in section["sentences"]]
+            picked.append({"answer": " ".join(s["text"] for s in online) or "No verified online presence is established by the captured sources.",
+                           "answerable": bool(online), "claim_ids": sorted({cid for s in online for cid in s["claim_ids"]}), "evidence_ids": []})
+        if OVERVIEW_QUESTION in keys:
+            picked.append({"answer": summary["brief"]["text"] or "The captured sources do not establish a company overview.",
+                           "answerable": bool(summary["brief"]["text"]), "claim_ids": summary["brief"]["claim_ids"], "evidence_ids": []})
+    gaps = blocked or [a["answer"] for a in picked if not a["answerable"]]
+    if QUESTIONS[3] in keys:
+        _, limitations = financial_insights(envelope)
+        gaps.extend(item["text"] for item in limitations if item["scope"] == "legal_entity")
+    if not picked:
+        message = "; ".join(blocked) or "This question is not supported by the captured company facts. Ask about its business, leadership, locations, filed finances, hiring, website, employees, changes, activity or contact details."
+        gaps = [message]
+        picked = [{"answer": message, "answerable": False, "claim_ids": [], "evidence_ids": []}]
+    used_ids = {cid for item in picked for cid in item["claim_ids"]}
+    claims = [c for c in envelope.get("claims", []) if c.get("id") in used_ids and c.get("availability") == "available" and not c.get("stale")]
+    citations = [c for c in (citation(envelope, claim) for claim in claims) if c]
+    cited_by_id = {c["claim_id"]: c for c in citations}
+    facts = [{"claim": c["field"], "value": c["value"], "family": c["family"], "scope": c.get("scope"),
+              "reporting_period": c.get("reporting_period"), "stale": False, **cited_by_id[c["id"]]} for c in claims if c["id"] in cited_by_id]
+    sentences = [{"text": a["answer"], "claim_ids": a["claim_ids"], "stale": False} for a in picked]
+    evidence_ids = sorted({eid for c in claims for eid in c.get("evidence_ids", [])} | {eid for a in picked for eid in a.get("evidence_ids", [])})
+    families = {c["family"] for c in claims}
+    answerable = any(a["answerable"] for a in picked)
     return {"organisation_number": envelope.get("organisation_number"), "company_name": (envelope.get("legal_identity") or {}).get("name"),
-            "question": q, "topics": topics, "facts": facts, "abstained": not facts, "unsupported_or_uncertain": gaps,
-            "answer_policy": "Only source-linked facts are returned; missing evidence is reported as missing, never as zero."}
+            "question": q, "topics": keys, "answer": " ".join(s["text"] for s in sentences), "answerable": answerable,
+            "sentences": sentences, "claim_ids": sorted(used_ids), "evidence_ids": evidence_ids, "citations": citations,
+            "facts": facts, "claims": claims, "abstained": not answerable, "unsupported_or_uncertain": list(dict.fromkeys(gaps)),
+            "availability": {f: (envelope.get("availability") or {}).get(f, {}) for f in sorted(families)},
+            "changes": envelope.get("changes", []) if QUESTIONS[7] in keys else [], "method": "grounded_answers_v2",
+            "answer_policy": "Only current source-linked claims support the answer; missing evidence is reported as missing, never as zero. Filed periods and company/group scope are kept separate."}

@@ -5,7 +5,7 @@ import unittest
 from unittest import mock
 from urllib.parse import parse_qs, urlsplit
 
-from fjordlens import gate, search
+from fjordlens import discovery, gate, search
 from fjordlens.html import parse_html
 
 ORG = "923609016"
@@ -72,6 +72,23 @@ class SearchTests(unittest.TestCase):
             fetcher = FakeFetcher([["https://www.fjordkraftteknikk.no/", "https://annen.no/"]])
             found = search.nominate(fetcher, ENTITY, exclude={"fjordkraftteknikk.no"})
         self.assertEqual([c["url"] for c in found], ["https://annen.no/"])
+
+    def test_profession_descriptor_does_not_hide_the_distinctive_name(self):
+        entity = {**ENTITY, "navn": "ARKITEKTFIRMA FJORDVIK AS"}
+        self.assertTrue(search.usable("https://fjordvik.no/", entity, True, ()))
+        self.assertFalse(search.usable("https://arkitektfirma.no/", entity, True, ()))
+        self.assertFalse(search.usable("https://unrelated.no/", entity, True, ()))
+        # Nomination is still not proof: the untouched identity gate rejects a bare name.
+        page = parse_html("<title>Arkitektfirma Fjordvik AS</title><p>Architecture services in Norway.</p>" * 3, "https://fjordvik.no/")
+        result = gate.assess(gate.Context(entity), {"url": "https://fjordvik.no/", "origin": "search_name"}, [page])
+        self.assertFalse(result["publishable"])
+
+    def test_alternate_spelling_applies_to_the_bounded_brand_hint(self):
+        candidates = discovery.guess_domains("ARKITEKTFIRMA FJORDV\u00d8REN AS")
+        self.assertIn("fjordvoren.no", candidates)
+        self.assertIn("fjordvoeren.no", candidates)
+        self.assertLessEqual(len(candidates), 6)
+        self.assertEqual(len(candidates), len(set(candidates)))
 
 
 class SearchGateTests(unittest.TestCase):

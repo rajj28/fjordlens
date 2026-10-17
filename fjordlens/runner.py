@@ -527,7 +527,7 @@ def write_envelopes(output, results, result_file=None):
         temp.replace(target)
 
 def run_batch(inputs, output, *, run_id=None, previous=None, replay=None, cutoff=None, registry_snapshot=None, workers=None,
-              max_requests=None, seconds=None, per_company=None, max_pages=7, fresh=False, provisional_every=60, first_provisional=15):
+              max_requests=None, seconds=None, per_company=None, max_pages=12, fresh=False, provisional_every=60, first_provisional=15):
     clock_start = time.monotonic()
     output, result_file = Path(output), None
     if output.suffix.lower() in {".jsonl", ".json"}:
@@ -617,7 +617,7 @@ def run_batch(inputs, output, *, run_id=None, previous=None, replay=None, cutoff
               "official_score": None, "accuracy_and_recall": "Not measured: requires independent checked labels",
               "models_at_runtime": [], "budget_passed": budget.total <= max_requests and budget.cost <= 10 and elapsed <= seconds,
               "registry_snapshot_supplied": bool(registry_snapshot),
-              "cache_policy": "External evidence only when explicitly supplied via --replay or --registry-snapshot; otherwise run-local URL and robots cache only"}
+              "cache_policy": "Declared NAV nomination index refreshed at runtime; every published ad fetched live. Other caches are run-local unless --replay or --registry-snapshot is supplied."}
     try:
         report["external_observations"] = write_observations(results, output / "external-observations.jsonl")
     except Exception as exc:  # noqa: BLE001 - an export problem never blocks the envelopes

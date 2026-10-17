@@ -22,6 +22,9 @@ SOCIAL = {"facebook.com": "Facebook", "fb.com": "Facebook", "instagram.com": "In
           "youtube.com": "YouTube", "youtu.be": "YouTube", "x.com": "X", "twitter.com": "X", "tiktok.com": "TikTok"}
 GENERIC = {"holding", "holdings", "eiendom", "eiendommer", "invest", "investering", "gruppen", "group", "norge", "norway",
            "consulting", "consult", "service", "services", "drift", "utvikling", "management", "capital", "partners"}
+# Only a domain nomination hint. These words are not removed from the identity gate's name.
+DOMAIN_DESCRIPTORS = {"markedsforing", "arkitektfirma", "arkitektfirmaet", "advokatfirma", "advokatfirmaet",
+                      "ingeniorfirma", "ingeniorfirmaet", "byggmester", "tannlege", "tannlegesenter", "frisor"}
 _dns_cache, _dns_lock = {}, threading.Lock()
 _dns_pool = ThreadPoolExecutor(max_workers=16, thread_name_prefix="dns")
 
@@ -76,11 +79,16 @@ def guess_domains(legal_name, limit=6):
     out.append(joined + ".no")
     if len(toks) > 1:
         out.append(hyphen + ".no")
-    core = [t for t in toks if t not in GENERIC]
-    if core and core != toks and len("".join(core)) >= 6:
+    core = [t for t in toks if t not in GENERIC | DOMAIN_DESCRIPTORS]
+    if core and core != toks and len("".join(core)) >= 4:
         out.append("".join(core) + ".no")
     if re.search(r"[æøåÆØÅ]", legal_name or ""):
         alt = name_tokens(_alt_fold(legal_name))
+        alt_core = [alternate for original, alternate in zip(toks, alt) if original not in GENERIC | DOMAIN_DESCRIPTORS] if len(toks) == len(alt) else []
+        # Apply the same descriptor-stripping hypothesis to the alternate spelling. It
+        # remains one bounded nomination and gets no identity credit until fetched.
+        if core != toks and alt_core and len("".join(alt_core)) >= 4 and "".join(alt_core) != "".join(core):
+            out.append("".join(alt_core) + ".no")
         if alt and "".join(alt) != joined:
             out.append("".join(alt) + ".no")
         native = [t for t in re.findall(r"[0-9a-zæøå]+", (legal_name or "").casefold()) if t not in {"as", "asa", "ans", "da", "sa", "ba", "nuf", "ks"}]
@@ -91,6 +99,8 @@ def guess_domains(legal_name, limit=6):
                 pass
     if len(joined) >= 6:
         out.append(joined + ".com")
+    if re.search(r"(?:^|\s)as\s*$", legal_name or "", re.I):
+        out.extend((joined + "as.no", hyphen + "-as.no"))
     valid = [d for d in dict.fromkeys(out) if 3 <= len(d.split(".")[0]) <= 63 and re.fullmatch(r"[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}", d)]
     return valid[:limit]
 

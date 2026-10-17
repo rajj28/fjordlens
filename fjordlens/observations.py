@@ -14,6 +14,7 @@ FIELDS = {
     "business_description": ("company_site", "company_profile"),
     "public_brand": ("company_site", "company_profile"),
     "company_linked_profile": (None, "profile_handle"),
+    "company_profile": (None, "profile_handle"),
     "job_posting": (None, "job_posting"),
     "company_publication": ("company_site", "public_post"),
     "employees": ("brreg", "workforce_snapshot"),
@@ -28,7 +29,7 @@ def platform_and_signal(claim):
         return None
     platform, signal = mapping
     value = claim.get("value")
-    if claim.get("field") == "company_linked_profile":
+    if claim.get("field") in {"company_linked_profile", "company_profile"}:
         platform = NETWORKS.get(str(value.get("platform") or "").lower()) if isinstance(value, dict) else None
     elif claim.get("field") == "job_posting":
         platform = ("job_board" if "NAV" in str(value.get("source") or "") else "company_site") if isinstance(value, dict) else None
@@ -48,13 +49,13 @@ def _metrics(field, value):
         return {"url": value} if isinstance(value, str) else {}
     if not isinstance(value, (dict, int, str)) or isinstance(value, bool):
         return {}
-    if field == "company_linked_profile":
+    if field in {"company_linked_profile", "company_profile"}:
         return {"url": value.get("url")} if isinstance(value, dict) else {}
     if field == "job_posting":
-        return {"title": value.get("title"), "url": value.get("url")} if isinstance(value, dict) else {}
+        return {k: value.get(k) for k in ("title", "url", "published", "expires", "status", "employer_orgnr")} if isinstance(value, dict) else {}
     if field == "company_publication":
-        return {k: value.get(k) for k in ("title", "url", "published_on")} if isinstance(value, dict) else {}
-    if field in {"employees", "workplace_employees"}:
+        return {k: value.get(k) for k in ("title", "url", "published_on", "published_at")} if isinstance(value, dict) else {}
+    if field == "employees":
         return {"employees": value} if isinstance(value, int) else {}
     return {"text": value[:300]} if isinstance(value, str) else {}
 
@@ -78,14 +79,24 @@ def to_observations(envelope):
             identity = {"type": str(proof["method"]), "organisation_number": org}
         else:
             identity = {"type": "exact_org_endpoint", "organisation_number": org}
+        value = claim.get("value")
+        content_url = value.get("url") if isinstance(value, dict) else value if claim.get("field") == "official_website" else None
+        published_on = (value.get("published_on") or value.get("published")) if isinstance(value, dict) else None
         observations.append({
             "id": "obs-" + claim["id"], "claim_id": claim["id"], "organisation_number": org,
+            "field": claim["field"], "family": claim.get("family"), "scope": claim.get("scope"),
+            "value": value, "evidence_ids": list(claim.get("evidence_ids", [])),
             "platform": platform, "signal_type": signal,
             "source_url": claim["source_url"], "retrieved_at": claim["retrieved_at"], "content_sha256": claim["content_sha256"],
             "source_class": claim["source_class"], "evidence_span": claim["claim_span"], "snapshot_path": claim["snapshot_path"],
             "exact_entity": True, "identity_proof": [identity],
-            "acquisition_mode": "official_api" if platform in {"brreg", "job_board"} else "permitted_public_page",
+            "acquisition_mode": "official_api" if claim["source_class"].startswith("official") or claim["source_class"] == "public_job_feed" else "permitted_public_page",
             "rights_status": "approved", "strategy": primary.get("extraction_method") or "unknown",
+            # A feed/listing is the captured evidence; the linked article/job is the subject.
+            # Keep both instead of falsely claiming to have fetched the subject URL.
+            "content_url": content_url, "published_on": published_on,
+            "published_at": value.get("published_at") if isinstance(value, dict) else None,
+            "effective_at": claim.get("effective_at"), "reporting_period": claim.get("reporting_period"),
             "metrics": _metrics(claim.get("field"), claim.get("value")),
         })
     return observations

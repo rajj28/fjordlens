@@ -22,7 +22,7 @@ def main():
     run.add_argument("--seconds", type=float, default=None, help="Wall-clock budget (default: SIGNALPOST_TIME_BUDGET_SECONDS or 2600)")
     run.add_argument("--per-company", type=int, default=None, help="HTTP attempts per company (default 40)")
     run.add_argument("--fresh", action="store_true", help="Do not treat an earlier run in --output as the previous snapshot")
-    run.add_argument("--max-pages", type=int, default=7)
+    run.add_argument("--max-pages", type=int, default=12, help="Maximum site content pages (default 12; request budget still applies)")
     run.add_argument("--run-id")
     serve = subs.add_parser("serve", help="Open the local evidence workspace")
     serve.add_argument("--data", default="submission/envelopes.jsonl.gz")

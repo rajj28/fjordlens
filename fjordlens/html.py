@@ -8,6 +8,13 @@ from urllib.parse import urljoin, urlsplit, urldefrag
 def clean(value):
     return re.sub(r"\s+", " ", str(value or "")).strip()
 
+
+def static_page_template(tag, attrs):
+    """CMS page/archive templates are not publications merely because they emit Article schema."""
+    classes = set((attrs.get("class") or "").lower().split())
+    return ((tag == "body" and bool(classes & {"page", "archive", "blog", "search", "error404"}))
+            or (tag == "article" and "type-page" in classes))
+
 class PageParser(HTMLParser):
     def __init__(self, url):
         super().__init__(convert_charrefs=True)
@@ -18,6 +25,7 @@ class PageParser(HTMLParser):
         # Owner-position signals for the identity gate.
         self.footer_parts, self.h1_parts, self.logo_alts, self.lang = [], [], [], ""
         self.jsonld_raw = []
+        self.static_page = False
         self.open_counts, self.footer_marks, self.in_h1 = {}, [], 0
 
     def absolute(self, value):
@@ -29,6 +37,7 @@ class PageParser(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
+        self.static_page = self.static_page or static_page_template(tag, a)
         if tag == "html" and not self.lang:
             self.lang = (a.get("lang") or "").lower()[:10]
         if tag not in self.VOID:
@@ -70,7 +79,8 @@ class PageParser(HTMLParser):
                 self.contacts.append(a["href"])
             target = self.absolute(a.get("href")) if a.get("href") else ""
             if target:
-                self.anchor = {"url": target, "href": a.get("href") or "", "parts": [], "rel": a.get("rel") or ""}
+                self.anchor = {"url": target, "href": a.get("href") or "", "parts": [], "rel": a.get("rel") or "",
+                               "article_context": bool(self.open_counts.get("article") or self.open_counts.get("h2") or self.open_counts.get("h3"))}
         if tag in {"p", "div", "br", "li", "footer", "header", "section", "h1", "h2", "h3", "tr"}:
             self.parts.append("\n")
 
@@ -118,7 +128,8 @@ class PageParser(HTMLParser):
 
     def end_anchor(self):
         if self.anchor and len(self.links) < 3000:
-            self.links.append({"url": self.anchor["url"], "href": self.anchor.get("href", ""), "text": clean(" ".join(self.anchor["parts"]))[:600], "rel": self.anchor["rel"]})
+            self.links.append({"url": self.anchor["url"], "href": self.anchor.get("href", ""), "text": clean(" ".join(self.anchor["parts"]))[:600],
+                               "rel": self.anchor["rel"], "article_context": self.anchor.get("article_context", False)})
         self.anchor = None
 
 def parse_html(html, url):
@@ -139,7 +150,7 @@ def parse_html(html, url):
             "links": list(unique.values()), "jsonld": parser.jsonld, "jsonld_raw": parser.jsonld_raw, "feeds": list(dict.fromkeys(parser.feeds)),
             "canonical": parser.canonical, "meta": parser.meta, "contacts": list(dict.fromkeys(parser.contacts)),
             "footer": clean(" ".join(parser.footer_parts))[:20000], "h1": clean(" ".join(parser.h1_parts))[:600],
-            "logo_alts": list(dict.fromkeys(parser.logo_alts)), "lang": parser.lang}
+            "logo_alts": list(dict.fromkeys(parser.logo_alts)), "lang": parser.lang, "static_page": parser.static_page}
 
 def structured_nodes(data, path="", depth=0):
     if depth > 20:

@@ -37,7 +37,7 @@ class ObservationTests(unittest.TestCase):
         env = envelope([
             claim("c1", "official_website", "website", "https://x.no/"),
             claim("c2", "company_linked_profile", "social_profiles", {"platform": "twitter", "url": "https://x.com/xas"}),
-            claim("c3", "job_posting", "hiring", {"title": "Kokk", "url": "https://arbeidsplassen.nav.no/s/1", "source": "NAV arbeidsplassen.no official job feed", "status": "active"}),
+            claim("c3", "job_posting", "hiring", {"title": "Kokk", "url": "https://arbeidsplassen.nav.no/s/1", "source": "NAV arbeidsplassen.no official job feed", "status": "active"}, source_class="public_job_feed"),
             claim("c4", "company_publication", "activity", {"title": "Ny avtale", "url": "https://x.no/n", "published_on": "2026-09-01"}),
             claim("c5", "employees", "workforce", 12, source_class="official_registry"),
             claim("c6", "legal_name", "identity", "X AS", source_class="official_registry"),
@@ -111,7 +111,8 @@ class AnswerTests(unittest.TestCase):
         distress = answers[QUESTIONS.index("Is it in financial distress?")]
         self.assertEqual((distress["answer"], distress["claim_ids"]), ("The official register flags liquidation.", ["l1"]))
         calm = build_answers(envelope([claim("b1", "bankrupt", "identity", False)]))[QUESTIONS.index("Is it in financial distress?")]
-        self.assertEqual(calm["answer"], "The official register does not flag bankruptcy.")
+        self.assertIn("The official register does not flag bankruptcy.", calm["answer"])
+        self.assertIn("do not establish current solvency or rule out financial distress", calm["answer"])
 
     def test_no_change_after_refresh(self):
         answer = build_answers(envelope([], refresh={"previous_run_id": "r1"}))[QUESTIONS.index("What changed since the last check?")]

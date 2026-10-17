@@ -5,6 +5,7 @@ unknown and why (from the family's availability reason) and never turns absence 
 """
 from __future__ import annotations
 
+from datetime import date
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from typing import Any
 
@@ -44,8 +45,108 @@ def latest_period(financial):
     """The latest complete reporting period: latest end date; on a tie the period with most figures, then the longest."""
     counts = {}
     for claim in financial:
-        counts[period_key(claim)] = counts.get(period_key(claim), 0) + 1
-    return max(counts, key=lambda key: (key[1], counts[key], [-ord(ch) for ch in key[0]]))
+        key = period_key(claim)
+        if key[0] and key[1]:
+            counts[key] = counts.get(key, 0) + 1
+    return max(counts, key=lambda key: (key[1], counts[key], [-ord(ch) for ch in key[0]])) if counts else None
+
+
+def financial_period_claims(envelope, scope="legal_entity"):
+    """Current claims from one complete period; never backfill an absent latest figure."""
+    financial = [c for c in envelope.get("claims", []) if c.get("availability") == "available" and not c.get("stale")
+                 and str(c.get("field", "")).startswith("financial_") and c.get("scope") == scope
+                 and isinstance(c.get("value"), dict) and c.get("reporting_period")]
+    key = latest_period(financial)
+    return [c for c in financial if period_key(c) == key] if key else []
+
+
+def amount(claim):
+    try:
+        value = Decimal(str(claim["value"]["amount"]))
+        return value if value.is_finite() else None
+    except (InvalidOperation, KeyError, TypeError):
+        return None
+
+
+def financial_insights(envelope):
+    """Bounded interpretations and like-for-like annual comparisons, each citing every input."""
+    sentences, limitations = [], []
+
+    def add(text, used):
+        sentences.append({"text": text, "claim_ids": sorted({c["id"] for c in used}), "stale": False})
+
+    for scope, label in (("legal_entity", "company accounts"), ("consolidated_group", "consolidated group accounts")):
+        latest = financial_period_claims(envelope, scope)
+        if not latest:
+            continue
+        by_field = {c["field"]: c for c in latest}
+        start, end = period_key(latest[0])
+        period_label = f"{start} to {end} ({label})"
+        operating, net, equity = (by_field.get(f"financial_{field}") for field in ("operating_profit", "net_profit", "equity"))
+        if operating and net and amount(operating) is not None and amount(net) is not None:
+            op, result = amount(operating), amount(net)
+            op_word = "an operating profit" if op > 0 else "an operating loss" if op < 0 else "a break-even operating result"
+            net_word = "an annual profit" if result > 0 else "an annual loss" if result < 0 else "a break-even annual result"
+            add(f"For {period_label}, the company recorded {op_word} and {net_word}. These are filed accounting results for that period; they do not establish current cash flow.", [operating, net])
+        if equity and amount(equity) is not None and amount(equity) < 0:
+            add(f"At {end} ({label}), filed equity was negative: {equity['value'].get('currency', '')} {nok(amount(equity))}. Negative book equity is a balance-sheet warning; it does not by itself establish insolvency or bankruptcy.", [equity])
+
+        # Only consecutive full years with matching start/end calendar days are compared.
+        # This excludes short first accounts, changed year ends, restated partial years and gaps.
+        try:
+            current_start, current_end = date.fromisoformat(start), date.fromisoformat(end)
+        except ValueError:
+            continue
+        candidates = [c for c in envelope.get("claims", []) if c.get("availability") == "available" and not c.get("stale")
+                      and c.get("scope") == scope and str(c.get("field", "")).startswith("financial_") and c.get("reporting_period")]
+        compared = set()
+        for field, metric in (("financial_revenue", "Revenue"), ("financial_operating_profit", "Operating result"),
+                              ("financial_net_profit", "Annual result")):
+            current = by_field.get(field)
+            if not current or amount(current) is None:
+                continue
+            previous = None
+            for candidate in candidates:
+                if candidate.get("field") != field or not isinstance(candidate.get("value"), dict):
+                    continue
+                if not current["value"].get("currency") or candidate["value"].get("currency") != current["value"].get("currency"):
+                    continue
+                try:
+                    prior_start, prior_end = (date.fromisoformat(v) for v in period_key(candidate))
+                except ValueError:
+                    continue
+                annual = 364 <= (current_end - current_start).days <= 365 and 364 <= (prior_end - prior_start).days <= 365
+                consecutive = (current_start - prior_end).days == 1
+                aligned = (current_start.month, current_start.day, current_end.month, current_end.day) == (prior_start.month, prior_start.day, prior_end.month, prior_end.day)
+                if annual and consecutive and aligned and amount(candidate) is not None:
+                    previous = candidate
+                    break
+            if not previous:
+                continue
+            now, before = amount(current), amount(previous)
+            difference = now - before
+            currency = current["value"]["currency"]
+            prior_label = " to ".join(period_key(previous))
+            change = f"increased by {currency} {nok(abs(difference))}" if difference > 0 else f"decreased by {currency} {nok(abs(difference))}" if difference < 0 else "was unchanged"
+            percentage = f" ({difference / before * 100:+.1f}%)" if before > 0 and difference else ""
+            add(f"{metric} {change}{percentage}: {currency} {nok(before)} in {prior_label} to {currency} {nok(now)} in {start} to {end} ({label}; calculated from comparable annual periods).", [previous, current])
+            compared.add(field)
+        if "financial_revenue" not in compared:
+            limitations.append({"family": "financials", "scope": scope, "state": "not_available",
+                                "text": f"Revenue growth is not established for {period_label}: comparable consecutive annual revenue figures in the same currency were not captured."})
+    return sentences, limitations
+
+
+def unchanged_refresh_note(envelope):
+    previous = (envelope.get("refresh") or {}).get("previous_run_id")
+    if not previous or any(c.get("material") for c in envelope.get("changes", [])):
+        return None
+    note = f"No material change was confirmed in this run compared with the previous run ({previous})."
+    stale_count = sum(bool(c.get("stale")) for c in envelope.get("claims", []))
+    if stale_count:
+        noun = "fact" if stale_count == 1 else "facts"
+        note += f" {stale_count} earlier {noun} could not be reconfirmed; this does not establish that they remained unchanged."
+    return note
 
 
 def build_answers(envelope: dict[str, Any]) -> list[dict[str, Any]]:
@@ -81,8 +182,8 @@ def build_answers(envelope: dict[str, Any]) -> list[dict[str, Any]]:
         text = " ".join(value) if isinstance(value, list) else str(value)
         parts.append(("Registered activity: " if text_claim is activity else "Statutory purpose: ") + text[:300])
         used.append(text_claim)
-    elif description:
-        parts.append("The verified website describes it as: " + str(description["value"])[:300])
+    if description:
+        parts.append("The verified website describes it as (self-reported): " + str(description["value"])[:300])
         used.append(description)
     if used:
         answered(QUESTIONS[0], " ".join(parts), used)
@@ -118,8 +219,11 @@ def build_answers(envelope: dict[str, Any]) -> list[dict[str, Any]]:
         unknown(QUESTIONS[2], "Where it operates is not established: " + reason("locations", "no address or workplace was found") + ".")
 
     # 4. Latest filed numbers: one reporting period only (the latest of the company accounts).
-    financial = [c for f, items in by_field.items() if f.startswith("financial_") for c in items
-                 if c.get("scope") == "legal_entity" and c.get("reporting_period") and isinstance(c.get("value"), dict)]
+    financial = financial_period_claims(envelope)
+    financial_scope, financial_label = "legal_entity", "company accounts"
+    if not financial:
+        financial = financial_period_claims(envelope, "consolidated_group")
+        financial_scope, financial_label = "consolidated_group", "consolidated group accounts; separate company figures were not captured"
     if financial:
         key = latest_period(financial)
         end = key[1]
@@ -131,9 +235,15 @@ def build_answers(envelope: dict[str, Any]) -> list[dict[str, Any]]:
         if picked:
             currency = picked[0][0]["value"].get("currency", "NOK")
             start = picked[0][0]["reporting_period"].get("fraDato")
-            text = f"For {start} to {end} (company accounts): " + "; ".join(
+            text = f"For {start} to {end} ({financial_label}): " + "; ".join(
                 f"{label} {c['value'].get('currency', currency)} {nok(c['value'].get('amount'))}" for c, label in picked) + "."
-            answered(QUESTIONS[3], text, [c for c, _ in picked])
+            insights, _ = financial_insights(envelope)
+            entity_ids = {c["id"] for c in claims if c.get("scope") == financial_scope}
+            insights = [s for s in insights if set(s["claim_ids"]) <= entity_ids]
+            used = [c for c, _ in picked]
+            additional_ids = {i for s in insights for i in s["claim_ids"]} - {c["id"] for c in used}
+            used.extend(c for c in claims if c["id"] in additional_ids)
+            answered(QUESTIONS[3], " ".join([text] + [s["text"] for s in insights]), used)
         else:
             unknown(QUESTIONS[3], "No filed revenue, result, equity or assets figure is available for the latest period.")
     else:
@@ -148,6 +258,10 @@ def build_answers(envelope: dict[str, Any]) -> list[dict[str, Any]]:
                (" and " if nav and len(jobs) > len(nav) else "") + \
                (f"{len(jobs) - len(nav)} posting(s) on the verified website" if len(jobs) > len(nav) else "") + \
                (": " + "; ".join(titles) if titles else "") + "."
+        if len(jobs) > len(nav):
+            text += " Website postings are company-published; current availability is not confirmed."
+        if any(c["value"].get("posting_context") == "employment_agency" for c in jobs):
+            text += " This employer is a recruitment or employment agency; positions may be with its clients."
         answered(QUESTIONS[4], text[0].upper() + text[1:], jobs)
     else:
         unknown(QUESTIONS[4], "No job ad was found in NAV's official job feed or on a verified company website; this does not show that the company is not hiring.")
@@ -176,7 +290,7 @@ def build_answers(envelope: dict[str, Any]) -> list[dict[str, Any]]:
         answers.append({"question": QUESTIONS[7], "answerable": True, "answer": text[0].upper() + text[1:],
                         "claim_ids": [c["claim_id"] for c in shown if c.get("claim_id") in current_ids], "evidence_ids": evidence_ids})
     elif previous_run:
-        answers.append({"question": QUESTIONS[7], "answerable": True, "answer": f"No material change since the previous run ({previous_run}).",
+        answers.append({"question": QUESTIONS[7], "answerable": True, "answer": unchanged_refresh_note(envelope),
                         "claim_ids": [], "evidence_ids": []})
     else:
         unknown(QUESTIONS[7], "This is the first run for this company, so there is no earlier state to compare.")
@@ -185,7 +299,8 @@ def build_answers(envelope: dict[str, Any]) -> list[dict[str, Any]]:
     posts = sorted([c for c in by_field.get("company_publication", []) if isinstance(c.get("value"), dict)],
                    key=lambda c: str(c["value"].get("published_on") or ""), reverse=True)[:3]
     if posts:
-        answered(QUESTIONS[8], "; ".join(f"{c['value'].get('published_on')}: {c['value'].get('title')}" for c in posts) + ".", posts)
+        answered(QUESTIONS[8], "; ".join(f"{c['value'].get('published_on')}: {c['value'].get('title')} ({c['value'].get('url', 'company publication')})" for c in posts)
+                 + ". These are company-published items; the dates shown are publication dates.", posts)
     else:
         unknown(QUESTIONS[8], "No dated public activity is established: " + reason("activity", "no dated company publication was found") + ".")
 
@@ -204,7 +319,14 @@ def build_answers(envelope: dict[str, Any]) -> list[dict[str, Any]]:
     if raised:
         answered(QUESTIONS[10], "The official register flags " + " and ".join("bankruptcy" if c["field"] == "bankrupt" else "liquidation" for c in raised) + ".", raised)
     elif flags:
-        answered(QUESTIONS[10], "The official register does not flag " + " or ".join("bankruptcy" if c["field"] == "bankrupt" else "liquidation" for c in flags) + ".", flags)
+        text = "The official register does not flag " + " or ".join("bankruptcy" if c["field"] == "bankrupt" else "liquidation" for c in flags) + "."
+        used = list(flags)
+        equity = next((c for c in financial_period_claims(envelope) if c.get("field") == "financial_equity"), None)
+        if equity and amount(equity) is not None and amount(equity) < 0:
+            text += f" Filed company equity was negative at {period_key(equity)[1]} ({equity['value'].get('currency', '')} {nok(amount(equity))}); that is a balance-sheet warning."
+            used.append(equity)
+        text += " These checks do not establish current solvency or rule out financial distress."
+        answered(QUESTIONS[10], text, used)
     else:
         unknown(QUESTIONS[10], "Registry distress flags are not established: " + reason("identity", "the register record was not available") + ".")
     return answers

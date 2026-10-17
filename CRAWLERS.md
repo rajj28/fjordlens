@@ -1,4 +1,4 @@
-# Connectors and access policy (FjordLens v1)
+# Connectors and access policy (FjordLens v1.1)
 
 | Connector | Published facts | Rights/access basis |
 | --- | --- | --- |
@@ -8,7 +8,7 @@
 | Regnskapsregisteret (`official.financials`) | Filed amounts, currency, account type, reporting period, filing-year availability | Official public annual-accounts API |
 | Group structure (`official.group`) | Direct parent/child relationships involving the target | Official open API |
 | Verified company sites (`website.research`) | Descriptions, exact-company structured jobs, dated publications, site-declared social/contact links | Public pages, conservative robots handling; no authentication or paywall bypass |
-| Optional web search (`search.nominate`) | Nothing directly: nominates candidate sites for the identity gate | Brave Web Search API with an evaluator-supplied key only; results used transiently, never stored |
+| Optional web search (`search.nomination_batches`) | Nothing directly: nominates candidate sites for the identity gate | Brave Web Search API with an evaluator-supplied key only; results used transiently, never stored |
 | NAV job feed (`jobs.research`) | Active job ads where the official feed names the company (or its workplace) as employer | Official public feed (arbeidsplassen.no); terms at https://arbeidsplassen.nav.no/vilkar-api |
 
 ## Website discovery
@@ -20,12 +20,38 @@
 4. Wikidata official website (from cached `caches["wikidata"]`, when supplied)
 5. NAV employer homepage (from cached `caches["nav_homepages"]`)
 6. DNS guess from legal name (`discovery.guess_domains`, up to 6 domains, checked via live DNS when `fetcher.dns_enabled`),
-   and from registered workplace trading names (these can only pass by organisation number)
-7. Only when none of the above passes the gate and `BRAVE_SEARCH_API_KEY` is set: `search.nominate` queries the
-   organisation number (`"923609016" OR "923 609 016"`), and only if that nominates nothing, `"legal name" town`
-   (a result's domain must carry the name's longest distinctive word). Up to 3 site roots; directories, social
-   platforms and already-tried domains are excluded. Name-search nominations pass like DNS guesses (rule A or D);
+   and from registered workplace trading names (these can only pass by organisation number). Legal-name hints include
+   descriptor-stripped names, alternate Norwegian spellings, IDNA names and AS suffixes within the same six-domain
+   cap. Removing a descriptor affects nomination only; the full legal identity is still checked by the gate.
+7. Only when none of the free candidates passes the gate and an evaluator-supplied `BRAVE_SEARCH_API_KEY` (or
+   `BRAVE_API_KEY`) is set: `search.nomination_batches` queries the organisation number
+   (`"923609016" OR "923 609 016"`), then `"legal name" town` if no first-batch candidate is verified.
+   The second query is allowed even when the first found candidates that the gate rejected. Each query nominates
+   at most 3 site roots; a verified candidate stops iteration. A name-search result's domain must carry the name's
+   longest distinctive word after generic business and profession descriptors are excluded. Directories and social
+   platforms are excluded. A deep result retains its `verification_url`, which may supply a previously unvisited
+   proof page on an already-tried domain. Name-search nominations pass like DNS guesses (rule A or D);
    organisation-number nominations only by rule A, because a supplier's or customer's page also shows our number.
+
+### Verification and bounded traversal
+
+- Up to five free candidates are tried before optional search. Each homepage is checked before extra proof pages
+  are requested. Legal notices, imprint pages and contact-information pages take priority, followed by contact,
+  privacy, general terms and about pages; intent groups are interleaved to avoid exhausting the limit on variants
+  of one page. A homepage with an owner-name match permits up to five proof pages; otherwise the cap is three.
+  A same-host deep search result is tried first. Any hard rejection stops that candidate's verification.
+- A verified section of a larger site is published as that section's URL. Site-wide descriptions, jobs, profiles
+  and publications are withheld for a section so they are not attributed to the subsidiary or tenant.
+- `--max-pages` defaults to 12. `crawl_site` counts the accepted homepage and its fetched verification pages
+  against this content-page allowance, then expands newly fetched pages into a bounded frontier. Contact, hiring,
+  activity and about routes share the allowance; news-listing links can lead to individual article pages.
+- `sitemap_links` reads at most four sitemap documents, including nested indexes, preferring post/news maps.
+  It starts at `/sitemap.xml` and can fall back to `/sitemap_index.xml`. Sitemaps are consulted when the initial
+  frontier has no activity route, or when the frontier empties. `lastmod` only orders candidate fetches; it is
+  never used as a publication date.
+- Frontier URLs are deduplicated, and utility routes and binary assets are skipped. The content-page allowance
+  is not a total HTTP cap: robots, redirects, rejected candidates, sitemap documents, missing-family probes,
+  WordPress API calls and up to two eligible feeds also consume the shared run/per-company request budgets.
 
 ### Extraction on a verified site (`website.extract`, one fact per source key; the first extractor wins)
 - Descriptions (meta description on home/about pages, first substantive paragraph), public brand (`og:site_name`
@@ -42,10 +68,20 @@
   homepage (`articles.extract_dated_links`: links on the verified host only; a time element or written date inside
   the link or in the nearest enclosing element that links to no other page; the quote is the verbatim source covering
   link and date, and an item whose link and date cannot be quoted together is skipped), an article page's own date
-  (`article:published_time` meta, a JSON-LD article node about that page, or the time element of the page's single
-  `<article>`; pagination pages are listings, not articles), and up to 10 posts from the site's WordPress REST API
+  (`article:published_time` meta, a JSON-LD article node about that page, or a supported publication time on the
+  page's single `<article>`; pagination pages are listings, not articles), and up to 10 posts from the site's WordPress REST API
   (`/wp-json/wp/v2/posts`, only when the homepage references `wp-json`; the API and each post must be on the verified
-  host; WordPress's default "Hello world!" post is ignored). Future dates and dates before 1990 are rejected.
+  host; WordPress's default "Hello world!" post is ignored). Article dates before 1990 and future publication
+  dates are rejected. A generic creation-date meta tag plus an `<article>` wrapper does not establish that a
+  root-level services page is a publication. CMS static-page/archive markers require stronger article evidence.
+  JSON-LD must identify the fetched page, including functional query parameters; tracking parameters and equivalent
+  Unicode/percent-encoded paths do not create duplicate articles. Encoded slashes remain distinct.
+- Publication-date safeguards: modification labels such as `Updated`, `modified`, `oppdatert` and `dateModified`
+  do not become publication dates. Atom `updated` alone is insufficient. Comment/review feeds, their channel
+  titles, and item links into comment anchors are excluded. Feed evidence stays tied to the captured feed bytes;
+  its article link is a separate content URL, not a claim that the article itself was fetched. `published_on`
+  retains the source's calendar date. When meta, JSON-LD, WordPress, feed or article-time evidence includes a time,
+  `published_at` preserves the original ISO or RFC timestamp; a missing timezone is not invented or converted.
 - Missing-type probe: when the link-driven crawl leaves publications or contacts empty, up to two conventional pages
   per missing family (`/nyheter`, `/aktuelt`, `/blogg`, `/news`; `/kontakt`, `/kontakt-oss`, `/contact`).
 - Hiring: JobPosting markup on the verified site (expired `validThrough` skipped); careers pages are recorded as part
@@ -87,8 +123,9 @@ Official API reference: https://data.brreg.no/enhetsregisteret/api/dokumentasjon
 - No retries on budget errors, robots blocks, cutoff, replay misses, or policy violations.
 
 ### TLS/www fallbacks (`website.fetch_page`)
-- On DNS failure or a certificate that is not valid for the host name: tries the other www/non-www host.
-- On TLS/connection failure (no HTTP response at all): retries the same URL over plain HTTP.
+- On DNS, certificate or transient TLS/connection failure with no HTTP response: tries the other www/non-www host.
+- A failed HTTPS request can also try the same URL over plain HTTP. At most two alternate URLs are attempted;
+  each still passes normal robots, public-IP and request-budget checks.
 - HTTP error statuses (4xx, 5xx) are answers and not retried here.
 
 ### Restricted platforms

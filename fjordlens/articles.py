@@ -10,7 +10,8 @@ from datetime import date
 from html.parser import HTMLParser
 import json
 import re
-from urllib.parse import urljoin, urlsplit, urlunsplit
+from urllib.parse import urljoin, urlsplit, urlunsplit, parse_qsl, quote
+from .html import static_page_template
 
 VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"}
 FILE_SUFFIXES = (".pdf", ".jpg", ".jpeg", ".png", ".gif", ".zip", ".doc", ".docx", ".xls", ".xlsx")
@@ -34,6 +35,33 @@ MAX_QUOTE = 2000          # a link+date quote longer than this is not captured: 
 MAX_DEPTH = 120           # enclosing elements tracked per position (deeper markup is transparent)
 MAX_ELEMENTS = 40000      # elements tracked per page
 TEXT_CAP = 3000           # characters of text kept per element (bigger elements are lists, not items)
+ACTION_LABEL = re.compile(r"^(?:les mer|les hele (?:saken|artikkelen)|read more|read (?:the )?(?:article|story)|continue reading|se mer)(?:\b|[.›»])", re.I)
+DATE_LABEL = re.compile(r"dateModified|datePublished|\b(?:updated|modified|oppdatert|endret|published|posted|publisert|offentliggjort)\b", re.I)
+MODIFICATION_LABELS = {"datemodified", "updated", "modified", "oppdatert", "endret"}
+
+
+def modification_date(text):
+    labels = DATE_LABEL.findall(text)
+    return bool(labels and labels[-1].lower() in MODIFICATION_LABELS)
+
+
+def canonical_path(path):
+    """Unicode and UTF-8 percent forms compare equally; encoded slashes stay distinct."""
+    encoded = quote(path, safe="/:@!$&'()*+,;=-._~%")
+    return re.sub(r"%([0-9a-f]{2})", lambda m: chr(int(m[1], 16))
+                  if re.fullmatch(r"[A-Za-z0-9._~-]", chr(int(m[1], 16))) else "%" + m[1].upper(), encoded, flags=re.I)
+
+
+def functional_query(query):
+    pairs = [(k, v) for k, v in parse_qsl(query, keep_blank_values=True)
+             if not k.lower().startswith("utm_") and k.lower() not in {"fbclid", "gclid", "msclkid"}]
+    # Distinct parameter order is incidental; repeated parameter order can be functional.
+    return tuple(sorted(pairs, key=lambda item: item[0]))
+
+
+def publication_timestamp(value):
+    """Preserve the source's timestamp and timezone, including RFC feed dates, without assuming local time."""
+    return value if isinstance(value, str) and re.search(r"\d{1,2}:\d{2}", value) else None
 
 
 def site_of(url: str) -> str:
@@ -181,7 +209,7 @@ def _same_site_url(href, page_url, site):
 
 def _title(link):
     title = " ".join("".join(link["text"]).split())
-    if not (8 <= len(title) <= 200):
+    if not (8 <= len(title) <= 200) or ACTION_LABEL.search(title):
         return None
     only_date = find_date(title, "9999-12-31")
     return None if only_date and only_date[1].strip() == title.strip() else title
@@ -215,6 +243,8 @@ def extract_dated_links(html: str, page_url: str, today: str) -> list[dict]:
             continue
         found = None
         for entry in link["times"]:  # A time element inside the link itself.
+            if modification_date(entry["tag"] + " " + re.sub(r"<[^>]+>", " ", html[max(0, entry["start"] - 80):entry["end"]])):
+                continue
             iso = _iso_prefix(entry["value"], today)
             if iso and entry["tag"] in html:
                 found = (iso, "time_element", _quote(html, link["start"], link["end"]))
@@ -231,14 +261,19 @@ def extract_dated_links(html: str, page_url: str, today: str) -> list[dict]:
             if len(element["hrefs"]) > 1:
                 break
             for entry in element["times"]:
+                if modification_date(entry["tag"] + " " + re.sub(r"<[^>]+>", " ", html[max(0, entry["start"] - 80):entry["end"]])):
+                    continue
                 iso = _iso_prefix(entry["value"], today)
                 if iso and entry["tag"] in html:
                     start = min(link["start"], entry["start"])
                     end = max(link["end"] or link["start"], entry["end"] or entry["start"])
                     found = (iso, "time_element", _quote(html, start, end))
                     break
-            if found is None and element["size"] <= TEXT_CAP:
-                hit = find_date("".join(element["text"]), today)
+            if found is None and element["size"] <= TEXT_CAP and not element["times"]:
+                block_text = "".join(element["text"])
+                hit = find_date(block_text, today)
+                if hit and modification_date(block_text[:block_text.find(hit[1])]):
+                    hit = None
                 if hit and hit[1] in html:
                     quote = _quote(html, element["start"], element["end"])
                     found = (hit[0], "block_text", quote if quote and hit[1] in quote else None)
@@ -265,9 +300,11 @@ class _Article(HTMLParser):
         self.in_script = self.in_h1 = self.in_title = False
         self.in_article = self.article_count = 0
         self.h1, self.title, self.script = [], [], []
+        self.static_page, self.current_time, self.article_text = False, None, ""
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
+        self.static_page = self.static_page or static_page_template(tag, attrs)
         if tag == "meta":
             key = (attrs.get("property") or attrs.get("name") or "").strip().lower()
             if key and attrs.get("content") is not None:
@@ -278,7 +315,9 @@ class _Article(HTMLParser):
             self.in_article += 1
             self.article_count += 1
         elif tag == "time" and self.in_article and attrs.get("datetime"):
-            self.times.append((attrs["datetime"], self.get_starttag_text()))
+            self.current_time = {"value": attrs["datetime"], "tag": self.get_starttag_text(),
+                                 "context": self.article_text[-80:], "text": []}
+            self.times.append(self.current_time)
         elif tag == "h1":
             self.in_h1 = True
         elif tag == "title":
@@ -294,10 +333,17 @@ class _Article(HTMLParser):
             self.in_h1 = False
         elif tag == "title":
             self.in_title = False
+        elif tag == "time":
+            self.current_time = None
 
     def handle_data(self, data):
         if self.in_script:
             self.script.append(data)
+            return
+        if self.in_article:
+            self.article_text = (self.article_text + data)[-1000:]
+        if self.current_time is not None:
+            self.current_time["text"].append(data)
         if self.in_h1:
             self.h1.append(data)
         if self.in_title:
@@ -331,7 +377,8 @@ def _node_url(node):
 
 def _same_page(url, page_url):
     a, b = urlsplit(url), urlsplit(page_url)
-    return site_of(url) == site_of(page_url) and a.path.rstrip("/") == b.path.rstrip("/")
+    return (site_of(url) == site_of(page_url) and canonical_path(a.path).rstrip("/") == canonical_path(b.path).rstrip("/")
+            and functional_query(a.query) == functional_query(b.query))
 
 
 def article_published_date(html: str, today: str = "9999-12-31", page_url: str | None = None) -> dict | None:
@@ -344,11 +391,9 @@ def article_published_date(html: str, today: str = "9999-12-31", page_url: str |
     except Exception:  # noqa: BLE001
         pass
     title = " ".join((parser.meta.get("og:title") or "".join(parser.h1) or "".join(parser.title)).split())
-    for key in ("article:published_time", "date", "pubdate", "publish-date", "dc.date.issued"):
-        value = parser.meta.get(key)
-        iso = _iso_prefix(value or "", today)
-        if iso and value in html:
-            return {"published_on": iso, "title": title, "source": "meta", "span": value}
+    site_name = " ".join(parser.meta.get("og:site_name", "").split())
+    if site_name:
+        title = re.sub(r"\s+[|–—-]\s+" + re.escape(site_name) + r"$", "", title, flags=re.I)
     nodes = []
     for raw in parser.scripts:
         try:
@@ -356,10 +401,21 @@ def article_published_date(html: str, today: str = "9999-12-31", page_url: str |
         except ValueError:
             continue
         nodes.extend((node, raw) for node in _article_nodes(data))
-    for node, raw in nodes:
-        url = _node_url(node)
-        if (url and page_url and not _same_page(url, page_url)) or (not url and len(nodes) != 1):
-            continue  # an article node about another page, or one of several unattributed nodes
+    own_nodes = [(node, raw) for node, raw in nodes
+                 if ((_node_url(node) and (not page_url or _same_page(_node_url(node), page_url)))
+                     or (not _node_url(node) and len(nodes) == 1))]
+    explicit_article = parser.meta.get("og:type", "").lower() == "article" or bool(own_nodes)
+    strong_nodes = [node for node, _ in own_nodes if any(isinstance(kind, str) and kind in {"NewsArticle", "BlogPosting", "PressRelease"}
+                    for kind in (node.get("@type") if isinstance(node.get("@type"), list) else [node.get("@type")]))]
+    if parser.static_page and not strong_nodes:
+        return None
+    for key in ("article:published_time", "pubdate", "publish-date", "dc.date.issued"):
+        value = parser.meta.get(key)
+        iso = _iso_prefix(value or "", today)
+        if iso and value in html:
+            return {"published_on": iso, "title": title, "source": "meta", "span": value,
+                    "article_evidence": explicit_article, "published_at": publication_timestamp(value)}
+    for node, raw in own_nodes:
         value = node.get("datePublished")
         if not isinstance(value, str):
             continue
@@ -369,10 +425,20 @@ def article_published_date(html: str, today: str = "9999-12-31", page_url: str |
         member = re.search(r'"datePublished"\s*:\s*"' + re.escape(value) + '"', raw)
         if member and member.group(0) in html:
             headline = node.get("headline") if isinstance(node.get("headline"), str) else ""
-            return {"published_on": iso, "title": title or headline, "source": "jsonld", "span": member.group(0)}
+            return {"published_on": iso, "title": title or headline, "source": "jsonld", "span": member.group(0),
+                    "article_evidence": True, "published_at": publication_timestamp(value)}
     if parser.article_count == 1:
-        for value, tag_text in parser.times:
+        for entry in parser.times:
+            value, tag_text = entry["value"], entry["tag"]
+            if modification_date(entry["context"] + " " + (tag_text or "") + " " + "".join(entry["text"])):
+                continue
             iso = _iso_prefix(value, today)
             if iso and tag_text and tag_text in html:
-                return {"published_on": iso, "title": title, "source": "time_element", "span": tag_text}
+                return {"published_on": iso, "title": title, "source": "time_element", "span": tag_text,
+                        "article_evidence": True, "published_at": publication_timestamp(value)}
+    value = parser.meta.get("date")
+    iso = _iso_prefix(value or "", today)
+    if iso and value in html:
+        return {"published_on": iso, "title": title, "source": "meta", "span": value,
+                "article_evidence": explicit_article, "published_at": publication_timestamp(value)}
     return None

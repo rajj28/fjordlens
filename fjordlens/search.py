@@ -55,22 +55,28 @@ def usable(url, entity, needs_name_in_host, exclude):
         return False
     if needs_name_in_host:
         # The domain must carry the name's most distinctive (longest non-generic) word, not just any word.
-        distinctive = sorted((t for t in gate.name_tokens(entity.get("navn") or "") if t not in discovery.GENERIC and len(t) >= 4),
+        distinctive = sorted((t for t in gate.name_tokens(entity.get("navn") or "")
+                              if t not in discovery.GENERIC | discovery.DOMAIN_DESCRIPTORS and len(t) >= 4),
                              key=len, reverse=True)
         label = domain.split(".")[0].replace("-", "")
         return bool(distinctive) and distinctive[0] in label
     return True
 
 
-def nominate(fetcher, entity, exclude=(), limit=3):
-    """Ranked candidate sites from search, as discovery candidates (origin search_orgnr / search_name)."""
+def nomination_batches(fetcher, entity, exclude=(), limit=3, allow_verification=False):
+    """Yield one transient nomination batch per query, so verification decides whether to search again.
+
+    The caller stops iteration as soon as a candidate is verified. A deep search result may
+    nominate a proof page on a previously tried domain; it is still fetched and gated normally.
+    """
     key = api_key()
     if not key:
-        return []
+        return
     org = entity.get("organisasjonsnummer")
     exclude = set(exclude)
-    found = []
+    nominated_urls = set()
     for query in queries(entity):
+        found = []
         url = ENDPOINT + "?" + urlencode({"q": query["q"], "country": "no", "count": 10, "safesearch": "strict"})
         r = fetcher.get(url, org, headers={"X-Subscription-Token": key, "Accept": "application/json"},
                         cost=cost_per_query(), store=False)
@@ -82,13 +88,30 @@ def nominate(fetcher, entity, exclude=(), limit=3):
             continue
         for item in results:
             link = item.get("url") if isinstance(item, dict) else None
-            if not isinstance(link, str) or not usable(link, entity, query["needs_name_in_host"], exclude):
+            if not isinstance(link, str):
                 continue
-            exclude.add(gate.registered_domain(link))
             parts = urlsplit(link)
-            found.append({"url": f"{parts.scheme}://{parts.netloc}/", "origin": query["kind"], "search_rank": len(found) + 1})
+            has_proof_path = parts.path not in ("", "/")
+            allowed_exclude = () if allow_verification and has_proof_path else exclude
+            if not usable(link, entity, query["needs_name_in_host"], allowed_exclude):
+                continue
+            domain = gate.registered_domain(link)
+            # One candidate per domain per query; allow a different proof page in the fallback query.
+            if domain in {gate.registered_domain(c["url"]) for c in found} or link in nominated_urls:
+                continue
+            nominated_urls.add(link)
+            candidate = {"url": f"{parts.scheme}://{parts.netloc}/", "origin": query["kind"], "search_rank": len(found) + 1}
+            if has_proof_path:
+                candidate["verification_url"] = link
+            found.append(candidate)
             if len(found) >= limit:
-                return found
+                break
+        yield found
+
+
+def nominate(fetcher, entity, exclude=(), limit=3):
+    """Compatibility helper: first non-empty batch. Live research uses nomination_batches."""
+    for found in nomination_batches(fetcher, entity, exclude=exclude, limit=limit):
         if found:
-            return found  # Only spend the follow-up query when the org-number query nominated nothing.
-    return found
+            return found
+    return []

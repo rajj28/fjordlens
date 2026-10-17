@@ -4,9 +4,9 @@ from datetime import datetime, timezone
 import os
 import html as stdlib_html
 import re
-from urllib.parse import urljoin, urlsplit, urlencode
+from urllib.parse import urljoin, urlsplit, urlencode, parse_qsl
 from xml.etree import ElementTree as ET
-from . import articles, discovery, gate, search
+from . import articles, discovery, gate, search, sections
 from .core import canonical
 from .gate import registered_domain
 from .html import clean, parse_html, structured_nodes
@@ -15,7 +15,7 @@ from .identity import assess, contains_name, host, jsonld_types, node_org, node_
 SOCIAL_HOSTS = {"linkedin.com": "LinkedIn", "facebook.com": "Facebook", "instagram.com": "Instagram",
                 "youtube.com": "YouTube", "youtu.be": "YouTube", "x.com": "X", "twitter.com": "X", "tiktok.com": "TikTok"}
 EMAIL_PROVIDERS = {"gmail.com", "hotmail.com", "hotmail.no", "outlook.com", "outlook.no", "live.com", "live.no", "yahoo.com", "yahoo.no", "icloud.com", "me.com", "online.no", "frisurf.no", "broadpark.no", "lyse.net", "start.no", "msn.com", "proton.me", "protonmail.com"}
-INTEREST = re.compile(r"kontakt|contact|om-oss|about|personvern|privacy|legal|impressum|career|karriere|ledig|stilling|jobs|nyhet|news|aktuelt|presse|press|location|kontor", re.I)
+INTEREST = re.compile(r"kontakt|contact|om-oss|about|personvern|privacy|legal|impressum|career|karriere|ledig|stilling|jobs|nyhet|news|aktuelt|presse|press|blogg?|artikler|articles|location|kontor", re.I)
 
 def valid_date(value):
     try:
@@ -25,6 +25,8 @@ def valid_date(value):
         return None
 
 def page_priority(link):
+    if link.get("article_hint"):
+        return 2
     value = link["url"] + " " + link.get("text", "")
     groups = (r"kontakt|contact|legal|impressum", None, r"nyhet|news|aktuelt|press|blogg|blog|artikler", r"om-oss|about|location|kontor")
     for i, pattern in enumerate(groups):
@@ -195,7 +197,15 @@ def known_claim(profile, field, key):
 
 
 def known_publication(profile, url):
-    return known_claim(profile, "company_publication", url)
+    target = url_key(url)
+    with profile.lock:
+        return any(c["field"] == "company_publication" and url_key(c.get("key", "")) == target for c in profile.data["claims"])
+
+
+def url_key(url):
+    """Ignore fragments, tracking and trailing slashes without merging meaningful query URLs."""
+    parts = urlsplit(url)
+    return host(url), articles.canonical_path(parts.path).rstrip("/"), urlencode(articles.functional_query(parts.query))
 
 
 def known_phone(profile, digits):
@@ -207,16 +217,25 @@ def article_page(profile, page, response, proof):
     """A single article on the verified site that states its own publication date (meta, JSON-LD or time element)."""
     parts = urlsplit(response.url)
     segments = [x for x in parts.path.split("/") if x]
-    if len(segments) < 2 or not LISTING_PAGE.search("/".join(segments[:-1])) or host(response.url) != host(proof["url"]):
+    if not segments or host(response.url) != host(proof["url"]):
         return
     if PAGINATION.search(parts.path + ("?" + parts.query if parts.query else "")) or segments[-1].isdigit():
         return
-    url = f"{parts.scheme}://{parts.netloc}{parts.path}"
+    url = parts._replace(fragment="").geturl()
     found = articles.article_published_date(response.text(), response.retrieved_at[:10], page_url=response.url)
     if not found or len(found.get("title") or "") < 8 or known_publication(profile, url):
         return
+    # Many CMSs publish articles at /a-story-slug/. Require explicit article markup there;
+    # generic page creation dates on services, products or contact pages are not news.
+    under_news = len(segments) >= 2 and LISTING_PAGE.search("/".join(segments[:-1]))
+    if not under_news and not found.get("article_evidence"):
+        return
+    if found["title"].strip().lower() in WORDPRESS_PLACEHOLDERS:
+        return
     value = {"title": found["title"][:300], "url": url, "published_on": found["published_on"], "source_kind": "company_owned",
              "independent_sentiment": False}
+    if found.get("published_at"):
+        value["published_at"] = found["published_at"]
     add_web(profile, "company_publication", value, response, "activity", proof, span=found["span"], key=url,
             date=found["published_on"], scope="company_published_content", method="html_article_date_v1",
             selector={"type": "article_date", "source": found["source"], "value": found["span"][:500]})
@@ -356,6 +375,8 @@ def wordpress_posts(profile, fetcher, org, home, proof):
             continue
         value = {"title": title[:300], "url": link, "published_on": published, "source_kind": "company_owned",
                  "independent_sentiment": False}
+        if articles.publication_timestamp(post.get("date")):
+            value["published_at"] = post["date"]
         # JSON evidence: the quote is the verbatim slice of this post's object in the API response.
         profile.add("company_publication", value, r, pointer=f"/{index}", family="activity", key=link, effective_at=published,
                     source_class="company_owned", method="json_pointer_v1", scope="company_published_content", identity_proof=proof)
@@ -452,6 +473,8 @@ def extract(profile, entity, page, response, proof):
                      "location": node.get("jobLocation"), "employer": employer.get("name"), "status": "source_reported"}
             add_web(profile, "job_posting", value, response, "hiring", proof, span=jsonld_quote(page, path) or canonical(node)[:3000], key=job_key, date=posted, method="jsonld_jobposting_v1", selector={"type": "parsed_html_pointer", "value": "/jsonld" + path})
         if any(t in {"NewsArticle", "Article", "BlogPosting", "PressRelease"} for t in types):
+            if page.get("static_page") and not types & {"NewsArticle", "BlogPosting", "PressRelease"}:
+                continue  # Generic Article schema on CMS contact/service pages is not a publication.
             headline = node.get("headline") or node.get("name")
             date = valid_date(node.get("datePublished"))
             target = node.get("url") or page["url"]
@@ -462,8 +485,11 @@ def extract(profile, entity, page, response, proof):
                 continue
             if date > response.retrieved_at[:10] or known_publication(profile, target):
                 continue
-            add_web(profile, "company_publication", {"title": clean(headline), "url": target, "published_on": date,
-                                                      "source_kind": "company_owned", "independent_sentiment": False}, response,
+            publication = {"title": clean(headline), "url": target, "published_on": date,
+                           "source_kind": "company_owned", "independent_sentiment": False}
+            if articles.publication_timestamp(node.get("datePublished")):
+                publication["published_at"] = node["datePublished"]
+            add_web(profile, "company_publication", publication, response,
                     "activity", proof, span=jsonld_quote(page, path) or canonical(node)[:3000], key=target, date=date, scope="company_published_content", method="jsonld_article_v1", selector={"type": "parsed_html_pointer", "value": "/jsonld" + path})
         if gate.OWNER_NODE_PATH.match(path or "/0") and own_organisation(node, org, entity.get("navn") or ""):
             same_as(profile, page, response, proof, node, path, entity.get("navn") or "")
@@ -472,14 +498,29 @@ def extract(profile, entity, page, response, proof):
                 if node.get(name):
                     add_web(profile, field, node[name], response, "contact", proof, span=jsonld_quote(page, path + "/" + name) or canonical(node[name]), method="jsonld_organization_v1", selector={"type": "parsed_html_pointer", "value": "/jsonld" + path + "/" + name})
 
+COMMENT_FEED_TITLE = re.compile(r"^\s*(?:comments?\s+(?:on|for|to)\b|kommentar(?:er)?\s+til\b|reviews?\s+(?:of|for)\b)", re.I)
+
+
+def comment_feed_url(url):
+    parts = urlsplit(url)
+    query = dict(parse_qsl(parts.query))
+    return bool(re.search(r"/(?:comments?|reviews?|kommentarer?)(?:/|$)", parts.path, re.I)
+                or re.search(r"comment|review", query.get("feed", ""), re.I)
+                or query.get("withcomments") == "1")
+
+
 def feed(profile, entity, response, proof):
-    if host(response.url) != host(proof["url"]):
+    if host(response.url) != host(proof["url"]) or comment_feed_url(response.url):
         return
     try:
         if b"<!DOCTYPE" in response.body.upper() or b"<!ENTITY" in response.body.upper():
             return
         root = ET.fromstring(response.body)
     except ET.ParseError:
+        return
+    container = next((child for child in root if child.tag.split("}")[-1] == "channel"), root)
+    feed_title = next(((child.text or "") for child in container if child.tag.split("}")[-1] == "title"), "")
+    if COMMENT_FEED_TITLE.search(feed_title):
         return
     raw_text = response.text()
     raw_items = [m.group(0) for m in re.finditer(r"(?s)<(?:[A-Za-z0-9_]+:)?(item|entry)\b.*?</(?:[A-Za-z0-9_]+:)?\1>", raw_text)]
@@ -489,22 +530,33 @@ def feed(profile, entity, response, proof):
             continue
         position += 1
         values = {child.tag.split("}")[-1]: (child.text or "").strip() for child in item}
-        title = values.get("title")
+        title = clean(re.sub(r"<[^>]+>", " ", stdlib_html.unescape(values.get("title") or "")))
         target = values.get("link")
         if not target:
-            target = next((c.attrib.get("href") for c in item if c.tag.split("}")[-1] == "link"), None)
-        date = values.get("pubDate") or values.get("published") or values.get("updated")
+            target = next((c.attrib.get("href") for c in item if c.tag.split("}")[-1] == "link"
+                           and c.attrib.get("rel", "alternate") == "alternate"), None)
+        target = urljoin(response.url, target) if target else None
+        if target and (re.match(r"(?:comments?|reviews?)(?:[-_]|$)", urlsplit(target).fragment, re.I)
+                       or COMMENT_FEED_TITLE.search(title)):
+            continue
+        # Atom's updated date is a revision date, not evidence of publication.
+        date = values.get("pubDate") or values.get("published")
         parsed = valid_date(date)
         if not parsed and date:
             try:
                 from email.utils import parsedate_to_datetime
                 parsed = parsedate_to_datetime(date).date().isoformat()
-            except (ValueError, TypeError):
+            except (ValueError, TypeError, OverflowError):
                 pass
-        if title and target and parsed and parsed <= response.retrieved_at[:10] and host(target) == host(proof["url"]):
-            add_web(profile, "company_publication", {"title": clean(title), "url": target, "published_on": parsed,
-                                                      "source_kind": "company_owned", "independent_sentiment": False}, response,
-                    "activity", proof, span=(raw_items[position] if position < len(raw_items) else ET.tostring(item, encoding="unicode"))[:3000], key=target, date=parsed,
+        if (title and title.lower() not in WORDPRESS_PLACEHOLDERS and target and parsed and parsed <= response.retrieved_at[:10]
+                and host(target) == host(proof["url"]) and not known_publication(profile, target)
+                and position < len(raw_items)):
+            publication = {"title": clean(title), "url": target, "published_on": parsed,
+                           "source_kind": "company_owned", "independent_sentiment": False}
+            if articles.publication_timestamp(date):
+                publication["published_at"] = date
+            add_web(profile, "company_publication", publication, response,
+                    "activity", proof, span=raw_items[position][:3000], key=target, date=parsed,
                     scope="company_published_content", method="rss_atom_item_v1")
             count += 1
         if count >= 20:
@@ -525,7 +577,8 @@ def fetch_page(profile, fetcher, org, url):
         return r
     parts = urlsplit(url)
     alternates = []
-    if r.error and re.search(r"getaddrinfo|Name or service|nodename|DNS|Hostname mismatch|certificate is not valid for", r.error):
+    if r.error and (re.search(r"getaddrinfo|Name or service|nodename|DNS|Hostname mismatch|certificate is not valid for", r.error)
+                    or RETRY_HTTP.search(r.error)):
         other = parts.hostname[4:] if parts.hostname.startswith("www.") else "www." + parts.hostname
         alternates.append(parts._replace(netloc=other).geturl())
     if url.startswith("https://"):
@@ -544,24 +597,29 @@ def html_page(response):
     return parse_html(response.text(), response.url)
 
 
-def verification_links(page, base_url, limit=2):
-    """Same-site contact/about/legal pages, contact first, no duplicates or documents."""
+def verification_links(page, base_url, limit=5):
+    """Bounded owner-proof pages, prioritizing legal notices over generic forms and terms."""
     domain = registered_domain(base_url)
-    picked, seen = [], {urlsplit(base_url).path.rstrip("/")}
+    picked, seen, groups = [], {url_key(base_url)}, {}
     def rank(link):
         text = link["url"] + " " + link.get("text", "")
-        return next((i for i, p in enumerate((r"kontakt|contact", r"om-oss|om oss|about|firma|selskap", r"personvern|privacy|impressum|legal|vilk")) if re.search(p, text, re.I)), 9)
+        return next((i for i, p in enumerate((r"legal[-_/ ]?notice|impressum|contact[-_/ ]?information",
+                    r"kontakt|contact", r"personvern|privacy", r"legal|vilk|terms", r"om-oss|om oss|about|firma|selskap"))
+                     if re.search(p, text, re.I)), 9)
     for link in sorted(page["links"], key=lambda l: (rank(l), len(l["url"]))):
         parts = urlsplit(link["url"])
         path = parts.path.rstrip("/")
-        if registered_domain(link["url"]) != domain or path in seen or not VERIFY.search(link["url"] + " " + link.get("text", "")):
+        if registered_domain(link["url"]) != domain or url_key(link["url"]) in seen or not VERIFY.search(link["url"] + " " + link.get("text", "")):
             continue
         if re.search(r"\.(pdf|jpe?g|png|gif|zip|docx?|xlsx?)$", path, re.I):
             continue
-        seen.add(path)
-        picked.append(link)
-        if len(picked) >= limit:
-            break
+        seen.add(url_key(link["url"]))
+        groups.setdefault(rank(link), []).append(link)
+    # A second contact-language variant must not hide the site's legal ownership page.
+    while any(groups.values()) and len(picked) < limit:
+        for rank_ in sorted(groups):
+            if groups[rank_] and len(picked) < limit:
+                picked.append(groups[rank_].pop(0))
     return picked
 
 
@@ -581,6 +639,7 @@ def publish_declared_profiles(profile, declared):
 
 def try_candidates(profile, fetcher, org, ctx, candidates, last_state):
     """Fetch each candidate's homepage (plus verification pages) and return the first gate-accepted site."""
+    section_candidates = []
     for cand in candidates:
         r = fetch_page(profile, fetcher, org, cand["url"])
         page = html_page(r)
@@ -593,22 +652,169 @@ def try_candidates(profile, fetcher, org, ctx, candidates, last_state):
         pages, responses = [page], [r]
         verdict = gate.assess(ctx, cand, pages)
         if not verdict["hard_reject"] and not verdict["signals"].get("org_on_homepage_owner_position"):
-            for link in verification_links(page, r.url):
+            links = verification_links(page, r.url)
+            original = cand.get("verification_url")
+            if original and host(original) == host(r.url) and url_key(original) != url_key(r.url):
+                links.insert(0, {"url": original, "text": "Search result proof page"})
+            if not links and verdict["signals"].get("name_owner"):
+                links = [{"url": urljoin(r.url, path), "text": "Conventional legal proof page"}
+                         for path in ("/kontakt", "/personvern")]
+            verified = {url_key(r.url)}
+            proof_limit = 5 if verdict["signals"].get("name_owner") else 3
+            for link in links[:proof_limit]:
+                if url_key(link["url"]) in verified:
+                    continue
+                verified.add(url_key(link["url"]))
                 sub = fetch_page(profile, fetcher, org, link["url"])
                 subpage = html_page(sub)
                 if subpage and registered_domain(sub.url) == registered_domain(r.url):
                     pages.append(subpage)
                     responses.append(sub)
-            if len(pages) > 1:
-                verdict = gate.assess(ctx, cand, pages)
+                    verdict = gate.assess(ctx, cand, pages)
+                    if verdict["hard_reject"] or (verdict["publishable"] and verdict["signals"].get("org_owner")):
+                        break
         profile.data["identity_assessments"].append(verdict)
         if verdict["publishable"]:
             return (verdict, pages, responses), last_state
+        section_candidates.extend(sections.nominate_company_sections(ctx.name, cand, page, r.text()))
         last_state = "ambiguous"
+    seen_sections = set()
+    for cand in section_candidates:
+        if cand["url"] in seen_sections:
+            continue
+        if len(seen_sections) >= 2:
+            break
+        seen_sections.add(cand["url"])
+        r = fetch_page(profile, fetcher, org, cand["url"])
+        page = html_page(r)
+        profile.data["attempts"].append({"strategy": "registry_company_section_v1", "url": cand["url"],
+                                         "parent_url": cand["parent_url"], "state": r.state})
+        if page is None:
+            continue
+        verdict = sections.assess_company_section(ctx, cand, page)
+        profile.data["identity_assessments"].append(verdict)
+        if verdict["publishable"]:
+            return (verdict, [page], [r]), last_state
     return None, last_state
 
 
-def research(profile, fetcher, entity, max_pages=7, caches=None):
+ASSET_PATH = re.compile(r"\.(?:pdf|zip|jpe?g|png|gif|svg|webp|avif|ico|mp[34]|mov|docx?|xlsx?|css|js|xml|gz)$", re.I)
+UTILITY_PATH = re.compile(r"/(?:wp-admin|wp-login|cart|checkout|account|login|search|tag|category|author)(?:/|\.|$)", re.I)
+
+
+def crawl_links(page, home_url):
+    """Candidates for fetching, never identity or publication evidence in their own right."""
+    listing = bool(LISTING_PAGE.search(urlsplit(page["url"]).path))
+    for link in page["links"]:
+        parts = urlsplit(link["url"])
+        if (host(link["url"]) != host(home_url) or parts.scheme not in {"http", "https"}
+                or ASSET_PATH.search(parts.path) or UTILITY_PATH.search(parts.path)):
+            continue
+        named = INTEREST.search(parts.path + " " + link.get("text", ""))
+        article = (link.get("article_context") or listing) and len(link.get("text", "")) >= 8 and parts.path.strip("/")
+        dated = articles.URL_DATE.search(parts.path)
+        if named or article or dated:
+            yield {**link, "article_hint": bool((article and not named) or dated)}
+
+
+def sitemap_links(profile, fetcher, org, home_url, max_documents=4):
+    """Follow a bounded sitemap index, preferring post/news maps. lastmod orders fetches only;
+    an article's publication date must still come from its page, feed or dated listing."""
+    pending = [(urljoin(home_url, "/sitemap.xml"), False)]
+    seen, links = set(), {}
+    while pending and len(seen) < max_documents:
+        url, post_map = pending.pop(0)
+        if url_key(url) in seen or host(url) != host(home_url):
+            continue
+        seen.add(url_key(url))
+        response = fetcher.get(url, org)
+        profile.snapshot(response)
+        profile.data["attempts"].append({"strategy": "bounded_sitemap_v2", "url": url, "state": response.state})
+        if response.state != "available" or host(response.url) != host(home_url):
+            if len(seen) == 1:
+                pending.append((urljoin(home_url, "/sitemap_index.xml"), False))
+            continue
+        if b"<!DOCTYPE" in response.body.upper() or b"<!ENTITY" in response.body.upper():
+            continue
+        try:
+            root = ET.fromstring(response.body)
+        except ET.ParseError:
+            continue
+        kind = root.tag.split("}")[-1]
+        if kind == "sitemapindex":
+            children = []
+            for item in list(root)[:1000]:
+                loc = next((c.text.strip() for c in item if c.tag.split("}")[-1] == "loc" and c.text), None)
+                if loc and host(loc) == host(home_url) and url_key(loc) not in seen:
+                    is_posts = bool(re.search(r"post|news|nyhet|article|blog|aktuelt|press", urlsplit(loc).path, re.I))
+                    children.append((loc, is_posts))
+            pending.extend(sorted(children, key=lambda item: (not item[1], "page" not in item[0], item[0])))
+        elif kind == "urlset":
+            for item in list(root)[:3000]:
+                values = {c.tag.split("}")[-1]: (c.text or "").strip() for c in item}
+                loc = values.get("loc")
+                if not loc or host(loc) != host(home_url) or ASSET_PATH.search(urlsplit(loc).path) or UTILITY_PATH.search(urlsplit(loc).path):
+                    continue
+                links.setdefault(url_key(loc), {"url": loc, "text": "", "article_hint": post_map,
+                                                "last_modified": valid_date(values.get("lastmod")) or ""})
+    return sorted(links.values(), key=lambda link: (page_priority(link),
+                  -int(link["last_modified"].replace("-", "") or "0"), link["url"]))[:1000]
+
+
+def crawl_site(profile, fetcher, org, entity, home, proof, pages, responses, max_pages):
+    """Fair, bounded frontier that expands newly fetched news pages into article candidates."""
+    visited = {url_key(resp.url) for resp in responses}
+    visited_urls = {resp.url for resp in responses}
+    queue, feeds, taken = {}, [], {}
+    scanned_sitemap = False
+
+    def enqueue(links):
+        for link in links:
+            key = url_key(link["url"])
+            if key not in visited and key not in queue and len(queue) < 1200:
+                queue[key] = link
+
+    def consume(page, response):
+        extract(profile, entity, page, response, proof)
+        enqueue(crawl_links(page, home.url))
+        feeds.extend(page["feeds"])
+
+    for page, response in zip(pages, responses):
+        consume(page, response)
+    remaining = max(0, max_pages - len(pages))
+    # Contact/about menus used to suppress sitemap lookup despite containing no activity route.
+    if remaining and not any(page_priority(link) == 2 for link in queue.values()):
+        enqueue(sitemap_links(profile, fetcher, org, home.url))
+        scanned_sitemap = True
+    while remaining:
+        if not queue and not scanned_sitemap:
+            enqueue(sitemap_links(profile, fetcher, org, home.url))
+            scanned_sitemap = True
+        if not queue:
+            break
+        link = min(queue.values(), key=lambda item: (taken.get(page_priority(item), 0), page_priority(item),
+                   -int(item.get("last_modified", "").replace("-", "") or "0"), len(item["url"]), item["url"]))
+        key = url_key(link["url"])
+        del queue[key]
+        if key in visited:
+            continue
+        visited.add(key)
+        remaining -= 1
+        priority = page_priority(link)
+        taken[priority] = taken.get(priority, 0) + 1
+        response = fetcher.get(link["url"], org)
+        visited_urls.update({link["url"], response.url})
+        visited.add(url_key(response.url))
+        profile.snapshot(response)
+        profile.data["attempts"].append({"strategy": "targeted_frontier_v2", "url": response.url,
+                                         "state": response.state, "snapshot_id": response.snapshot_id})
+        page = html_page(response)
+        if page and host(response.url) == host(home.url):
+            consume(page, response)
+    return feeds, visited_urls
+
+
+def research(profile, fetcher, entity, max_pages=12, caches=None):
     org = entity["organisasjonsnummer"]
     with profile.lock:
         units = [c["value"] for c in profile.data["claims"] if c["field"] == "registered_workplace" and isinstance(c["value"], dict)]
@@ -632,12 +838,16 @@ def research(profile, fetcher, entity, max_pages=7, caches=None):
     accepted, last_state = try_candidates(profile, fetcher, org, ctx, sites[:5], "not_available")
     if not accepted and search.enabled():
         # Optional licensed search (only with an evaluator-supplied key): nominations face the same gate.
-        nominated = search.nominate(fetcher, entity, exclude={registered_domain(c["url"]) for c in sites})
-        profile.data["attempts"].append({"strategy": "search_nomination_v1", "state": "available" if nominated else "not_available",
-                                         "candidates": [c["url"] for c in nominated]})
-        if nominated:
-            accepted, last_state = try_candidates(profile, fetcher, org, ctx, nominated, last_state)
-        elif not sites:
+        found_nomination = False
+        for nominated in search.nomination_batches(fetcher, entity, exclude={registered_domain(c["url"]) for c in sites[:5]}, allow_verification=True):
+            profile.data["attempts"].append({"strategy": "search_nomination_v2", "state": "available" if nominated else "not_available",
+                                             "candidates": [c["url"] for c in nominated]})
+            if nominated:
+                found_nomination = True
+                accepted, last_state = try_candidates(profile, fetcher, org, ctx, nominated, last_state)
+                if accepted:
+                    break
+        if not found_nomination and not sites:
             profile.state("website", "not_available", "No registry website, business e-mail domain, name-derived domain or search candidate exists")
             for family in SITE_FAMILIES:
                 if profile.data["availability"][family]["state"] != "available":
@@ -669,44 +879,10 @@ def research(profile, fetcher, entity, max_pages=7, caches=None):
             if profile.data["availability"][family]["state"] != "available":
                 profile.state(family, "not_available", "Verified page is a section of a larger site; site-wide facts are not attributed to this company")
         return
-    visited = {resp.url for resp in responses}
-    queue, feeds = [], []
-    for page, resp in zip(pages, responses):
-        extract(profile, entity, page, resp, proof)
-        queue.extend(l for l in page["links"] if registered_domain(l["url"]) == registered_domain(home.url) and INTEREST.search(l["url"] + " " + l["text"]))
-        feeds.extend(page["feeds"])
-    if len(queue) < 3:
-        sm = fetcher.get(urljoin(home.url, "/sitemap.xml"), org)
-        profile.snapshot(sm)
-        if sm.state == "available" and b"<!DOCTYPE" not in sm.body.upper() and b"<!ENTITY" not in sm.body.upper():
-            try:
-                root = ET.fromstring(sm.body)
-                for elem in root.iter():
-                    if elem.tag.split("}")[-1] == "loc" and elem.text and registered_domain(elem.text) == registered_domain(home.url) and INTEREST.search(elem.text):
-                        queue.append({"url": elem.text.strip(), "text": ""})
-            except ET.ParseError:
-                pass
-    unique = {l["url"]: l for l in queue if l["url"] not in visited and not re.search(r"\.(pdf|zip|jpg|png|mp4)(\?|$)", l["url"], re.I)}
-    queue = sorted(unique.values(), key=lambda l: (page_priority(l), len(l["url"]), l["url"]))
-    ordered, groups = [], {}
-    for link in queue:  # Round-robin intent coverage prevents contact pages consuming all depth.
-        groups.setdefault(page_priority(link), []).append(link)
-    while any(groups.values()):
-        for priority in sorted(groups):
-            if groups[priority]:
-                ordered.append(groups[priority].pop(0))
-    for link in ordered[:max(0, max_pages - len(pages))]:
-        r = fetcher.get(link["url"], org)
-        visited.update({link["url"], r.url})
-        profile.snapshot(r)
-        profile.data["attempts"].append({"strategy": "targeted_static_v1", "url": r.url, "state": r.state, "snapshot_id": r.snapshot_id})
-        if r.state == "available" and "html" in r.headers.get("content-type", "text/html") and registered_domain(r.url) == registered_domain(home.url):
-            page = parse_html(r.text(), r.url)
-            extract(profile, entity, page, r, proof)
-            feeds.extend(page["feeds"])
+    feeds, visited = crawl_site(profile, fetcher, org, entity, home, proof, pages, responses, max_pages)
     probe_missing(profile, fetcher, org, entity, home, proof, visited)
     wordpress_posts(profile, fetcher, org, home, proof)
-    for url in list(dict.fromkeys(feeds))[:1]:
+    for url in [url for url in dict.fromkeys(feeds) if not comment_feed_url(url)][:2]:
         if registered_domain(url) != registered_domain(home.url):
             continue
         r = fetcher.get(url, org)

@@ -50,7 +50,15 @@ def summary_row(profile, chunk=None):
 
 def compact(profile):
     """Drop what the viewer never shows (raw snapshot metadata, crawl attempts) to keep chunks small."""
+    from .answers import QUESTIONS
+    from .research import ONLINE_QUESTION, OVERVIEW_QUESTION, answer_profile
     keep = dict(profile)
+    # Precompute the same grounded answers used by the API. Keep references, not duplicate claim bodies.
+    answer_fields = ("answer", "answerable", "sentences", "claim_ids", "evidence_ids", "unsupported_or_uncertain")
+    keep["question_answers"] = {}
+    for question in (*QUESTIONS, ONLINE_QUESTION, OVERVIEW_QUESTION):
+        result = answer_profile(profile, question)
+        keep["question_answers"][question] = {key: result[key] for key in answer_fields}
     keep["source_snapshot_count"] = len(profile.get("source_snapshots", []))
     keep["source_snapshots"] = []
     keep["attempts"] = []
@@ -64,6 +72,8 @@ def _js(name, value):
 
 
 def write_report(envelopes, out_dir):
+    from .answers import QUESTIONS
+    from .research import ANSWER_ROUTES, UNSUPPORTED_ANSWER_ROUTES, ONLINE_QUESTION, OVERVIEW_QUESTION
     out = Path(out_dir)
     data = out / "data"
     data.mkdir(parents=True, exist_ok=True)
@@ -87,7 +97,10 @@ def write_report(envelopes, out_dir):
     stats = {"profiles": len(rows), "claims": sum(r["claim_count"] for r in rows), "verified_sites": sum(r["website_verified"] for r in rows),
              "changes": sum(r["changes"] for r in rows), "retrieved_at": max((r["updated_at"] or "" for r in rows), default=None)}
     rows.sort(key=lambda r: (-r["website_verified"], -r["claim_count"], r["name"]))
-    (data / "index.js").write_text(_js("window.FJ_INDEX", rows) + _js("window.FJ_STATS", stats), encoding="utf-8")
+    answer_config = {"routes": ANSWER_ROUTES, "unsupported": UNSUPPORTED_ANSWER_ROUTES,
+                     "questions": QUESTIONS, "online": ONLINE_QUESTION, "overview": OVERVIEW_QUESTION}
+    (data / "index.js").write_text(_js("window.FJ_INDEX", rows) + _js("window.FJ_STATS", stats)
+                                 + _js("window.FJ_ANSWER_CONFIG", answer_config), encoding="utf-8")
     for chunk, profiles in chunks.items():
         (data / f"chunk-{chunk:04d}.js").write_text("window.FJ_CHUNKS=window.FJ_CHUNKS||{};\n" + _js(f"window.FJ_CHUNKS[{chunk}]", profiles), encoding="utf-8")
     return {"report": str(out / "index.html"), "companies": len(rows), "chunks": len(chunks)}

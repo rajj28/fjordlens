@@ -8,6 +8,8 @@ from datetime import datetime
 from decimal import Decimal, InvalidOperation
 import re
 
+from .answers import financial_insights, unchanged_refresh_note
+
 ROLE_LABELS = {"DAGL": "chief executive (daglig leder)", "LEDE": "board chair", "NEST": "deputy chair", "MEDL": "board member",
                "VARA": "deputy board member", "REVI": "auditor", "REGN": "accountant", "KONT": "contact person",
                "INNH": "owner", "DTSO": "partner with joint liability", "DTPR": "partner with proportional liability"}
@@ -84,6 +86,8 @@ def money(value):
         amount = Decimal(str(value["amount"]))
     except (InvalidOperation, KeyError, TypeError):
         return None
+    if not amount.is_finite():
+        return None
     currency = value.get("currency", "")
     exact = f"{amount:,.0f}".replace(",", " ")
     if abs(amount) >= 1_000_000:
@@ -103,7 +107,7 @@ def summarize(profile):
 
 
 def _summarize(profile):
-    claims = [c for c in profile["claims"] if c.get("availability") == "available"]
+    claims = [c for c in profile["claims"] if c.get("availability") == "available" and not c.get("stale")]
     by_field = {}
     for claim in claims:
         by_field.setdefault(claim["field"], []).append(claim)
@@ -186,9 +190,11 @@ def _summarize(profile):
     workplaces = [c for c in by_field.get("registered_workplace", []) if isinstance(c["value"], dict)]
     if workplaces:
         places = sorted({(c["value"].get("address") or {}).get("kommune") or (c["value"].get("address") or {}).get("poststed") or "unknown" for c in workplaces})
-        staffed = sum(int(c["value"].get("employees") or 0) for c in workplaces)
+        counts = [c["value"].get("employees") for c in workplaces]
+        complete_headcount = all(isinstance(value, int) and not isinstance(value, bool) for value in counts)
+        staffed = sum(counts) if complete_headcount else None
         say(where, f"{len(workplaces)} registered workplace(s) in {', '.join(places[:6])}{' and more' if len(places) > 6 else ''}"
-                   + (f", with {staffed} registered employees across them." if staffed else "."), workplaces)
+                   + (f", with {staffed} registered employees across them." if staffed is not None else "; a total workplace headcount is not established because some counts are missing."), workplaces)
     site_address = first("website_contact_address")
     if site_address:
         say(where, f"The verified website lists an address: {site_address['value'] if isinstance(site_address['value'], str) else 'see source'} (self-reported).", [site_address])
@@ -229,14 +235,14 @@ def _summarize(profile):
         balance = [(equity, "equity"), (assets, "total assets"), (debt, "total debt")]
         bparts = [f"{word} {money(c['value'])}" for c, word in balance if c and money(c["value"])]
         if bparts:
-            say(numbers, "Balance sheet at period end: " + "; ".join(bparts) + ".", [c for c, _ in balance if c])
+            say(numbers, f"Balance sheet at {period.get('tilDato')} ({label}): " + "; ".join(bparts) + ".", [c for c, _ in balance if c and money(c["value"])])
         try:
             if equity and assets and Decimal(assets["value"]["amount"]) > 0 and equity["value"]["currency"] == assets["value"]["currency"]:
                 ratio = Decimal(equity["value"]["amount"]) / Decimal(assets["value"]["amount"]) * 100
-                say(numbers, f"Calculated equity ratio: {ratio:.1f}% (equity divided by total assets, from the filed figures).", [equity, assets])
+                say(numbers, f"Calculated equity ratio at {period.get('tilDato')} ({label}): {ratio:.1f}% (equity divided by total assets, from the filed figures).", [equity, assets])
             if revenue and operating and Decimal(revenue["value"]["amount"]) > 0 and revenue["value"]["currency"] == operating["value"]["currency"]:
                 margin = Decimal(operating["value"]["amount"]) / Decimal(revenue["value"]["amount"]) * 100
-                say(numbers, f"Calculated operating margin: {margin:.1f}% (operating result divided by revenue).", [revenue, operating])
+                say(numbers, f"Calculated operating margin for {period.get('fraDato')} to {period.get('tilDato')} ({label}): {margin:.1f}% (operating result divided by revenue).", [revenue, operating])
         except (InvalidOperation, KeyError, TypeError, ZeroDivisionError):
             pass
     years = by_field.get("available_filing_years") or by_field.get("annual_accounts_filing") or []
@@ -245,6 +251,12 @@ def _summarize(profile):
         values = sorted({str(v) for v in values if v})
         if values:
             say(numbers, f"Annual accounts are on file for {len(values)} year(s), {values[0]}–{values[-1]}.", years[:1] if isinstance(years[0]["value"], list) else years)
+
+    analysis = section("financial_context", "Financial performance and trends")
+    financial_sentences, financial_limitations = financial_insights(profile)
+    current_by_id = {c["id"]: c for c in claims}
+    for sentence in financial_sentences:
+        say(analysis, sentence["text"], [current_by_id[cid] for cid in sentence["claim_ids"]])
 
     hiring = section("hiring", "Hiring")
     postings = [c for c in by_field.get("job_posting", []) if isinstance(c["value"], dict)]
@@ -263,7 +275,7 @@ def _summarize(profile):
         say(hiring, f"{len(site_posts)} job posting(s) are published on the verified website with this company as employer"
                     + (": " + "; ".join(titles[:5]) if titles else "") + " (as published by the company; current availability is not confirmed).", site_posts)
 
-    activity = section("public_activity", "Recent public activity")
+    activity = section("public_activity", "Dated public activity")
     publications = sorted([c for c in by_field.get("company_publication", []) if isinstance(c["value"], dict)],
                           key=lambda c: c["value"].get("published_on") or "", reverse=True)
     for claim in publications[:3]:
@@ -303,12 +315,13 @@ def _summarize(profile):
             phrase = CHANGE_PHRASES.get(change["type"], change["type"].replace("_", " ").capitalize())
             say(changed, f"{phrase}: {change_detail(change)} (observed {str(change.get('observed_at', ''))[:10]}).", [claim] if claim else [])
     elif previous:
-        say(changed, f"No material changes since the previous run ({previous}).", claims[:1])
+        # Refresh metadata is not an entity fact and must not borrow an unrelated claim citation.
+        pass
     stale = [c for c in profile["claims"] if c.get("stale")]
     if stale:
         say(changed, f"{len(stale)} earlier fact(s) could not be re-confirmed in this run and are kept as last-known values, marked stale.", stale[:20])
 
-    unknown_items = []
+    unknown_items = list(financial_limitations)
     for family, state in profile.get("availability", {}).items():
         if state.get("state") != "available":
             verb = "could not be confirmed" if state.get("state") in {"ambiguous", "blocked", "failed"} else "not found"
@@ -317,32 +330,26 @@ def _summarize(profile):
             label = FAMILY_LABELS.get(family, family)
             unknown_items.append({"family": family, "state": state.get("state"), "reason": state.get("reason"),
                                   "text": f"{label[0].upper() + label[1:]}: {verb}. {state.get('reason')} ({state.get('state')})."})
-    brief_parts = [s["text"] for s in (what["sentences"][:1] + lead["sentences"][:1] + numbers["sentences"][:1] + hiring["sentences"][:1])]
-    brief_ids = sorted({i for s in (what["sentences"][:1] + lead["sentences"][:1] + numbers["sentences"][:1] + hiring["sentences"][:1]) for i in s["claim_ids"]})
-    return {"method": "grounded_templates_v2", "brief": {"text": " ".join(brief_parts), "claim_ids": brief_ids},
+    # Lead with actual business activity when available, followed by scale and the filed outcome.
+    business = next((s for s in what["sentences"] if description and description["id"] in s["claim_ids"]), None)
+    business = business or next((s for s in what["sentences"] if any(c and c["id"] in s["claim_ids"] for c in (first("registered_activity"), first("statutory_purpose")))), None)
+    business = business or next(iter(what["sentences"]), None)
+    workforce = next((s for s in what["sentences"] if employees and employees["id"] in s["claim_ids"]), None)
+    risk = next((s for s in what["sentences"] if any(c["id"] in s["claim_ids"] for c in flags)), None)
+    brief_sentences = []
+    for sentence in [business, workforce, *numbers["sentences"][:1], *analysis["sentences"][:1], risk, *hiring["sentences"][:1]]:
+        if sentence and sentence not in brief_sentences:
+            brief_sentences.append(sentence)
+    brief_ids = sorted({i for s in brief_sentences for i in s["claim_ids"]})
+    return {"method": "grounded_templates_v3", "brief": {"text": " ".join(s["text"] for s in brief_sentences), "claim_ids": brief_ids},
             "sections": [s for s in sections if s["sentences"]], "sentences": flat, "unknowns": unknown_items,
             "change_count": len(changes), "material_change_count": len(material), "stale_claim_count": len(stale),
+            "refresh_note": unchanged_refresh_note(profile),
             "interpretation": "Every sentence cites the claims it rests on. Company-published content is self-reported. "
                               "Calculated ratios are labelled. Missing evidence does not establish absence."}
 
 
 def answer(profile, question):
-    mappings = [(r"financ|revenue|profit|assets|equity|debt|regnskap|omsetning|numbers", {"financials"}),
-                (r"lead|ceo|board|director|manage|leder|styre|runs", {"leadership"}),
-                (r"job|hir|career|stilling|recruit|working", {"hiring"}),
-                (r"news|activ|announc|nyhet", {"activity"}),
-                (r"where|location|office|address|workplace|operat", {"locations"}),
-                (r"web|social|linkedin|contact|site", {"website", "contact", "social_profiles"}),
-                (r"what|does|describe|business|employee|industry", {"identity", "description"})]
-    if re.search(r"chang|refresh|update", question, re.I):
-        return {"question": question, "answer": f"{len(profile['changes'])} change record(s) against the previous run.", "changes": profile["changes"], "claim_ids": []}
-    families = set()
-    for pattern, chosen in mappings:
-        if re.search(pattern, question, re.I):
-            families |= chosen
-    if not families:
-        return {"question": question, "answer": "This question is not supported by the captured company facts. Ask about financials, leadership, locations, hiring, activity, or changes.", "claim_ids": []}
-    claims = [c for c in profile["claims"] if c["family"] in families]
-    return {"question": question, "answer": f"Found {len(claims)} supported claim(s) in the selected profile." if claims else "The captured sources do not establish an answer.",
-            "claims": claims, "claim_ids": [c["id"] for c in claims],
-            "availability": {f: profile["availability"][f] for f in sorted(families)}, "method": "evidence_lookup_v1"}
+    # Server, command line and pre-rendered reports share the same answer policy.
+    from .research import answer_profile
+    return answer_profile(profile, question)

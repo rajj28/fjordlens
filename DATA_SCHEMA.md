@@ -1,6 +1,8 @@
-# Data schema (FjordLens v1)
+# Data schema (FjordLens v1.1 behavior, envelope schema 1.0.0)
 
-Each JSONL envelope is produced by `core.Profile` (during research) and `runner.finalize` (at terminal assembly). All fields below are present in every envelope.
+Each JSONL envelope is produced by `core.Profile` (during research) and `runner.finalize` (at terminal assembly).
+The additions below preserve existing claim and evidence identifiers and the `1.0.0` envelope schema version.
+Optional derived blocks may be unavailable if their assembly stage fails; errors and availability states record that outcome.
 
 ## Top-level envelope fields
 
@@ -20,7 +22,7 @@ Each JSONL envelope is produced by `core.Profile` (during research) and `runner.
 | `errors` | `Profile._error`, `Job.failure`, `finalize` | Array of `{family, type, message, ...}` |
 | `refresh` | `refresh.refresh` | `{previous_run_id, preserved_evidence[], stale_claim_ids[]}` |
 | `operations` | `finalize.operations` | `{requests, runtime_ms, third_party_cost_usd}` |
-| `summary` | `synthesis.summarize` | Grounded summary with `method`, `brief`, `sections[]`, `sentences[]`, `unknowns[]`, `change_count`, `material_change_count`, `stale_claim_count`, `interpretation` |
+| `summary` | `synthesis.summarize` | Grounded summary with `method`, `brief`, `sections[]`, `sentences[]`, `unknowns[]`, `change_count`, `material_change_count`, `stale_claim_count`, `refresh_note`, `interpretation` |
 | `answers` | `answers.build_answers` | The same 11 standard questions for every company, in fixed order: `{question, answerable, answer, claim_ids, evidence_ids}`; answers use only cited claims, unknowns say why |
 | `validation_errors` | `core.validate` | Array of strings; non-empty → `run.terminal_status="failed"` |
 | `state` | `runner.envelope_state` | One of: `available`, `not_available`, `blocked`, `ambiguous`, `failed`, `not_applicable` |
@@ -58,7 +60,64 @@ Each JSONL envelope is produced by `core.Profile` (during research) and `runner.
 | website | `official_website` only after the identity gate accepts the site; `careers_page_url` (a careers link on the verified site, not a hiring fact); the registry `hjemmeside` stays an identity fact (`registry_website_candidate`) |
 | workforce | `employees` (`/antallAnsatte`, effective at the Aa-registeret registration date), `employees_registered_on`, `workplace_employees` (per registered subunit); `not_available` with the reason when the registry holds no registered employees |
 | identity (brand) | `public_brand` from the verified homepage (`og:site_name`, else the site's own Organization/WebSite `name`), labelled company-reported |
-| hiring | `job_posting` only (NAV official feed items marked ACTIVE, or JobPosting markup on the verified site that has not expired; `posting_context: "employment_agency"` and a `note` when the employer is in NACE 78, because the position may be with a client), `careers_page` |
+| hiring | `job_posting` only (NAV official feed items marked ACTIVE, or JobPosting markup on the verified site that has not expired; `posting_context: "employment_agency"` and a `note` when the employer is in NACE 78, because the position may be with a client). A careers-page link alone stays in the website family. |
+| social_profiles | `company_linked_profile` from the verified website; `company_profile` when the entity's registry website field declares a social profile. Both retain their source class and declaration scope; the destination is not verified. |
+| activity | `company_publication`: `{title, url, published_on, source_kind, independent_sentiment}` plus optional `published_at` when a source timestamp includes a time. `published_on` retains the source calendar date; `published_at` preserves the original ISO/RFC timestamp without inventing a missing timezone. The article URL can differ from the captured feed/listing URL in its evidence. |
+
+## Summary and direct answers
+
+`summary.method` is `grounded_templates_v3`. The brief contains `{text, claim_ids}`; sections contain
+`{key, title, sentences}`; each sentence contains `{text, claim_ids, stale}`. Current business, leadership and
+financial sections exclude stale claims. Last-known claims remain in the envelope and are explicitly described
+as unconfirmed in the change section. `refresh_note` qualifies an unchanged result as applying to facts confirmed
+in this run and reports earlier facts that could not be re-confirmed.
+
+Financial statements use one reporting period per scope, with dates and company/group labels. A missing latest
+figure is not backfilled from an older year. Calculated ratios cite their inputs. Annual changes require
+consecutive full-year periods with matching calendar boundaries, scope and currency; the text names both periods
+and cites both figures. A nonpositive prior value does not produce a percentage growth claim. Missing comparable
+revenue produces an explicit limitation. Negative equity and registry distress flags are bounded observations,
+not determinations of current solvency or cash flow.
+
+The envelope's `answers` array keeps its existing eleven questions and shape. Interactive answers from
+`research.answer_profile` (CLI) and `synthesis.answer` (server) use a common additive response:
+
+| Field | Meaning |
+| --- | --- |
+| `organisation_number`, `company_name`, `question` | Company and requested question |
+| `method` | `grounded_answers_v2` |
+| `answer`, `answerable`, `abstained` | Direct readable answer; partial supported multi-topic answers can be answerable while still listing gaps |
+| `topics` | Canonical question keys selected by the shared classifier |
+| `sentences` | Answer segments `{text, claim_ids, stale}`; a segment can contain several related sentences |
+| `claim_ids`, `evidence_ids` | Supporting identifiers; changes can cite earlier evidence without inventing a current claim |
+| `citations` | `{claim_id, field, source_url, retrieved_at, content_sha256, quote, evidence_id}`; quotes are display excerpts of the evidence span |
+| `claims`, `facts` | Supporting current claims and compact cited facts; facts also expose value, family, scope and reporting period |
+| `availability`, `unsupported_or_uncertain` | Relevant availability records and explicit evidence gaps or unsupported intents |
+| `changes`, `answer_policy` | Change records for change questions and the grounding policy |
+
+Exact standard questions take precedence over regex intent routes. Unsupported prediction, sentiment and other
+unmeasured requests abstain. Missing employees, hiring evidence or financials never become zero or a claim of
+absence. The static report precomputes the same answers in `question_answers` and exports the shared route
+configuration as `FJ_ANSWER_CONFIG`; these are viewer data additions, not new raw-envelope requirements.
+
+## External observation export
+
+`external-observations.jsonl` has one row per eligible current external claim with complete provenance.
+`company_profile` and `company_linked_profile` both map to the declared platform's `profile_handle` signal.
+Entity `employees` can produce `brreg/workforce_snapshot`; workplace counts are not exported as entity totals.
+
+Existing observation identifiers and provenance remain intact. Additive fields are `field`, `family`, `scope`,
+`value`, `evidence_ids`, `content_url`, `published_on`, `effective_at` and `reporting_period`. Publication metrics
+retain title, direct URL and publication date; job metrics retain title, URL, publication/expiry values, status
+and employer organisation number where present. The full `value` also preserves optional publication timestamps.
+Missing values stay null.
+
+`source_url` identifies the captured evidence, such as a feed or listing. `content_url` identifies the linked
+article, job or official website; it must not be substituted for the evidence URL. `acquisition_mode` follows
+the actual `source_class`: official registry/API and public NAV feed sources use `official_api`, while company
+pages use `permitted_public_page`. A registry-declared social link therefore retains its official acquisition
+mode even though its platform label is a social network. `identity_proof`, retrieval time, saved-body hash and
+snapshot path remain available for verification.
 
 ## Evidence object
 
@@ -195,7 +254,7 @@ Each JSONL envelope is produced by `core.Profile` (during research) and `runner.
   "errors": [],
   "refresh": {"previous_run_id": null, "preserved_evidence": [], "stale_claim_ids": []},
   "operations": {"requests": 12, "runtime_ms": 328000, "third_party_cost_usd": 0.0},
-  "summary": {"method": "grounded_templates_v2", "brief": {"text": "...", "claim_ids": []}, "sections": [], "sentences": [], "unknowns": []},
+  "summary": {"method": "grounded_templates_v3", "brief": {"text": "...", "claim_ids": []}, "sections": [], "sentences": [], "unknowns": [], "refresh_note": null},
   "validation_errors": [],
   "state": "available"
 }

@@ -41,7 +41,7 @@ whenever every envelope was written; source failures are data, not process failu
 
 ### Run budget
 
-The agent always finishes inside the wall-clock budget and writes every envelope: requests stop at
+The agent is designed to finish inside the wall-clock budget and write every envelope: requests stop at
 `budget − margin`, a watchdog finalizes from consistent copies even if a source hangs, and provisional
 `envelopes.jsonl` files are rewritten 15 s after start and then every 60 s while work is in flight.
 
@@ -51,6 +51,7 @@ The agent always finishes inside the wall-clock budget and writes every envelope
 | Total HTTP attempts | `--max-requests` | `SIGNALPOST_MAX_REQUESTS` | 30 × companies (min 2000) |
 | Attempts per company | `--per-company` | `FJORDLENS_PER_COMPANY` | 40 |
 | Website workers | `--workers` | – | 32 |
+| Site content pages | `--max-pages` | – | 12 (within the same request limits) |
 | Optional search key | – | `BRAVE_SEARCH_API_KEY` | unset (search off) |
 | API spend ceiling (USD) | – | `FJORDLENS_MAX_API_COST_USD` | 9.0 |
 
@@ -58,8 +59,8 @@ Every request also has a hard total deadline (twice the socket timeout, never pa
 that hangs or trickles bytes costs seconds, not the run; a company site that answers 429 with a long
 `Retry-After` is skipped rather than waited out.
 
-Measured on 300 random companies from the 411,160-company universe: about 8 HTTP attempts per company,
-0 failed envelopes, all within budget. Third-party API cost is **$0**.
+See [submission measurements](submission/README.md) for versioned live-run results, budgets and validation.
+Third-party API cost is **$0** when the optional search key is unset.
 
 ## What a profile contains
 
@@ -75,15 +76,15 @@ Measured on 300 random companies from the 411,160-company universe: about 8 HTTP
 | Website | Verified official website (identity gate v2) |
 | Description | The registry's own activity and statutory-purpose text, plus the verified site's description |
 | Contact | Registry phone, mobile and e-mail of the entity and of each registered workplace; e-mail/phone on the verified company domain; phone numbers the verified site's contact page labels as such |
-| Social | Company profiles the verified site links, or lists as `sameAs` in its own organisation markup, whose handle carries the company or domain name |
+| Social | Company profiles the verified site links or lists as `sameAs`, whose handle carries the company or domain name; registry-declared social websites are labelled separately, with the destination unverified |
 | Hiring | NAV's official public job feed: active ads whose employer organisation number is the company or one of its registered workplaces (ads from staffing and recruitment agencies, NACE 78, are labelled as possibly for clients); JobPosting markup and careers pages on the verified site |
 | Activity | Dated company publications from the verified site: RSS/Atom, article markup, news/blog listing pages (a link paired with the date shown next to it; the quote is the verbatim source of both), an article page's own publication date, and the site's WordPress posts API |
 
 Each envelope also has a `summary` (brief plus sections: what it does, who leads it, where it operates, latest
-filed numbers with labelled calculated ratios, hiring, recent activity, online presence, what changed, what is
+filed numbers with labelled calculated ratios, hiring, dated activity, online presence, what changed, what is
 unknown and why), where every sentence cites the claim IDs it rests on, and an `answers` block with the same
 eleven standard questions for every company (what it does, who leads it, where it operates, latest filed
-numbers, employees, website, hiring, what changed, recent activity, online presence, financial distress), each
+numbers, employees, contact, hiring, what changed, dated activity, website, financial distress), each
 answered only from cited claims or marked unanswerable with the reason.
 
 ## How identity is decided
@@ -130,7 +131,8 @@ last-known values marked stale. A failure never erases evidence; replaying ident
 `fjordlens/data/nav-index.json.gz` maps active NAV job ads to employer organisation numbers. It is built from
 NAV's official public feed by `python scripts/build_nav_index.py`, only **nominates** ads, and is refreshed at
 run time from the saved feed cursor; every published job is re-fetched live from the official feed and its
-employer number re-checked. No other cache is used: all evidence is fetched live during the run.
+employer number re-checked. Normal runs fetch other evidence live with run-local URL and robots caches.
+Explicit `--replay` and `--registry-snapshot` inputs use the supplied immutable evidence bundles instead.
 
 ## View and verify
 
@@ -139,7 +141,7 @@ employer number re-checked. No other cache is used: all evidence is fetched live
 python -m fjordlens serve --data out/run/envelopes.jsonl    # optional local server
 python scripts/validate_citations.py out/run                # Builderr's citation contract: ids, URLs, times, snapshot bytes
 python scripts/audit_evidence.py out/run                    # re-open saved bytes, re-check every claim and figure
-python -m unittest discover -s tests                        # 267 tests incl. adversarial identity and hostile-server cases
+python -m unittest discover -s tests                        # adversarial identity, publications, financials and hostile-server cases
 ```
 
 ## Ask and screen
@@ -169,8 +171,9 @@ kept in the browser and results exportable as JSON.
   own WordPress posts API), fetched only where robots.txt (RFC 9309) allows.
 - Optional: Brave Web Search API, only if the evaluator sets `BRAVE_SEARCH_API_KEY`; results are used transiently
   to nominate candidate sites and are not stored. At most two queries for a company without a verified free
-  candidate (in practice under 1.3 queries per company), i.e. about $6 per 1,000 companies at $5 per 1,000
-  queries (`BRAVE_COST_PER_REQUEST_USD`), with a hard ceiling (`FJORDLENS_MAX_API_COST_USD`, default $9).
+  candidate, at a configured $0.005 per query (`BRAVE_COST_PER_REQUEST_USD`), with a hard ceiling
+  (`FJORDLENS_MAX_API_COST_USD`, default $9). A rejected first batch permits the second query;
+  a verified candidate stops further searching. Search-enabled live recall has not been benchmarked here.
 - No restricted platforms are fetched (LinkedIn, Facebook, Instagram, Google, Glassdoor, Indeed, X, TikTok);
   links to company profiles are recorded only as declared by the company's own site or registry entry.
 - Credentials: none required. Expected third-party cost per official run: **$0** without the optional key.

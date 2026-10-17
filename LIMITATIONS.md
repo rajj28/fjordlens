@@ -1,4 +1,4 @@
-# Known limits and honest abstention (FjordLens v1)
+# Known limits and honest abstention (FjordLens 1.1)
 
 ## What is not covered
 
@@ -7,7 +7,7 @@
 - **No LinkedIn, Meta (Facebook/Instagram), Indeed, Glassdoor, Google, TikTok, X/Twitter scraping**: These hosts are hard-blocked in `net.RESTRICTED`. A company's outbound links to them may be recorded as `company_linked_profile` without fetching the destination.
 - **PDF annual accounts not parsed**: Filing-history connector (`official.history`) returns download URLs and filing years only. Document extraction is not implemented.
 - **Brønnøysund announcements excluded by robots.txt**: The `w2.brreg.no` announcements host disallows the agent via robots.txt; no announcements are collected.
-- **TLS-broken sites skipped**: `website.fetch_page` tries the other www/non-www host on DNS failure or a certificate issued for the other name, then plain HTTP. If all fail (certificate errors, handshake failures, connection refused, timeout, EOF), the site is marked `blocked`/`failed` and not researched.
+- **Transport failures can leave sites unavailable**: `website.fetch_page` tries the standard www/non-www alternative on DNS, connection, timeout or TLS failures. HTTP refusals and robots exclusions do not trigger this fallback. If allowed alternatives fail, the site remains `blocked`/`failed`.
 - **No CAPTCHA solving, no authentication bypass, no paywall bypass**.
 - **No browser automation / Playwright at runtime**: Playwright is an optional dev dependency only.
 - **No sentiment analysis, review scoring, popularity ranking, or predicted official score**.

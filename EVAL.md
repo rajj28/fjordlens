@@ -1,6 +1,11 @@
-# Verification and measurement (FjordLens v1)
+# Verification and measurement (FjordLens 1.1)
 
 Do not infer a competition score from local tests. Only Builderr's checked reference pool can measure competitive recall, factual accuracy, and qualification.
+
+The [published harness](https://builderr.ai/docs/signalpost-evaluation-harness.md) allocates 50 points to recall,
+30 to evidence, 12 to synthesis, and 8 to researcher UX. Local company-coverage counts have no checked
+denominator and cannot be converted into those points. A directional leaderboard run is not an official
+qualification result. Revision measurements and their limitations are recorded in `submission/`.
 
 ## Local checks
 
@@ -16,6 +21,8 @@ The test suite covers:
   - Replay integrity, robots blocking, malformed HTML parsing
   - Regression: conflicting structured identifiers, malformed JSON-LD types, owner-name substrings
   - Incomplete role lists, timezone-aware cutoffs
+  - Publication versus modification dates, comment feeds, static pages, query-specific article identity
+  - Comparable full-year financial periods, currency/scope boundaries, stale evidence and direct cited answers
   - Preservation of historical snapshot bytes, missing/corrupt historical evidence
   - Invalid-input checkpoint paths
   - **Adversarial gate cases** (`tests/test_gate_v2.py`): sister-company name supersets, multi-entity sites, groupish owner strings, parked/placeholder pages, foreign .com guesses without org number, social/profile links, domain-placeholder titles, supplier credit org numbers, page-scope different entity, path-scoped sites, social handle filter
@@ -56,4 +63,13 @@ The test suite covers:
 - Budget pass/fail (`budget.total <= max_requests`, `budget.cost <= 10`, `elapsed <= seconds`)
 - Registry snapshot supplied, cache policy, Python version
 
-Run `python scripts/finalize_submission.py` after collection to rebuild the public export from recorded evidence, audit the rebuilt batches, and exercise an unchanged refresh. The script creates the public reports and a private archive of raw snapshots and request receipts (`artifacts/fjordlens-private-evidence.zip`). Consult those generated reports for results; the procedure itself is not evidence that collection or validation has completed.
+Compare two runs on identical company inputs using `python scripts/compare_runs.py <baseline> <candidate>`.
+The script reports operational results and coverage changes, flags changed websites for review, and explicitly
+does not estimate an official score. Keep a separate sample untouched during implementation to check whether
+changes generalize. Source updates between live runs remain a confounder.
+
+After collection, run `scripts/validate_citations.py` and `scripts/audit_evidence.py` against the output folder.
+With the optional development dependency Playwright installed, `node scripts/report_tasks.cjs <report_folder>`
+exercises navigation, direct answers, comparison evidence, financial boundaries and historical evidence on
+desktop and mobile. An optional second argument pointing to a local FjordLens server also checks static/API
+answer parity. These checks do not reproduce Builderr's six undisclosed researcher tasks.
