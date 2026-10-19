@@ -580,7 +580,8 @@ def run_batch(inputs, output, *, run_id=None, previous=None, replay=None, cutoff
     orgs = read_inputs(inputs)
     seconds, max_requests, per_company = resolve_limits(len(orgs), seconds=seconds, max_requests=max_requests, per_company=per_company)
     # Requests stop early enough to assemble and write every envelope before the hard limit.
-    margin = min(max(45.0, seconds * 0.05), seconds * 0.5)
+    # Very short runs can spend most of their time serializing a large input batch.
+    margin = min(max(45.0, seconds * 0.05), seconds * 0.8)
     previous_root = None
     if previous:
         previous_root = Path(previous).parent
