@@ -94,6 +94,9 @@ publishes only its section URL; facts from the surrounding site are not attribut
   Visible HTML times require `itemprop=datePublished` or a local publication label such as Published/Publisert.
   Hidden, comment, footer, sidebar and event times cannot supply publication dates. URL-less Article markup
   with a headline that differs from the page's headline cannot lend its date to that page.
+  Contact, about, privacy, legal and service utility routes are excluded across HTML, structured metadata,
+  feeds and WordPress. Booking/contact call-to-action labels cannot become article titles merely because
+  a date appears nearby. Editorial paths such as `/news/privacy-update` remain eligible.
 - Missing-type probe: when the link-driven crawl leaves publications or contacts empty, up to two conventional pages
   per missing family (`/nyheter`, `/aktuelt`, `/blogg`, `/news`; `/kontakt`, `/kontakt-oss`, `/contact`).
 - Hiring: JobPosting markup on the verified site (expired `validThrough` skipped); careers pages are recorded as part

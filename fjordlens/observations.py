@@ -75,13 +75,14 @@ def to_observations(envelope):
         platform, signal = labels
         primary = evidence.get(claim["primary_evidence_id"], {})
         proof = primary.get("identity_proof") or {}
-        if proof.get("method") == "identity_gate_v2" or proof.get("rule"):
+        if claim["source_class"] == "third_party_publication" and proof.get("method"):
+            identity = {"type": str(proof["method"]), "organisation_number": org}
+            identity.update({key: proof[key] for key in ("rule", "article_url", "evidence_span", "registry_snapshot_id")
+                             if key in proof})
+        elif proof.get("method") == "identity_gate_v2" or proof.get("rule"):
             identity = {"type": "website_identity_gate", "status": "exact", "rule": str(proof.get("rule") or "")[:200]}
         elif proof.get("method"):
             identity = {"type": str(proof["method"]), "organisation_number": org}
-            if claim["source_class"] == "third_party_publication":
-                identity.update({key: proof[key] for key in ("rule", "article_url", "evidence_span", "registry_snapshot_id")
-                                 if key in proof})
         else:
             identity = {"type": "exact_org_endpoint", "organisation_number": org}
         value = claim.get("value")

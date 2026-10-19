@@ -20,6 +20,7 @@
 - **Historical replay and auditable refresh require raw snapshots beside the prior profile export**. Public profiles alone contain no complete raw-source bundle; missing required historical bytes are explicit failures. The raw evidence archive is kept private and excluded from version control.
 - **Rule D (the site names itself as the company and shows its registered street or postcode with town) is an auditable inference from agreeing sources**; a name with only a phone number or a registered person is never enough for a domain we derived ourselves. Confidence numbers are heuristic, not measured accuracy.
 - **Dated links on listing pages are paired with a date only inside the link or the nearest element that links to no other article**; list layouts with no per-item element yield no dated links rather than possibly mis-dated ones.
+- **Static utility routes are excluded from publications** even when a CMS labels them Article or supplies a creation date. This may miss genuine editorial content placed under contact/about/service routes; normal news/blog paths remain eligible.
 - **Contact-page phone numbers are company-reported**: a number labelled `Tlf`/`Telefon` on the verified site's contact page may belong to a named employee.
 - **No JBOX bonus eligibility claimed**. The entry has no JBOX dependency.
 

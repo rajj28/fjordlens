@@ -365,7 +365,8 @@ def wordpress_posts(profile, fetcher, org, home, proof):
         link, published = post.get("link"), valid_date(post.get("date"))
         title = clean(re.sub(r"<[^>]+>", " ", str((post.get("title") or {}).get("rendered") or "") if isinstance(post.get("title"), dict) else ""))
         title = stdlib_html.unescape(title)
-        if not isinstance(link, str) or host(link) != host(home.url) or catalog_url(link) or not published or not title:
+        if (not isinstance(link, str) or host(link) != host(home.url) or catalog_url(link)
+                or articles.nonpublication_url(link) or not published or not title):
             continue
         if title.strip().lower() in WORDPRESS_PLACEHOLDERS:
             continue  # WordPress's default first post is not company activity.
@@ -380,6 +381,35 @@ def wordpress_posts(profile, fetcher, org, home, proof):
         # JSON evidence: the quote is the verbatim slice of this post's object in the API response.
         profile.add("company_publication", value, r, pointer=f"/{index}", family="activity", key=link, effective_at=published,
                     source_class="company_owned", method="json_pointer_v1", scope="company_published_content", identity_proof=proof)
+
+
+def jsonld_publication(node, page, today, site_url):
+    """A structured article's canonical subject URL and fields, shared with evidence audit."""
+    types = jsonld_types(node)
+    if not types & {"NewsArticle", "Article", "BlogPosting", "PressRelease"}:
+        return None
+    if page.get("static_page") and not types & {"NewsArticle", "BlogPosting", "PressRelease"}:
+        return None
+    headline = node.get("headline") or node.get("name")
+    date = valid_date(node.get("datePublished"))
+    if not isinstance(headline, str) or not clean(headline) or not date or date > today:
+        return None
+    target = articles._node_url(node, page["url"])
+    if not target:
+        # A URL-less neighboring schema must not lend its title/date to the current page.
+        visible = page.get("h1") or page.get("meta", {}).get("og:title") or page.get("title")
+        if (any(node.get(key) for key in ("url", "mainEntityOfPage", "@id")) or not visible
+                or not articles._compatible_headline(headline, visible)):
+            return None
+        target = page["url"]
+    target = urlsplit(target)._replace(fragment="").geturl()
+    if host(target) != host(site_url) or catalog_url(target) or articles.nonpublication_url(target):
+        return None
+    publication = {"title": clean(headline), "url": target, "published_on": date,
+                   "source_kind": "company_owned", "independent_sentiment": False}
+    if articles.publication_timestamp(node.get("datePublished")):
+        publication["published_at"] = node["datePublished"]
+    return publication
 
 
 def extract(profile, entity, page, response, proof):
@@ -488,24 +518,11 @@ def extract(profile, entity, page, response, proof):
                      "location": node.get("jobLocation"), "employer": employer.get("name"), "status": "source_reported"}
             add_web(profile, "job_posting", value, response, "hiring", proof, span=jsonld_quote(page, path) or canonical(node)[:3000], key=job_key, date=posted, method="jsonld_jobposting_v1", selector={"type": "parsed_html_pointer", "value": "/jsonld" + path})
         if any(t in {"NewsArticle", "Article", "BlogPosting", "PressRelease"} for t in types):
-            if page.get("static_page") and not types & {"NewsArticle", "BlogPosting", "PressRelease"}:
-                continue  # Generic Article schema on CMS contact/service pages is not a publication.
-            headline = node.get("headline") or node.get("name")
-            date = valid_date(node.get("datePublished"))
-            target = node.get("url") or page["url"]
-            if not isinstance(target, str) or not headline or not date:
+            publication = jsonld_publication(node, page, response.retrieved_at[:10], proof["url"])
+            if not publication or known_publication(profile, publication["url"]):
                 continue
-            target = urljoin(page["url"], target)
-            if host(target) != host(proof["url"]) or catalog_url(target):
-                continue
-            if date > response.retrieved_at[:10] or known_publication(profile, target):
-                continue
-            publication = {"title": clean(headline), "url": target, "published_on": date,
-                           "source_kind": "company_owned", "independent_sentiment": False}
-            if articles.publication_timestamp(node.get("datePublished")):
-                publication["published_at"] = node["datePublished"]
             add_web(profile, "company_publication", publication, response,
-                    "activity", proof, span=jsonld_quote(page, path) or canonical(node)[:3000], key=target, date=date, scope="company_published_content", method="jsonld_article_v1", selector={"type": "parsed_html_pointer", "value": "/jsonld" + path})
+                    "activity", proof, span=jsonld_quote(page, path) or canonical(node)[:3000], key=publication["url"], date=publication["published_on"], scope="company_published_content", method="jsonld_article_v1", selector={"type": "parsed_html_pointer", "value": "/jsonld" + path})
         if gate.OWNER_NODE_PATH.match(path or "/0") and own_organisation(node, org, entity.get("navn") or ""):
             same_as(profile, page, response, proof, node, path, entity.get("navn") or "")
         if node_org(node) == org:
@@ -561,7 +578,8 @@ def feed(profile, entity, response, proof):
             target = next((c.attrib.get("href") for c in item if c.tag.split("}")[-1] == "link"
                            and c.attrib.get("rel", "alternate") == "alternate"), None)
         target = urljoin(response.url, target) if target else None
-        if target and (catalog_url(target) or re.match(r"(?:comments?|reviews?)(?:[-_]|$)", urlsplit(target).fragment, re.I)
+        if target and (catalog_url(target) or articles.nonpublication_url(target)
+                       or re.match(r"(?:comments?|reviews?)(?:[-_]|$)", urlsplit(target).fragment, re.I)
                        or COMMENT_FEED_TITLE.search(title)):
             continue
         # Atom's updated date is a revision date, not evidence of publication.

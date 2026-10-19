@@ -10,7 +10,7 @@ from datetime import date
 from html.parser import HTMLParser
 import json
 import re
-from urllib.parse import urljoin, urlsplit, urlunsplit, parse_qsl, quote
+from urllib.parse import urljoin, urlsplit, urlunsplit, parse_qsl, quote, unquote
 from .html import static_page_template
 
 VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"}
@@ -36,6 +36,22 @@ MAX_DEPTH = 120           # enclosing elements tracked per position (deeper mark
 MAX_ELEMENTS = 40000      # elements tracked per page
 TEXT_CAP = 3000           # characters of text kept per element (bigger elements are lists, not items)
 ACTION_LABEL = re.compile(r"^(?:les mer|les hele (?:saken|artikkelen)|read more|read (?:the )?(?:article|story)|continue reading|se mer)(?:\b|[.›»])", re.I)
+CONVERSION_LABEL = re.compile(
+    r"^(?:book(?:e)?\s+(?:(?:a|an|en|et|din|ditt|gratis|free)\s+){0,2}(?:prat|chat|call|meeting|demo|m\u00f8te|mote|time|appointment|consultation)"
+    r"|(?:bestill|reserver|schedule)\s+(?:(?:a|an|en|et|din|ditt|gratis|free)\s+){0,2}(?:prat|chat|call|meeting|demo|m\u00f8te|mote|time|appointment|consultation)"
+    r"|kontakt\s+oss|contact\s+us|ta\s+kontakt|get\s+in\s+touch"
+    r"|send\s+(?:oss\s+en\s+melding|(?:us\s+)?a\s+message)"
+    r"|(?:get|request)\s+(?:a\s+)?quote|f\u00e5\s+(?:et\s+)?tilbud)(?:\b|\s|$)", re.I)
+NONPUBLICATION_ROOTS = {
+    "kontakt", "kontakt-oss", "kontaktoss", "contact", "contact-us", "contactus", "contacts",
+    "personvern", "personvernerklaering", "personvernerkl\u00e6ring", "privacy", "privacy-policy", "privacy-statement",
+    "datenschutz", "cookies", "cookie-policy", "cookie-policy-statement", "informasjonskapsler",
+    "legal", "legal-notice", "imprint", "impressum", "terms", "terms-and-conditions", "terms-of-use",
+    "vilkar", "vilk\u00e5r", "betingelser", "salgsbetingelser", "brukervilkar", "brukervilk\u00e5r",
+    "tjenester", "tjeneste", "services", "service", "produkter", "products", "shop", "cart", "checkout",
+    "om", "om-oss", "omoss", "about", "about-us", "aboutus", "company", "our-company",
+    "booking", "book-demo", "book-a-demo", "book-a-call", "bestilling", "login", "logg-inn", "sitemap",
+}
 DATE_LABEL = re.compile(r"dateModified|datePublished|\b(?:updated|modified|oppdatert|endret|published|posted|publisert|offentliggjort)\b", re.I)
 MODIFICATION_LABELS = {"datemodified", "updated", "modified", "oppdatert", "endret"}
 ARTICLE_NOISE = re.compile(r"(?:^|[\s_-])(?:footer|copyright|comment\w*|review\w*|related|recommend\w*|sidebar|share)(?:$|[\s_-])", re.I)
@@ -54,6 +70,25 @@ def canonical_path(path):
     encoded = quote(path, safe="/:@!$&'()*+,;=-._~%")
     return re.sub(r"%([0-9a-f]{2})", lambda m: chr(int(m[1], 16))
                   if re.fullmatch(r"[A-Za-z0-9._~-]", chr(int(m[1], 16))) else "%" + m[1].upper(), encoded, flags=re.I)
+
+
+def nonpublication_url(url):
+    """Utility sections are not articles, even when a CMS stamps Article metadata on them.
+
+    Only the first section (after an optional locale) is classified. A real story such
+    as /news/privacy-policy-update remains eligible; contact/privacy/service sections
+    and their CMS-generated child paths do not become dated company publications.
+    """
+    if not isinstance(url, str) or not url:
+        return False
+    try:
+        parts = [unquote(part).casefold().replace("_", "-") for part in urlsplit(url).path.split("/") if part]
+    except (ValueError, UnicodeError):
+        return True
+    if parts and re.fullmatch(r"(?:no|nb|nn|en|sv|da|de|fr|es)(?:-[a-z]{2})?", parts[0]):
+        parts.pop(0)
+    root = re.sub(r"\.(?:html?|php|aspx?)$", "", parts[0]) if parts else ""
+    return root in NONPUBLICATION_ROOTS
 
 
 def functional_query(query):
@@ -119,6 +154,7 @@ class _Listing(HTMLParser):
         self.line_starts = [0] + [m.end() for m in re.finditer("\n", source)]
         self.stack, self.real, self.elements, self.links = [], [], {}, []
         self.anchor, self.open_time, self.skip = None, None, 0
+        self.visibility = []
         self.next_id = 0
 
     def _here(self):
@@ -132,10 +168,19 @@ class _Listing(HTMLParser):
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
         here = self._here()
-        if tag in {"script", "style", "template", "noscript"}:
-            self.skip += 1
+        hidden = ((self.visibility and self.visibility[-1][1])
+                  or tag in {"script", "style", "template", "noscript", "footer", "aside", "nav", "form", "svg"}
+                  or "hidden" in attrs or str(attrs.get("aria-hidden", "")).lower() == "true"
+                  or bool(re.search(r"display\s*:\s*none|visibility\s*:\s*hidden", attrs.get("style", ""), re.I))
+                  or bool(ARTICLE_NOISE.search(attrs.get("class", "") + " " + attrs.get("id", ""))))
+        if tag not in VOID:
+            self.visibility.append((tag, bool(hidden)))
+        if hidden:
             return
         if tag == "a":
+            if _comment_fragment(attrs.get("href", "")):
+                for eid in self.real:
+                    self.elements[eid]["comment_link"] = True
             if attrs.get("href") is not None and self.anchor is None:
                 self.anchor = {"href": attrs["href"], "text": [], "times": [], "ancestors": list(self.real),
                                "start": here, "end": None}
@@ -152,7 +197,7 @@ class _Listing(HTMLParser):
             return
         if len(self.real) < MAX_DEPTH and self.next_id < MAX_ELEMENTS:
             self.next_id += 1
-            self.elements[self.next_id] = {"text": [], "size": 0, "times": [], "hrefs": set(), "start": here, "end": None}
+            self.elements[self.next_id] = {"text": [], "size": 0, "times": [], "hrefs": set(), "start": here, "end": None, "comment_link": False}
             self.stack.append((tag, self.next_id))
             self.real.append(self.next_id)
         else:
@@ -160,8 +205,12 @@ class _Listing(HTMLParser):
 
     def handle_endtag(self, tag):
         here = self._here()
-        if tag in {"script", "style", "template", "noscript"}:
-            self.skip = max(0, self.skip - 1)
+        index = next((i for i in range(len(self.visibility) - 1, -1, -1) if self.visibility[i][0] == tag), None)
+        if index is None:
+            return
+        hidden = self.visibility[index][1]
+        del self.visibility[index:]
+        if hidden:
             return
         if tag == "time" and self.open_time is not None:
             self.open_time["end"] = self._tag_end(here)
@@ -182,7 +231,7 @@ class _Listing(HTMLParser):
                 break
 
     def handle_data(self, data):
-        if self.skip:
+        if self.visibility and self.visibility[-1][1]:
             return
         for eid in self.real:
             element = self.elements[eid]
@@ -192,6 +241,11 @@ class _Listing(HTMLParser):
         if self.anchor is not None and self.open_time is None:
             self.anchor["text"].append(data)  # A date inside the link is not part of its title.
 
+    def handle_startendtag(self, tag, attrs):
+        self.handle_starttag(tag, attrs)
+        if tag not in VOID:
+            self.handle_endtag(tag)
+
 
 def _quote(html, start, end):
     """The verbatim source between two offsets, or None when it is too long to be one readable quote."""
@@ -200,9 +254,17 @@ def _quote(html, start, end):
     return None
 
 
+def _comment_fragment(url):
+    try:
+        fragment = unquote(urlsplit(url or "").fragment)
+    except (ValueError, TypeError):
+        return False
+    return bool(re.search(r"(?:^|[-_/])(?:comments?|respond|reply|reviews?)(?:[-_/]|\d|$)", fragment, re.I))
+
+
 def _same_site_url(href, page_url, site):
     href = (href or "").strip()
-    if not href or href.lower().startswith(("mailto:", "tel:", "javascript:", "#")):
+    if not href or href.lower().startswith(("mailto:", "tel:", "javascript:", "#")) or _comment_fragment(href):
         return None
     absolute = urljoin(page_url, href)
     parts = urlsplit(absolute)
@@ -213,7 +275,7 @@ def _same_site_url(href, page_url, site):
 
 def _title(link):
     title = " ".join("".join(link["text"]).split())
-    if not (8 <= len(title) <= 200) or ACTION_LABEL.search(title):
+    if not (8 <= len(title) <= 200) or ACTION_LABEL.search(title) or CONVERSION_LABEL.search(title):
         return None
     only_date = find_date(title, "9999-12-31")
     return None if only_date and only_date[1].strip() == title.strip() else title
@@ -234,7 +296,7 @@ def extract_dated_links(html: str, page_url: str, today: str) -> list[dict]:
     ignored = {urlunsplit((page.scheme, page.netloc, page.path, page.query, "")), f"{page.scheme}://{page.netloc}/"}
     for link in parser.links:
         target = _same_site_url(link["href"], page_url, site)
-        link["url"] = target if target and not urlsplit(target).path.lower().endswith(FILE_SUFFIXES) else None
+        link["url"] = target if target and not nonpublication_url(target) and not urlsplit(target).path.lower().endswith(FILE_SUFFIXES) else None
         link["title"] = _title(link) if link["url"] else None
         # Every other page this element links to competes for its dates, whatever the link text says.
         if target and target not in ignored:
@@ -262,7 +324,7 @@ def extract_dated_links(html: str, page_url: str, today: str) -> list[dict]:
             if found is not None:
                 break
             element = parser.elements[eid]
-            if len(element["hrefs"]) > 1:
+            if len(element["hrefs"]) > 1 or element["comment_link"]:
                 break
             for entry in element["times"]:
                 if modification_date(entry["tag"] + " " + re.sub(r"<[^>]+>", " ", html[max(0, entry["start"] - 80):entry["end"]])):
@@ -415,13 +477,21 @@ def _article_nodes(data, depth=0):
             yield from _article_nodes(data["@graph"], depth + 1)
 
 
-def _node_url(node):
+def _node_url(node, page_url=None):
     for key in ("url", "mainEntityOfPage", "@id"):
         value = node.get(key)
         if isinstance(value, dict):
             value = value.get("@id") or value.get("url")
         if isinstance(value, str) and value.startswith(("http://", "https://")):
             return value
+        if isinstance(value, str) and value.strip() and page_url:
+            try:
+                if not urlsplit(value).scheme:
+                    resolved = urljoin(page_url, value)
+                    if urlsplit(resolved).scheme in {"http", "https"}:
+                        return resolved
+            except ValueError:
+                continue
     return None
 
 
@@ -444,6 +514,8 @@ def _compatible_headline(headline, title):
 def article_published_date(html: str, today: str = "9999-12-31", page_url: str | None = None) -> dict | None:
     """The page's own publication date: page-level meta, a JSON-LD article node about this page (or the only one),
     or the time element of the page's single <article>."""
+    if nonpublication_url(page_url):
+        return None
     parser = _Article()
     try:
         parser.feed(html or "")
@@ -462,8 +534,8 @@ def article_published_date(html: str, today: str = "9999-12-31", page_url: str |
             continue
         nodes.extend((node, raw) for node in _article_nodes(data))
     own_nodes = [(node, raw) for node, raw in nodes
-                 if ((_node_url(node) and (not page_url or _same_page(_node_url(node), page_url)))
-                     or (not _node_url(node) and len(nodes) == 1
+                 if ((_node_url(node, page_url) and (not page_url or _same_page(_node_url(node, page_url), page_url)))
+                     or (not any(node.get(key) for key in ("url", "mainEntityOfPage", "@id")) and len(nodes) == 1
                          and _compatible_headline(node.get("headline"), title)))]
     explicit_article = parser.meta.get("og:type", "").lower() == "article" or bool(own_nodes)
     strong_nodes = [node for node, _ in own_nodes if any(isinstance(kind, str) and kind in {"NewsArticle", "BlogPosting", "PressRelease"}

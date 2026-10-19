@@ -9,6 +9,7 @@ from unittest.mock import patch
 from fjordlens import news
 from fjordlens.core import Profile, validate
 from fjordlens.net import Response
+from fjordlens.observations import to_observations
 
 ORG = "923609016"
 OTHER_ORG = "988573949"
@@ -195,6 +196,7 @@ class ConnectorTests(unittest.TestCase):
     @patch.dict('os.environ', {'BRAVE_SEARCH_API_KEY': '', 'BRAVE_API_KEY': ''})
     def test_keyless_nominated_article_has_three_replayable_evidence_refs(self):
         profile = self.profile()
+        profile.data['legal_identity']['source_snapshot_id'] = 'registry-snapshot-fixture'
         fetcher = FakeFetcher({URL: response(article())})
         self.assertEqual(news.research(profile, fetcher, ENTITY, nominated_urls=[URL]), 1)
         self.assertEqual(len(profile.data["claims"]), 1)
@@ -210,6 +212,16 @@ class ConnectorTests(unittest.TestCase):
             found = news.extract_article(article(), URL, selector["entity"], TODAY, selector["company_domains"])
             self.assertEqual(claim["value"], found["value"])
             self.assertEqual(evidence["claim_span"], found["spans"][selector["part"]])
+        observation = to_observations(profile.data)[0]
+        identity = observation['identity_proof'][0]
+        self.assertEqual((observation['platform'], observation['signal_type']), ('news', 'public_mention'))
+        self.assertEqual(identity['type'], 'independent_news_identity_v1')
+        self.assertEqual(identity['organisation_number'], ORG)
+        self.assertEqual(identity['rule'], 'legal_name_and_labeled_org_in_article')
+        self.assertEqual(identity['article_url'], URL)
+        self.assertEqual(identity['evidence_span'], IDENTITY)
+        self.assertEqual(identity['registry_snapshot_id'], 'registry-snapshot-fixture')
+        self.assertEqual({e['selector']['part'] for e in observation['supporting_evidence']}, {'identity', 'title', 'date'})
 
     @patch.dict('os.environ', {'BRAVE_SEARCH_API_KEY': 'fake', 'BRAVE_API_KEY': ''})
     def test_search_snippet_cannot_become_evidence_and_candidate_budget_is_global(self):

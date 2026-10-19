@@ -2,6 +2,7 @@
 import argparse
 from decimal import Decimal
 import gzip
+import html as stdlib_html
 import json
 from pathlib import Path
 import re
@@ -43,6 +44,10 @@ def audit(folder):
                 s = snapshots[e['snapshot_id']]
                 path = folder / (s['storage_path'] or 'MISSING')
                 try:
+                    if claim['field'] == 'company_publication':
+                        from fjordlens import articles
+                        if articles.nonpublication_url(claim['value'].get('url', '')):
+                            raise ValueError('Utility page is not a dated publication')
                     if e['content_sha256'] not in bodies:
                         raw = read_snapshot_bytes(path)
                         if digest(raw) != e['content_sha256']:
@@ -65,6 +70,26 @@ def audit(folder):
                             if record['valuta'] != claim['value']['currency'] or record['regnskapsperiode'] != claim['reporting_period'] or record['regnskapstype'] != claim['value']['account_type']:
                                 raise ValueError('Financial currency, period or scope mismatch')
                             amounts += 1
+                        elif claim['field'] == 'company_publication':
+                            from fjordlens import articles
+                            from fjordlens.website import catalog_url, host, valid_date, WORDPRESS_PLACEHOLDERS
+                            if (not isinstance(value, dict)
+                                    or not urlsplit(s['final_url']).path.rstrip('/').endswith('/wp-json/wp/v2/posts')):
+                                raise ValueError('Unsupported JSON publication source')
+                            title = value.get('title')
+                            title = stdlib_html.unescape(clean(re.sub(r'<[^>]+>', ' ', str(title.get('rendered') or '') if isinstance(title, dict) else '')))
+                            date, target = valid_date(value.get('date')), value.get('link')
+                            if (not isinstance(target, str) or not title or title.lower() in WORDPRESS_PLACEHOLDERS
+                                    or not date or date > e['retrieved_at'][:10] or catalog_url(target)
+                                    or articles.nonpublication_url(target)
+                                    or host(target) != host(e.get('identity_proof', {}).get('url', ''))):
+                                raise ValueError('WordPress publication does not pass source binding')
+                            expected = {'title': title[:300], 'url': target, 'published_on': date,
+                                        'published_at': articles.publication_timestamp(value.get('date'))}
+                            if any(claim['value'].get(key) != item for key, item in expected.items()):
+                                raise ValueError('WordPress publication title, URL or date differs from saved source')
+                            if e['claim_span'] not in snapshot_text(raw, s):
+                                raise ValueError('WordPress publication quote not in saved source')
                         passed = True
                     elif selector['type'] == 'parsed_html_pointer':
                         if s['id'] not in pages:
@@ -78,6 +103,17 @@ def audit(folder):
                                 raise ValueError('Missing exact-company proof')
                             if selector != proof.get('proof_selector') or node_org({'taxID': value}) != profile['organisation_number'] or str(value) != e['claim_span']:
                                 raise ValueError('Structured legal identity evidence does not match its identifier')
+                        elif claim['field'] == 'company_publication':
+                            from fjordlens.website import jsonld_publication
+                            if e['extraction_method'] != 'jsonld_article_v1' or not isinstance(value, dict):
+                                raise ValueError('Unsupported structured publication source')
+                            expected = jsonld_publication(value, pages[s['id']], e['retrieved_at'][:10],
+                                                          e.get('identity_proof', {}).get('url', ''))
+                            if not expected or any(claim['value'].get(key) != expected.get(key)
+                                                   for key in ('title', 'url', 'published_on', 'published_at')):
+                                raise ValueError('Structured publication title, URL or date differs from saved source')
+                            if e['claim_span'] not in snapshot_text(raw, s):
+                                raise ValueError('Structured publication quote not in saved source')
                         passed = True
                     elif e['extraction_method'] in ('legal_identity_gate_v1', 'identity_gate_v2'):
                         if s['id'] not in pages:
@@ -129,6 +165,9 @@ def audit(folder):
                                 raise ValueError('Article date claim is not about the saved page')
                         if not found or found['published_on'] != claim['value']['published_on'] or found['span'] != e['claim_span']:
                             raise ValueError('Dated publication is not re-derived from the saved page')
+                        expected_title = found['title'][:300] if selector['type'] == 'article_date' else found['title']
+                        if claim['value'].get('title') != expected_title or claim['value'].get('published_at') != found.get('published_at'):
+                            raise ValueError('Dated publication title or timestamp differs from saved source')
                         if e['claim_span'] not in text:
                             raise ValueError('Publication quote not in saved source')
                         passed = True

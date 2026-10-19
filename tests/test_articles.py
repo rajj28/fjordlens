@@ -1,5 +1,5 @@
 import unittest
-from fjordlens.articles import extract_dated_links, article_published_date
+from fjordlens.articles import extract_dated_links, article_published_date, nonpublication_url
 
 
 class TestExtractDatedLinks(unittest.TestCase):
@@ -494,6 +494,99 @@ if __name__ == '__main__':
     unittest.main()
 
 class ArticlePageBindingTests(unittest.TestCase):
+    def test_explicit_invalid_jsonld_subject_cannot_be_treated_as_absent(self):
+        for reference in ('javascript:alert(1)', 'urn:article:123'):
+            with self.subTest(reference=reference):
+                html = ('<h1>Company announces a new contract</h1><script type="application/ld+json">'
+                        '{"@type":"NewsArticle","url":"' + reference + '","datePublished":"2025-03-01"}</script>')
+                self.assertIsNone(article_published_date(html, '2025-06-01', 'https://example.no/news/story'))
+
+    def test_relative_jsonld_identity_is_resolved_against_fetched_page(self):
+        for reference in ('/news/another-story', '../another-story', '//other.no/news/story'):
+            with self.subTest(reference=reference):
+                html = ('<h1>Company announces a new contract</h1><script type="application/ld+json">'
+                        '{"@type":"NewsArticle","url":"' + reference + '","datePublished":"2025-03-01"}</script>')
+                self.assertIsNone(article_published_date(html, '2025-06-01', 'https://example.no/news/story'))
+        for reference in ('/news/story', 'story', '#article'):
+            with self.subTest(reference=reference):
+                html = ('<h1>Company announces a new contract</h1><script type="application/ld+json">'
+                        '{"@type":"NewsArticle","mainEntityOfPage":{"@id":"' + reference + '"},"datePublished":"2025-03-01"}</script>')
+                self.assertEqual(article_published_date(html, '2025-06-01', 'https://example.no/news/story')['published_on'], '2025-03-01')
+
+    def test_hidden_and_comment_cards_do_not_publish_listing_dates(self):
+        card = '<li><a href="/news/story">Company wins a contract</a><time datetime="2025-03-14">14 March 2025</time></li>'
+        for attr in ('class="comments"', 'id="recent-comments"', 'class="related-posts"', 'hidden',
+                     'aria-hidden="true"', 'style="display:none"', 'style="visibility:hidden"'):
+            with self.subTest(attr=attr):
+                html = '<ul ' + attr + '>' + card + '</ul>'
+                self.assertEqual(extract_dated_links(html, 'https://example.no/', '2025-06-01'), [])
+
+    def test_comment_anchor_is_not_a_publication_link(self):
+        for fragment in ('comment-13', 'comments', 'reply-12', 'respond', 'review_13', '%63omment-13'):
+            with self.subTest(fragment=fragment):
+                html = ('<li><a href="/news/story#' + fragment + '">Alice on Company wins a contract</a>'
+                        '<time datetime="2025-03-14">14 March 2025</time></li>')
+                self.assertEqual(extract_dated_links(html, 'https://example.no/', '2025-06-01'), [])
+
+    def test_comment_date_cannot_move_to_nearby_story_link(self):
+        html = ('<li><a href="/news/story#comment-13">Alice on Company wins a contract</a>'
+                '<time datetime="2025-03-14">14 March 2025</time><a href="/news/story">Company wins a contract</a></li>')
+        self.assertEqual(extract_dated_links(html, 'https://example.no/', '2025-06-01'), [])
+
+    def test_hidden_comment_time_does_not_override_visible_listing_date(self):
+        html = ('<li><a href="/news/story">Company wins a contract</a>'
+                '<span class="comments"><time datetime="2025-04-01">1 April 2025</time></span>'
+                '<time datetime="2025-03-14">14 March 2025</time></li>')
+        found = extract_dated_links(html, 'https://example.no/', '2025-06-01')
+        self.assertEqual([item['published_on'] for item in found], ['2025-03-14'])
+
+    def test_utility_sections_and_localized_cms_children_are_not_publications(self):
+        paths = ('/contact/', '/kontakt-oss/category27.html', '/privacy-policy/', '/personvern/',
+                 '/legal/notice', '/services/consulting', '/tjenester/radgivning', '/about-us/',
+                 '/om-oss/article-42', '/en/contact.html', '/nb-NO/personvern/', '/%63ontact/',
+                 '/privacy_policy.php', '/booking/')
+        for path in paths:
+            with self.subTest(path=path):
+                url = 'https://example.no' + path
+                self.assertTrue(nonpublication_url(url))
+                html = ('<meta property="og:type" content="article"><h1>Company information page</h1>'
+                        '<script type="application/ld+json">'
+                        '{"@type":"Article","url":"' + url + '","datePublished":"2025-03-01"}</script>')
+                self.assertIsNone(article_published_date(html, '2025-06-01', url))
+
+    def test_genuine_news_about_privacy_contacts_and_services_remains_eligible(self):
+        paths = ('/news/privacy-policy-update', '/news/contact-centre-opens', '/nyheter/nye-tjenester',
+                 '/en/news/privacy', '/2025/03/01/service-award', '/contact-centre-wins-award')
+        for path in paths:
+            with self.subTest(path=path):
+                url = 'https://example.no' + path
+                self.assertFalse(nonpublication_url(url))
+                html = ('<meta property="og:type" content="article"><h1>Important company announcement</h1>'
+                        '<meta property="article:published_time" content="2025-03-01">')
+                self.assertEqual(article_published_date(html, '2025-06-01', url)['published_on'], '2025-03-01')
+
+    def test_dated_utility_links_cannot_borrow_dates_from_surrounding_text(self):
+        for path in ('/kontakt/', '/contact-us/', '/privacy-policy/', '/services/design', '/om-oss/article-42'):
+            with self.subTest(path=path):
+                html = ('<div><a href="' + path + '">Company information and contact details</a>'
+                        '<p>New regulations apply from 2 August 2025.</p></div>')
+                self.assertEqual(extract_dated_links(html, 'https://example.no/', '2025-10-01'), [])
+
+    def test_conversion_ctas_are_not_article_titles_even_on_unusual_routes(self):
+        for label in ('Book en prat \u2192', 'Book a meeting', 'Bestill en demo', 'Kontakt oss',
+                      'Contact us today', 'Get in touch', 'Send oss en melding', 'Request a quote'):
+            with self.subTest(label=label):
+                html = ('<div><a href="/next-step">' + label + '</a>'
+                        '<p>New regulations apply from 2 August 2025.</p></div>')
+                self.assertEqual(extract_dated_links(html, 'https://example.no/', '2025-10-01'), [])
+
+    def test_real_headline_with_cta_in_same_listing_does_not_inherit_its_title(self):
+        html = ('<li><a href="/news/new-service">New service centre opens</a>'
+                '<time datetime="2025-03-14">14 March 2025</time></li>'
+                '<div><a href="/next-step">Book en prat \u2192</a><p>Regulations apply 2 August 2025.</p></div>')
+        found = extract_dated_links(html, 'https://example.no/', '2025-10-01')
+        self.assertEqual([(item['title'], item['published_on']) for item in found], [('New service centre opens', '2025-03-14')])
+
     def test_unbound_jsonld_with_different_headline_cannot_supply_date(self):
         html = ('<article><h1>New contract announced</h1></article><script type="application/ld+json">'
                 '{"@type":"NewsArticle","headline":"A different company closes its office","datePublished":"2025-03-01"}</script>')
