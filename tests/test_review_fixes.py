@@ -51,6 +51,55 @@ class SiteExtractionTests(unittest.TestCase):
         claims = self.fields(self.extract(html, SITE), "company_linked_profile")
         self.assertEqual([c["value"]["url"] for c in claims], ["https://www.linkedin.com/company/equinor"])
 
+    def test_sameas_owns_numeric_facebook_and_linkedin_profiles_without_handle_match(self):
+        facebook = "https://www.facebook.com/profile.php?id=61553549982503"
+        linkedin = "https://www.linkedin.com/company/86803995"
+        html = "<title>Equinor</title>" + jsonld({"@type": "Organization", "name": "Equinor ASA",
+                                                  "sameAs": [facebook, linkedin]})
+        claims = self.fields(self.extract(html, SITE), "company_linked_profile")
+        self.assertEqual({c["value"]["url"] for c in claims}, {facebook, linkedin})
+        for claim in claims:
+            self.assertEqual(claim["value"]["relationship"], "declared_in_site_organization_markup")
+            self.assertFalse(claim["value"]["destination_verified"])
+
+    def test_scalar_sameas_quotes_scalar_and_points_to_scalar(self):
+        profile_url = "https://www.linkedin.com/company/86803995"
+        html = "<title>Equinor</title>" + jsonld({"@type": "Organization", "name": "Equinor ASA",
+                                                  "sameAs": profile_url})
+        profile = self.extract(html, SITE)
+        claim = self.fields(profile, "company_linked_profile")[0]
+        evidence = next(e for e in profile.data["evidence"] if e["id"] in claim["evidence_ids"])
+        self.assertEqual(evidence["claim_span"], json.dumps(profile_url))
+        self.assertEqual(evidence["selector"]["value"], "/jsonld/0/sameAs")
+
+    def test_array_sameas_quotes_each_selected_url_and_points_to_its_index(self):
+        urls = ["https://www.linkedin.com/company/86803995", "https://www.facebook.com/profile.php?id=61553549982503"]
+        html = "<title>Equinor</title>" + jsonld({"@type": "Organization", "name": "Equinor ASA", "sameAs": urls})
+        profile = self.extract(html, SITE)
+        claims = self.fields(profile, "company_linked_profile")
+        self.assertEqual(len(claims), 2)
+        for claim in claims:
+            item = claim["value"]["url_as_published"]
+            evidence = next(e for e in profile.data["evidence"] if e["id"] in claim["evidence_ids"])
+            self.assertEqual(evidence["claim_span"], json.dumps(item))
+            index = urls.index(item)
+            self.assertEqual(evidence["selector"]["value"], f"/jsonld/0/sameAs/{index}")
+
+    def test_unmatched_declared_alias_is_accepted_only_on_own_organization_node(self):
+        alias = "https://www.linkedin.com/company/independent-brand"
+        own = {"@type": "Organization", "name": "Equinor ASA", "sameAs": alias}
+        sibling = {"@type": "Organization", "name": "Equinor Eiendom AS", "sameAs": alias}
+        article_author = {"@type": "Article", "author": own}
+        for document, expected in ((own, 1), (sibling, 0), (article_author, 0)):
+            with self.subTest(document=document):
+                claims = self.fields(self.extract("<title>Equinor</title>" + jsonld(document), SITE),
+                                     "company_linked_profile")
+                self.assertEqual(len(claims), expected)
+
+    def test_generic_agency_footer_link_still_requires_handle_match(self):
+        html = ('<title>Equinor</title><a href="https://www.linkedin.com/company/bergenwebdesign">Web agency</a>')
+        self.assertEqual(self.fields(self.extract(html, SITE), "company_linked_profile"), [])
+
     def test_sameas_with_conflicting_identifier_is_rejected(self):
         html = "<title>Equinor</title>" + jsonld({"@type": "Organization", "name": "Equinor ASA", "taxID": "990888213",
                                                   "sameAs": ["https://www.linkedin.com/company/equinor"]})

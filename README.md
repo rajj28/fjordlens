@@ -53,6 +53,7 @@ The agent is designed to finish inside the wall-clock budget and write every env
 | Website workers | `--workers` | – | 32 |
 | Site content pages | `--max-pages` | – | 12 (within the same request limits) |
 | Optional search key | – | `BRAVE_SEARCH_API_KEY` | unset (search off) |
+| Brave attempts across the entire run | `--max-search-requests` | `FJORDLENS_MAX_SEARCH_REQUESTS` | 6 (0 disables) |
 | API spend ceiling (USD) | – | `FJORDLENS_MAX_API_COST_USD` | 9.0 |
 
 Every request also has a hard total deadline (twice the socket timeout, never past the run budget), so a server
@@ -78,7 +79,7 @@ the current contract supports variable batch sizes and does not promise the old 
 | Website | Verified official website (identity gate v2) |
 | Description | The registry's own activity and statutory-purpose text, plus the verified site's description |
 | Contact | Registry phone, mobile and e-mail of the entity and of each registered workplace; e-mail/phone on the verified company domain; phone numbers the verified site's contact page labels as such |
-| Social | Company profiles the verified site links or lists as `sameAs`, whose handle carries the company or domain name; registry-declared social websites are labelled separately, with the destination unverified |
+| Social | Named profile links on the verified site, or `sameAs` declarations bound to its own Organization node (including numeric profile IDs); registry declarations are labelled separately, and destinations remain unverified |
 | Hiring | NAV's official public job feed: active ads whose employer organisation number is the company or one of its registered workplaces (ads from staffing and recruitment agencies, NACE 78, are labelled as possibly for clients); JobPosting markup and careers pages on the verified site |
 | Activity | Dated company publications from the verified site: RSS/Atom, article markup, news/blog listing pages (a link paired with the date shown next to it; the quote is the verbatim source of both), an article page's own publication date, and the site's WordPress posts API |
 
@@ -171,10 +172,14 @@ kept in the browser and results exportable as JSON.
 - APIs: Brønnøysund Enhetsregisteret and Regnskapsregisteret (open data, NLOD 2.0); NAV job-vacancy feed
   (public token, [terms](https://arbeidsplassen.nav.no/vilkar-api)); company websites (including a verified site's
   own WordPress posts API), fetched only where robots.txt (RFC 9309) allows.
-- Optional: Brave Web Search API, only if the evaluator sets `BRAVE_SEARCH_API_KEY`; results are used transiently
+- Optional: Brave Web Search API via `BRAVE_SEARCH_API_KEY` (an evaluator-supplied credential in official runs); results are used transiently
   to nominate candidates and are not stored. At most four website-discovery and two independent-news queries
   per company, at a configured $0.005 per query (`BRAVE_COST_PER_REQUEST_USD`), with a hard ceiling
-  (`FJORDLENS_MAX_API_COST_USD`, default $9). A rejected first batch permits the second query;
+  (`FJORDLENS_MAX_API_COST_USD`, default $9). Website and news searches also share a conservative **six-attempt
+  limit for the entire run**, including retries; the evaluator can explicitly supply a different allowance using
+  `--max-search-requests`. This protects small search quotas independently of the dollar estimate. It is a per-run
+  guard, not a provider-wide monthly usage meter. `run-report.json` records attempts and the configured cap.
+  A rejected first batch permits the second query while allowance remains;
   a verified website stops further website searching. Independent articles require their own exact-company proof.
   Search-enabled live recall has not been benchmarked here.
 - No restricted platforms are fetched (LinkedIn, Facebook, Instagram, Google, Glassdoor, Indeed, X, TikTok);

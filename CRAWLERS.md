@@ -34,6 +34,13 @@
    preserve deep legal/contact results on a domain. Name-search nominations pass like DNS guesses (rule A or D);
    organisation-number nominations only by rule A, because a supplier's or customer's page also shows our number.
 
+All Brave traffic shares a per-run attempt counter, including website queries, news queries and retries.
+`--max-search-requests` overrides `FJORDLENS_MAX_SEARCH_REQUESTS`; the default is six attempts for the entire run
+and zero disables requests. Invalid limits fail closed. The counter is charged before the HTTP attempt under
+the shared budget lock, even if the request fails. This limit supplements the request/time/spend budgets and
+does not track usage by other programs or earlier runs. Official evaluation uses organizer-supplied credentials
+and its explicitly supplied search allowance; personal credentials used for local experiments are never shipped.
+
 ### Verification and bounded traversal
 
 - Up to five free candidates are tried before optional search. Each homepage is checked before extra proof pages
@@ -70,8 +77,11 @@ publishes only its section URL; facts from the surrounding site are not attribut
   web agency, ...) is named in the same or the two preceding lines; the quote is the number exactly as written in
   the saved HTML. Organization markup with our organisation number.
 - Social profiles: links whose handle carries the company or domain name, and `sameAs` URLs in the site's own
-  Organization node when that node carries our organisation number or exactly our legal name and no other
-  identifier (same handle rule); destinations are never fetched.
+  Organization node when that node carries our organisation number, or exactly our legal name without a
+  conflicting Norwegian identifier or an ambiguous same-name sibling node. These declarations may use numeric IDs or trading handles; generic
+  page links still require the handle match. Each declaration cites the exact scalar or array element in
+  the saved JSON-LD. The audit rechecks the declaring entity, URL and relationship; destinations are never fetched
+  and remain explicitly unverified.
 - Publications: RSS/Atom items, Article/NewsArticle/BlogPosting markup, dated links on news/blog listing pages and the
   homepage (`articles.extract_dated_links`: links on the verified host only; a time element or written date inside
   the link or in the nearest enclosing element that links to no other page; the quote is the verbatim source covering

@@ -568,7 +568,8 @@ def write_envelopes(output, results, result_file=None):
         temp.replace(target)
 
 def run_batch(inputs, output, *, run_id=None, previous=None, replay=None, cutoff=None, registry_snapshot=None, workers=None,
-              max_requests=None, seconds=None, per_company=None, max_pages=12, fresh=False, provisional_every=60, first_provisional=15):
+              max_requests=None, seconds=None, per_company=None, max_pages=12, fresh=False, provisional_every=60, first_provisional=15,
+              max_search_requests=None):
     clock_start = time.monotonic()
     output, result_file = Path(output), None
     if output.suffix.lower() in {".jsonl", ".json"}:
@@ -591,7 +592,7 @@ def run_batch(inputs, output, *, run_id=None, previous=None, replay=None, cutoff
             previous, previous_root = auto, output
     previous_rows = read_previous(previous) if previous else {}
     run_id = run_id or ("fjordlens-" + now().replace(":", "").replace("-", ""))
-    budget = Budget(max_requests, max(1.0, seconds - margin), per_company)
+    budget = Budget(max_requests, max(1.0, seconds - margin), per_company, max_search_requests=max_search_requests)
     fetcher = Fetcher(output, budget, replay=Path(replay) if replay else None, cutoff=cutoff,
                       registry_snapshot=Path(registry_snapshot) if registry_snapshot else None)
     started_at = now()
@@ -644,6 +645,7 @@ def run_batch(inputs, output, *, run_id=None, previous=None, replay=None, cutoff
               "complete": True, "input_count": len(orgs), "terminal_envelopes": len(results), "unique_organisations": len(set(orgs)),
               "companies_cut_by_deadline": timed_out,
               "requests": budget.total, "request_limit": max_requests, "per_company_request_limit": per_company,
+              "search_requests": budget.search_requests, "search_request_limit": budget.max_search_requests,
               "runtime_seconds": round(elapsed, 3), "runtime_limit_seconds": seconds,
               "third_party_cost_usd": round(budget.cost, 6), "cost_per_company_usd": round(budget.cost / max(1, len(orgs)), 6),
               "p50_company_runtime_ms": statistics.median(durations) if durations else 0,

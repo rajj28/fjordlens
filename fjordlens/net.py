@@ -33,6 +33,14 @@ HOST_INTERVALS = {"pam-stilling-feed.nav.no": 0.25,  # Documented bulk API; poli
 class FetchError(Exception):
     pass
 
+
+def _is_brave_search_url(url):
+    try:
+        return urllib.parse.urlsplit(url).hostname == "api.search.brave.com"
+    except (TypeError, ValueError):
+        return False
+
+
 def utc_timestamp(value):
     """Require an explicit timezone; compare instants rather than ISO strings."""
     parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
@@ -177,8 +185,21 @@ def read_snapshot_bytes(path):
 
 
 class Budget:
-    def __init__(self, requests=2000, seconds=2600, per_company=20):
+    def __init__(self, requests=2000, seconds=2600, per_company=20, *, max_search_requests=None):
         self.max_requests, self.deadline, self.per_company = requests, time.monotonic() + seconds, per_company
+        if max_search_requests is None:
+            configured = os.environ.get("FJORDLENS_MAX_SEARCH_REQUESTS")
+            if configured is None:
+                max_search_requests = 6
+            else:
+                configured = configured.strip()
+                if not re.fullmatch(r"[0-9]+", configured):
+                    raise ValueError("FJORDLENS_MAX_SEARCH_REQUESTS must be a non-negative integer")
+                max_search_requests = int(configured)
+        if (not isinstance(max_search_requests, int) or isinstance(max_search_requests, bool)
+                or max_search_requests < 0):
+            raise ValueError("max_search_requests must be a non-negative integer")
+        self.max_search_requests = max_search_requests
         try:
             self.max_cost = float(os.environ.get("FJORDLENS_MAX_API_COST_USD") or 9.0)
         except ValueError:
@@ -189,6 +210,7 @@ class Budget:
         self.total = 0
         self.counts = {}
         self.cost = 0.0
+        self.search_requests = 0
         self.receipts = []
 
     def close(self):
@@ -199,17 +221,22 @@ class Budget:
     def reserve(self, org, url, cost=0.0):
         if not isinstance(cost, (int, float)) or isinstance(cost, bool) or not math.isfinite(cost) or cost < 0:
             raise FetchError("Budget: invalid declared request cost")
+        brave_search = _is_brave_search_url(url)
         with self.lock:
             if time.monotonic() >= self.deadline:
                 raise FetchError("Budget: wall-clock deadline reached")
             # Shared run-level sources (e.g. the job-feed catch-up) count toward the total only.
             if self.total >= self.max_requests or (org != "_shared" and self.counts.get(org, 0) >= self.per_company):
                 raise FetchError("Budget: request allowance exhausted")
+            if brave_search and self.search_requests >= self.max_search_requests:
+                raise FetchError("Budget: Brave search request allowance exhausted")
             if self.cost + cost > self.max_cost:
                 raise FetchError("Budget: external API spend ceiling")
             self.total += 1
             self.counts[org] = self.counts.get(org, 0) + 1
             self.cost += cost
+            if brave_search:
+                self.search_requests += 1
             # The request log keeps a search endpoint without its query (search terms are not retained).
             logged = url.split("?", 1)[0] if "api.search.brave.com" in url else url
             receipt = {"sequence": self.total, "organisation_number": org, "url": logged,
@@ -300,6 +327,12 @@ class Fetcher:
             if any(host == h or host.endswith("." + h) for h in RESTRICTED):
                 # Enforced on every request, including robots.txt redirect hops.
                 raise FetchError("Restricted platform; a licensed connector is required")
+            if _is_brave_search_url(url):
+                # Avoid DNS, host pacing, and connection work once the shared run cap is
+                # already exhausted. reserve() below remains the authoritative atomic check.
+                with self.budget.lock:
+                    if self.budget.search_requests >= self.budget.max_search_requests:
+                        raise FetchError("Budget: Brave search request allowance exhausted")
             ip = resolve_public(host, p.port or (443 if p.scheme == "https" else 80))
             # Resolve once and connect to that exact public IP. SNI/Host use the original host.
             # Separate rate lanes: the rate-limited filing-copy endpoint must never stall the
@@ -420,12 +453,14 @@ class Fetcher:
         # letting repeated paths hammer a failed host or ignore a long Retry-After.
         return max(30.0, self._retry_after(result) or 0.0)
 
-    def _can_retry(self, org, wait, timeout, cost=0.0):
+    def _can_retry(self, org, wait, timeout, cost=0.0, url=None):
         with self.budget.lock:
             return (math.isfinite(wait) and wait >= 0
                     and time.monotonic() + wait + timeout < self.budget.deadline
                     and self.budget.total < self.budget.max_requests
                     and (org == "_shared" or self.budget.counts.get(org, 0) < self.budget.per_company)
+                    and (not _is_brave_search_url(url)
+                         or self.budget.search_requests < self.budget.max_search_requests)
                     and isinstance(cost, (int, float)) and not isinstance(cost, bool)
                     and math.isfinite(cost) and cost >= 0
                     and self.budget.cost + cost <= self.budget.max_cost)
@@ -460,7 +495,7 @@ class Fetcher:
                     r = self._raw(target, org, "access_policy")
                     wait = self._retry_wait(r, False, 0)
                     retry_timeout = self.timeout * 1.5 if r.error else self.timeout
-                    if not retries and wait is not None and self._can_retry(org, wait, retry_timeout):
+                    if not retries and wait is not None and self._can_retry(org, wait, retry_timeout, url=target):
                         self._save(r)
                         time.sleep(wait)
                         retries += 1
@@ -535,7 +570,7 @@ class Fetcher:
                 for attempt in range(2 if is_official else 1):
                     wait = self._retry_wait(result, is_official, attempt)
                     retry_cost = cost if not chain else 0.0
-                    if wait is None or not self._can_retry(org, wait, self.timeout, retry_cost):
+                    if wait is None or not self._can_retry(org, wait, self.timeout, retry_cost, url=url):
                         break
                     time.sleep(wait)
                     result = self._raw(url, org, source_class, headers if not chain else None, cost if not chain else 0.0)

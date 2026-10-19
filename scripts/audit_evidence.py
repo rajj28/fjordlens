@@ -97,7 +97,32 @@ def audit(folder):
                         value = at(pages[s['id']], selector['value'], missing)
                         if value is missing:
                             raise ValueError('Parsed HTML selector does not resolve')
-                        if e['extraction_method'] in ('legal_identity_gate_v1', 'identity_gate_v2'):
+                        if e['extraction_method'] == 'jsonld_sameas_v1':
+                            from fjordlens import gate
+                            from fjordlens.website import own_organisation_node, social_profile_url
+                            match = re.fullmatch(r'/jsonld(.+)/sameAs(?:/[0-9]+)?', selector['value'])
+                            node_path = match.group(1) if match else ''
+                            owner = at(pages[s['id']], '/jsonld' + node_path, missing)
+                            proof = e.get('identity_proof') or {}
+                            if (not gate.OWNER_NODE_PATH.fullmatch(node_path) or not isinstance(owner, dict)
+                                    or not own_organisation_node(pages[s['id']], owner, node_path,
+                                                                 profile['organisation_number'],
+                                                                 (profile.get('legal_identity') or {}).get('name', ''))
+                                    or proof.get('organisation_number') != profile['organisation_number']
+                                    or not proof.get('publishable')
+                                    or gate.host(s['final_url']) != gate.host(proof.get('url', ''))):
+                                raise ValueError('Social sameAs is not declared by the verified company organisation')
+                            target = social_profile_url(value) if isinstance(value, str) else None
+                            expected = {'platform': target[0], 'url': target[2], 'url_as_published': value,
+                                        'relationship': 'declared_in_site_organization_markup',
+                                        'destination_verified': False} if target else None
+                            if (claim['field'] != 'company_linked_profile' or not expected
+                                    or any(claim['value'].get(key) != item for key, item in expected.items())
+                                    or claim['value'].get('destination_verified') is not False):
+                                raise ValueError('Social profile or relationship differs from its saved sameAs declaration')
+                            if e['claim_span'] not in snapshot_text(raw, s):
+                                raise ValueError('Social sameAs quote not in saved source')
+                        elif e['extraction_method'] in ('legal_identity_gate_v1', 'identity_gate_v2'):
                             proof = e['identity_proof']
                             if proof['organisation_number'] != profile['organisation_number'] or not proof.get('publishable'):
                                 raise ValueError('Missing exact-company proof')

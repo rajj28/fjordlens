@@ -76,7 +76,16 @@ PROFILE_PATHS = {
 def social_profile_url(url):
     """(platform, handle, canonical_url) for a company profile link; None for share widgets, posts,
     personal profiles, search pages and other non-profile links. Query strings are dropped."""
-    parts = urlsplit(url)
+    if not isinstance(url, str) or any(ord(char) < 32 for char in url):
+        return None
+    try:
+        parts = urlsplit(url)
+        if (parts.scheme not in {"http", "https"} or not parts.hostname
+                or parts.username or parts.password
+                or parts.port not in {None, 443 if parts.scheme == "https" else 80}):
+            return None
+    except ValueError:
+        return None
     h = (parts.hostname or "").lower().removeprefix("www.").removeprefix("m.").removeprefix("no.")
     platform = {"linkedin.com": "LinkedIn", "facebook.com": "Facebook", "fb.com": "Facebook", "instagram.com": "Instagram",
                 "youtube.com": "YouTube", "x.com": "X", "twitter.com": "X", "tiktok.com": "TikTok"}.get(h)
@@ -322,25 +331,84 @@ def own_organisation(node, org, legal_name):
     return bool(target) and any(core_name(node.get(key)) == target for key in ("legalName", "name") if isinstance(node.get(key), str))
 
 
+def own_organisation_node(page, node, path, org, legal_name):
+    """Bind a name-only organization node to an unambiguous same-entity JSON-LD record."""
+    if not gate.OWNER_NODE_PATH.fullmatch(path or "") or not own_organisation(node, org, legal_name):
+        return False
+
+    def same_site(value):
+        if not isinstance(value, str) or not value.strip():
+            return False
+        try:
+            parts = urlsplit(urljoin(page.get("url", ""), value.strip()))
+            if (parts.scheme not in {"http", "https"} or not parts.hostname
+                    or parts.username or parts.password
+                    or parts.port not in {None, 443 if parts.scheme == "https" else 80}):
+                return False
+            return registered_domain(parts.hostname) == registered_domain(page.get("url", ""))
+        except (TypeError, ValueError):
+            return False
+
+    node_url = node.get("url")
+    if node_url is not None and not same_site(node_url):
+        return False
+    identifiers = {item["organisation_number"] for item in node_org_identifiers(node)
+                   if item.get("organisation_number")}
+    if identifiers:
+        return identifiers == {org}
+
+    target = core_name(legal_name)
+    matching = [(other, other_path) for other, other_path in structured_nodes(page.get("jsonld", []))
+                if other_path != path and gate.OWNER_NODE_PATH.fullmatch(other_path or "")
+                and jsonld_types(other) & ORG_TYPES
+                and any(core_name(other.get(key)) == target for key in ("legalName", "name")
+                        if isinstance(other.get(key), str))]
+    if not matching:
+        return True
+
+    node_id = node.get("@id")
+    if not isinstance(node_id, str) or not node_id.strip() or not same_site(node_id):
+        return False
+    for other, _ in matching:
+        if other.get("@id") != node_id or not same_site(other.get("@id")):
+            return False
+        other_url = other.get("url")
+        if other_url is not None and not same_site(other_url):
+            return False
+        other_ids = {item["organisation_number"] for item in node_org_identifiers(other)
+                     if item.get("organisation_number")}
+        if other_ids and other_ids != {org}:
+            return False
+    return True
+
+
 def same_as(profile, page, response, proof, node, path, legal_name):
-    """Social profiles the site's own organisation markup declares (schema.org sameAs)."""
+    """Social links declared by the own-organisation node checked by extract().
+
+    Numeric platform IDs and trading handles need not spell the legal name. The
+    declaration belongs to the verified entity; the destination remains unverified.
+    """
     links = node.get("sameAs")
-    links = [links] if isinstance(links, str) else links if isinstance(links, list) else []
-    quote = jsonld_quote(page, (path or "") + "/sameAs") or canonical(links)[:3000]
+    scalar = isinstance(links, str)
+    links = [links] if scalar else links if isinstance(links, list) else []
     for index, link in enumerate(links[:12]):
         if not isinstance(link, str):
             continue
         profile_url = social_profile_url(link)
-        if not profile_url or not handle_matches_company(profile_url[1], legal_name, proof["url"]):
+        if not profile_url:
             continue
         platform, url = profile_url[0], profile_url[2]
         if known_claim(profile, "company_linked_profile", url):
             continue
+        same_as_path = (path or "") + "/sameAs"
+        if not scalar:
+            same_as_path += f"/{index}"
+        quote = jsonld_quote(page, same_as_path) or canonical(link)[:3000]
         value = {"platform": platform, "url": url, "url_as_published": link, "relationship": "declared_in_site_organization_markup",
                  "destination_verified": False}
         add_web(profile, "company_linked_profile", value, response, "social_profiles", proof, span=quote, key=url,
                 scope="site_declared_link", method="jsonld_sameas_v1",
-                selector={"type": "parsed_html_pointer", "value": "/jsonld" + (path or "") + f"/sameAs/{index}"})
+                selector={"type": "parsed_html_pointer", "value": "/jsonld" + same_as_path})
 
 
 def wordpress_posts(profile, fetcher, org, home, proof):
@@ -523,7 +591,7 @@ def extract(profile, entity, page, response, proof):
                 continue
             add_web(profile, "company_publication", publication, response,
                     "activity", proof, span=jsonld_quote(page, path) or canonical(node)[:3000], key=publication["url"], date=publication["published_on"], scope="company_published_content", method="jsonld_article_v1", selector={"type": "parsed_html_pointer", "value": "/jsonld" + path})
-        if gate.OWNER_NODE_PATH.match(path or "/0") and own_organisation(node, org, entity.get("navn") or ""):
+        if own_organisation_node(page, node, path, org, entity.get("navn") or ""):
             same_as(profile, page, response, proof, node, path, entity.get("navn") or "")
         if node_org(node) == org:
             for name, field in (("telephone", "website_phone"), ("email", "website_email"), ("address", "website_contact_address")):
