@@ -1,0 +1,18 @@
+{
+  "id": "ss_9be2827b9f993a7fdc7499d7",
+  "requested_url": "https://xn--gyplangen-72a0s.no/wp-json/wp/v2/posts?per_page=10&_fields=id,date,link,title",
+  "final_url": "https://xn--gyplangen-72a0s.no/wp-json/wp/v2/posts?per_page=10&_fields=id,date,link,title",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:14:25Z",
+  "content_sha256": "9ef72aff891b6c7877f1011bef30faae8b2389a362d52e43fdbc3d79ae319618",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/9ef72aff891b6c7877f1011bef30faae8b2389a362d52e43fdbc3d79ae319618.json",
+  "content_type": "application/json; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 443,
+  "cache_hit": false,
+  "error": null
+}

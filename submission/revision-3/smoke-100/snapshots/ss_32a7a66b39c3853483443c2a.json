@@ -1,0 +1,18 @@
+{
+  "id": "ss_32a7a66b39c3853483443c2a",
+  "requested_url": "https://astomed.no/pages/om-oss",
+  "final_url": "https://astomed.no/pages/om-oss",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:12:26Z",
+  "content_sha256": "16a133dcb9a3bbca1d86a522c72d745549282efffaa4a3679ae91fc731e485fe",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/16a133dcb9a3bbca1d86a522c72d745549282efffaa4a3679ae91fc731e485fe.html",
+  "content_type": "text/html; charset=utf-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 296488,
+  "cache_hit": false,
+  "error": null
+}

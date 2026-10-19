@@ -1,0 +1,18 @@
+{
+  "id": "ss_63b8600c208a096b6aa483cb",
+  "requested_url": "https://www.elsoregnskap.no/cookie-erklaering/",
+  "final_url": "https://www.elsoregnskap.no/cookie-erklaering/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:12:47Z",
+  "content_sha256": "15d70a702fdeafc106ecbf7bebf809c54047917a322bb14a3fd79cd6b7fcf79b",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/15d70a702fdeafc106ecbf7bebf809c54047917a322bb14a3fd79cd6b7fcf79b.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 35495,
+  "cache_hit": false,
+  "error": null
+}

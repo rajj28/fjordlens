@@ -1,0 +1,18 @@
+{
+  "id": "ss_fd28d1d22883ad991709f5a2",
+  "requested_url": "https://xn--gyplangen-72a0s.no/rocky-mountains/",
+  "final_url": "https://xn--gyplangen-72a0s.no/rocky-mountains/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:14:19Z",
+  "content_sha256": "44c93ad40009907c917f0f0a3cb1624a4cfab832c5cc9357a6f5907321b63ee0",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/44c93ad40009907c917f0f0a3cb1624a4cfab832c5cc9357a6f5907321b63ee0.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 90452,
+  "cache_hit": false,
+  "error": null
+}

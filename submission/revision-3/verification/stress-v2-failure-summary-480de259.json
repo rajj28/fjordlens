@@ -1,0 +1,112 @@
+﻿{
+    "source_commit":  "480de259f33b74f9bbb1c01c02103eb8d7c13b68",
+    "working_tree_clean_at_run_start":  "Root agent confirmed source was clean on this commit before the harness run; the failed harness exited before persisting its captured git status.",
+    "passed":  false,
+    "scope":  "Synthetic offline orchestration, duplicates, failure and deadline handling. No live coverage or official score.",
+    "prior_failure":  {
+                          "deadline_wall_seconds_including_report":  7.735,
+                          "mixed_failure_predicate_used_last_two_digits_and_recorded_zero_failures":  true,
+                          "deadline_limit_seconds":  6,
+                          "note":  "This new separate v2 failure summary retains prior outputs and is not the old summary.",
+                          "previous_summary_marked_passed_despite_invalid_checks":  true
+                      },
+    "failure":  "The 1100_deadline case exceeded its 6-second limit; report measured 6.938 seconds and budget_passed=false.",
+    "scenarios":  [
+                      {
+                          "scenario":  "1100_missing",
+                          "source_commit":  "480de259f33b74f9bbb1c01c02103eb8d7c13b68",
+                          "output_folder":  "stress-v2-480de259-20261020-003629-1100_missing",
+                          "passed":  true,
+                          "inputs":  1100,
+                          "terminal_envelopes":  1100,
+                          "failed_envelopes":  0,
+                          "errors":  0,
+                          "envelope_states":  {
+                                                  "available":  0,
+                                                  "not_available":  1100,
+                                                  "blocked":  0,
+                                                  "not_applicable":  0,
+                                                  "ambiguous":  0,
+                                                  "failed":  0
+                                              },
+                          "deadline_cutoffs":  0,
+                          "budget_passed":  true,
+                          "wall_seconds_including_report":  3.75,
+                          "runtime_limit_seconds":  60,
+                          "requests":  0,
+                          "validation_errors":  0
+                      },
+                      {
+                          "scenario":  "300_mixed_failure",
+                          "source_commit":  "480de259f33b74f9bbb1c01c02103eb8d7c13b68",
+                          "output_folder":  "stress-v2-480de259-20261020-003629-300_mixed_failure",
+                          "passed":  true,
+                          "inputs":  300,
+                          "terminal_envelopes":  300,
+                          "failed_envelopes":  60,
+                          "errors":  60,
+                          "envelope_states":  {
+                                                  "available":  0,
+                                                  "not_available":  160,
+                                                  "blocked":  80,
+                                                  "not_applicable":  0,
+                                                  "ambiguous":  0,
+                                                  "failed":  60
+                                              },
+                          "deadline_cutoffs":  0,
+                          "budget_passed":  true,
+                          "wall_seconds_including_report":  1.5,
+                          "runtime_limit_seconds":  60,
+                          "requests":  0,
+                          "validation_errors":  0
+                      },
+                      {
+                          "scenario":  "1100_repeated_inputs",
+                          "source_commit":  "480de259f33b74f9bbb1c01c02103eb8d7c13b68",
+                          "output_folder":  "stress-v2-480de259-20261020-003629-1100_repeated_inputs",
+                          "passed":  true,
+                          "inputs":  1100,
+                          "terminal_envelopes":  1100,
+                          "failed_envelopes":  0,
+                          "errors":  0,
+                          "envelope_states":  {
+                                                  "available":  0,
+                                                  "not_available":  1100,
+                                                  "blocked":  0,
+                                                  "not_applicable":  0,
+                                                  "ambiguous":  0,
+                                                  "failed":  0
+                                              },
+                          "deadline_cutoffs":  0,
+                          "budget_passed":  true,
+                          "wall_seconds_including_report":  3.11,
+                          "runtime_limit_seconds":  60,
+                          "requests":  0,
+                          "validation_errors":  0
+                      },
+                      {
+                          "scenario":  "1100_deadline",
+                          "source_commit":  "480de259f33b74f9bbb1c01c02103eb8d7c13b68",
+                          "output_folder":  "stress-v2-480de259-20261020-003629-1100_deadline",
+                          "passed":  false,
+                          "inputs":  1100,
+                          "terminal_envelopes":  1100,
+                          "failed_envelopes":  0,
+                          "errors":  0,
+                          "envelope_states":  {
+                                                  "available":  0,
+                                                  "not_available":  380,
+                                                  "blocked":  0,
+                                                  "not_applicable":  0,
+                                                  "ambiguous":  0,
+                                                  "failed":  720
+                                              },
+                          "deadline_cutoffs":  724,
+                          "budget_passed":  false,
+                          "wall_seconds_including_report":  6.938,
+                          "runtime_limit_seconds":  6,
+                          "requests":  0,
+                          "validation_errors":  0
+                      }
+                  ]
+}

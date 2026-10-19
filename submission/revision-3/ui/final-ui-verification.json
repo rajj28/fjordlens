@@ -1,0 +1,33 @@
+﻿{
+  "source_commit": "025b2877aa5fdfb4e1ad695b1ffce0944a32bf8b",
+  "artifact": "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-v3-benchmark-20261017\\final-development-100-approved",
+  "run_report": {
+    "complete": true,
+    "inputs": 100,
+    "terminal_envelopes": 100,
+    "failed_envelopes": 0,
+    "requests": 1148,
+    "runtime_seconds": 236.578,
+    "third_party_cost_usd": 0.0,
+    "run_report_path": "run-report.json"
+  },
+  "server": {"command": ".venv\\Scripts\\python.exe -m fjordlens serve --data <artifact>\\envelopes.jsonl --port 8793", "startup_http_status": 200, "port": 8793, "stopped": true, "stop_method": "Stopped verified listener PID 18044, started at server launch time; confirmed no remaining LISTENING socket on 127.0.0.1:8793."},
+  "task_checks": {
+    "command": "node scripts/report_tasks.cjs <artifact>\\report http://127.0.0.1:8793",
+    "exit_code": 0,
+    "passed": true,
+    "viewports": ["desktop", "mobile"],
+    "researcher_flows_per_viewport": ["find company", "inspect citation", "compare with citations", "same-document permalink", "direct leadership answer", "period/scope guards", "previous/current change evidence"],
+    "static_api_query_comparisons": 44,
+    "parity_fields": ["answer", "answerability", "claim IDs", "evidence IDs"]
+  },
+  "screenshot_checks": {
+    "command": "node scripts/report_screens.cjs <artifact>\\report <artifact>\\final-ui-screens",
+    "exit_code": 0,
+    "errors": [],
+    "screenshots": ["desktop-list.png", "desktop-company.png", "desktop-compare.png", "mobile-list.png", "mobile-company.png", "mobile-compare.png"],
+    "inspected": ["desktop-company.png", "mobile-company.png"],
+    "visual_findings": "No visible layout defects; mobile layout fits the viewport and screenshot script found no horizontal overflow. Company dossier evidence and citations are visible. The Avito/VIEW Group wording is consistent with registered workplace history and company-owned site evidence, so it was not flagged as a confirmed mismatch."
+  },
+  "source_edits": false
+}

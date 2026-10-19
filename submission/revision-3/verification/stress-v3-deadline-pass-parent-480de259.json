@@ -1,0 +1,41 @@
+{
+  "source_commit": "480de259f33b74f9bbb1c01c02103eb8d7c13b68",
+  "working_tree_dirty": true,
+  "working_tree_status": [
+    " M fjordlens/runner.py"
+  ],
+  "passed": true,
+  "scope": "Synthetic offline orchestration, duplicates, failure and deadline handling. No live coverage or official score.",
+  "prior_failure": {
+    "previous_summary_marked_passed_despite_invalid_checks": true,
+    "mixed_failure_predicate_used_last_two_digits_and_recorded_zero_failures": true,
+    "deadline_wall_seconds_including_report": 7.735,
+    "deadline_limit_seconds": 6,
+    "note": "The prior summary is preserved here as history; v2 corrects the failure index and asserts budget, states, errors, and deadline wall time."
+  },
+  "scenarios": [
+    {
+      "scenario": "1100_deadline",
+      "passed": true,
+      "inputs": 1100,
+      "unique_inputs": 1100,
+      "connector_calls": 144,
+      "terminal_envelopes": 1100,
+      "failed_envelopes": 0,
+      "errors": 0,
+      "envelope_states": {
+        "available": 0,
+        "not_available": 144,
+        "blocked": 0,
+        "not_applicable": 0,
+        "ambiguous": 0,
+        "failed": 956
+      },
+      "deadline_cutoffs": 960,
+      "budget_passed": true,
+      "wall_seconds_including_report": 4.625,
+      "requests": 0,
+      "validation_errors": 0
+    }
+  ]
+}

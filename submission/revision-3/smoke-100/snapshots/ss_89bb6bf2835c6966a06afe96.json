@@ -1,0 +1,18 @@
+{
+  "id": "ss_89bb6bf2835c6966a06afe96",
+  "requested_url": "https://ponshelse.no/estetica/",
+  "final_url": "https://ponshelse.no/estetica/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:12:18Z",
+  "content_sha256": "5536922f458f11f2c8e76365c5a65f38942518948947291bee63557081bbb528",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/5536922f458f11f2c8e76365c5a65f38942518948947291bee63557081bbb528.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 264642,
+  "cache_hit": false,
+  "error": null
+}

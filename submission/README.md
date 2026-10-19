@@ -1,6 +1,8 @@
 # Submission evidence
 
-Latest: [Version 2 / FjordLens 1.1.0](revision-2/README.md), validated on 17 October 2026.
+Latest: [FjordLens 1.2.0](revision-3/README.md), validated on 20 October 2026.
+
+Previous: [Version 2 / FjordLens 1.1.0](revision-2/README.md), validated on 17 October 2026.
 
 The original October 5 artifact remains below for comparison.
 

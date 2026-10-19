@@ -1,0 +1,18 @@
+{
+  "id": "ss_13aeb848fe7bb62eb5f14785",
+  "requested_url": "https://www.elsoregnskap.no/kvalitetskontroll/",
+  "final_url": "https://www.elsoregnskap.no/kvalitetskontroll/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:12:48Z",
+  "content_sha256": "462c543d2a7be705bfa7593514d830a60bd31f5173a030732407e8b633c70225",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/462c543d2a7be705bfa7593514d830a60bd31f5173a030732407e8b633c70225.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 35607,
+  "cache_hit": false,
+  "error": null
+}

@@ -1,0 +1,18 @@
+{
+  "id": "ss_c39352bda418663627ea8476",
+  "requested_url": "https://avito.no/nb/career-avito-data-management",
+  "final_url": "https://avito.no/nb/career-avito-data-management",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:15:49Z",
+  "content_sha256": "85c86fe9f085228b7918ff9fed32b51876f357acf5cc755f10a4fb3970c40d24",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/85c86fe9f085228b7918ff9fed32b51876f357acf5cc755f10a4fb3970c40d24.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": "Wed, 19 Aug 2026 09:44:31 GMT",
+  "etag": null,
+  "body_size_bytes": 65481,
+  "cache_hit": false,
+  "error": null
+}

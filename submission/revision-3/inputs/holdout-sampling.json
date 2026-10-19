@@ -1,0 +1,32 @@
+{
+  "seed": 2026101704,
+  "algorithm": "Algorithm R reservoir sampling, random.Random(seed), uniform over eligible unique universe rows",
+  "source": "C:\\Users\\Acer\\searchagenthackaton]\\reference\\company-universe.jsonl.gz",
+  "source_sha256": "1c89710e5b01f8617e86d09fbdff4a52f2f8dbbba297e74f7164b5984f5a0384",
+  "source_rows": 411160,
+  "excluded": 300,
+  "exclusion_sources": [
+    {
+      "path": "C:\\Users\\Acer\\searchagenthackaton]\\submission\\smoke-100\\envelopes.jsonl",
+      "companies": 100,
+      "sha256": "f301b64fbe632eafd913d92e517be87b6cff703803928aeb192838f265a351a4"
+    },
+    {
+      "path": "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-benchmark-20261017\\holdout-100.jsonl",
+      "companies": 100,
+      "sha256": "3ec09af998c13cfed0d9695528f0ad2d7cbf343b6fc3894a2e955f5c909c8865"
+    },
+    {
+      "path": "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-v3-benchmark-20261017\\fresh-100.jsonl",
+      "companies": 100,
+      "sha256": "df42898b1f77746050df8ec1bcdf93591fa4376a1afe2436da203744da65e7f2"
+    }
+  ],
+  "eligible": 410860,
+  "selected": 100,
+  "output": "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-v3-benchmark-20261017\\final-holdout-100.jsonl",
+  "output_sha256": "865c0b4263e0478d69edf035ba26bb91b3ba401ea9fadc8ae558bf95571808c3",
+  "overlap_with_prior_samples": 0,
+  "created_at": "2026-10-17T08:21:34.943572+00:00",
+  "purpose": "Untouched comparison only; no tuning on this sample"
+}

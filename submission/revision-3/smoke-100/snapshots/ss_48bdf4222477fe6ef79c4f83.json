@@ -1,0 +1,18 @@
+{
+  "id": "ss_48bdf4222477fe6ef79c4f83",
+  "requested_url": "https://nettsmed.no/nytt/",
+  "final_url": "https://nettsmed.no/nytt/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:12:38Z",
+  "content_sha256": "d1e1979df3648d666314d40866ab1a52d78985ea8e74cd740b4eb809530ba273",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/d1e1979df3648d666314d40866ab1a52d78985ea8e74cd740b4eb809530ba273.html",
+  "content_type": "text/html; charset=utf-8",
+  "last_modified": null,
+  "etag": "W/\"5728546450b038897c6ca2b49edc44c8\"",
+  "body_size_bytes": 55772,
+  "cache_hit": false,
+  "error": null
+}

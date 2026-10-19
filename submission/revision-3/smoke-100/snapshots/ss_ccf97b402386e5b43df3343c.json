@@ -1,0 +1,18 @@
+{
+  "id": "ss_ccf97b402386e5b43df3343c",
+  "requested_url": "https://avito.no/privacy-policy",
+  "final_url": "https://avito.no/privacy-policy",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:15:46Z",
+  "content_sha256": "c58597b2b146401c3b4d1acc6568201d458a3d85fa5c436fd0bb880f2417163c",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/c58597b2b146401c3b4d1acc6568201d458a3d85fa5c436fd0bb880f2417163c.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": "Wed, 19 Aug 2026 09:44:10 GMT",
+  "etag": null,
+  "body_size_bytes": 47633,
+  "cache_hit": false,
+  "error": null
+}

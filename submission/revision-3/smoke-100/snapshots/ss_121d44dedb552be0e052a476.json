@@ -1,0 +1,18 @@
+{
+  "id": "ss_121d44dedb552be0e052a476",
+  "requested_url": "https://ponshelse.no/min-konto/",
+  "final_url": "https://ponshelse.no/min-konto/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:12:20Z",
+  "content_sha256": "48946b2faafa0a9477a5ffa104160125311bf3c0f96d7fc1f572e23f5f6c2f70",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/48946b2faafa0a9477a5ffa104160125311bf3c0f96d7fc1f572e23f5f6c2f70.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 120371,
+  "cache_hit": false,
+  "error": null
+}

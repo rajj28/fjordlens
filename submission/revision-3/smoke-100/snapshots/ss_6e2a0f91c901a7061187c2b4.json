@@ -1,0 +1,18 @@
+{
+  "id": "ss_6e2a0f91c901a7061187c2b4",
+  "requested_url": "https://www.elsoregnskap.no/wp-json/wp/v2/posts?per_page=10&_fields=id,date,link,title",
+  "final_url": "https://www.elsoregnskap.no/wp-json/wp/v2/posts?per_page=10&_fields=id,date,link,title",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:12:53Z",
+  "content_sha256": "a67422184e088af9f7c5778f6518e3d83ca0d0ecfa6d9f17cabbc931faeefe63",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/a67422184e088af9f7c5778f6518e3d83ca0d0ecfa6d9f17cabbc931faeefe63.json",
+  "content_type": "application/json; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 1586,
+  "cache_hit": false,
+  "error": null
+}

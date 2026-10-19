@@ -1,0 +1,604 @@
+{
+  "review_timestamp_utc": "2026-10-19T19:10:00Z",
+  "scope": "Read-only evidence review of official_website and company_publication deltas for paired 100-company runs.",
+  "website_claim_deltas": [
+    {
+      "comparison": "baseline-fresh-100 -> final-development-100-approved",
+      "change": "added",
+      "organisation_number": "926046195",
+      "registry_legal_name": "GØY PÅ LANGEN AS",
+      "official_website": "https://xn--gyplangen-72a0s.no/",
+      "saved_source_url": "https://xn--gyplangen-72a0s.no/",
+      "saved_claim_span": "efon: 91-35-46-48 | Epost: goypalangen@gmail.com | Org. nr. 926 046 195 © 2025 Created with",
+      "identity_gate_rule": "A: our organisation number is in the site's owner position",
+      "identity_gate_status": "exact",
+      "identity_gate_evidence_span": "efon: 91-35-46-48 | Epost: goypalangen@gmail.com | Org. nr. 926 046 195 © 2025 Created with",
+      "identity_gate_exact_entity": true,
+      "official_registry_corroboration": [
+        {
+          "field": "legal_name",
+          "value": "GØY PÅ LANGEN AS",
+          "source_url": "https://data.brreg.no/enhetsregisteret/api/enheter/926046195",
+          "claim_span": "\"navn\":\"GØY PÅ LANGEN AS\""
+        },
+        {
+          "field": "registered_address",
+          "value": {
+            "adresse": [
+              "Bru-Fjellveien 37"
+            ],
+            "kommune": "NORDRE FOLLO",
+            "kommunenummer": "3207",
+            "land": "Norge",
+            "landkode": "NO",
+            "postnummer": "1404",
+            "poststed": "SIGGERUD"
+          },
+          "source_url": "https://data.brreg.no/enhetsregisteret/api/enheter/926046195",
+          "claim_span": "\"forretningsadresse\":{\"adresse\":[\"Bru-Fjellveien 37\"],\"kommune\":\"NORDRE FOLLO\",\"kommunenummer\":\"3207\",\"land\":\"Norge\",\"landkode\":\"NO\",\"postnummer\":\"1404\",\"poststed\":\"SIGGERUD\"}"
+        }
+      ]
+    },
+    {
+      "comparison": "baseline-fresh-100 -> final-development-100-approved",
+      "change": "added",
+      "organisation_number": "927001128",
+      "registry_legal_name": "DEEP WATER TOOLING AS",
+      "official_website": "https://dwt.no/",
+      "saved_source_url": "https://dwt.no/",
+      "saved_claim_span": "fer the complete chain from design to mobilization and operation of the systems Deep Water Tooling AS, Kyrkjebakken 26, 6856 Sogndal, Norway info@dwt.no +47 91791965 Contact Copyright",
+      "identity_gate_rule": "D: the site names the company and shows its registered street or postcode with town",
+      "identity_gate_status": "exact",
+      "identity_gate_evidence_span": "fer the complete chain from design to mobilization and operation of the systems Deep Water Tooling AS, Kyrkjebakken 26, 6856 Sogndal, Norway info@dwt.no +47 91791965 Contact Copyright",
+      "identity_gate_exact_entity": true,
+      "official_registry_corroboration": [
+        {
+          "field": "legal_name",
+          "value": "DEEP WATER TOOLING AS",
+          "source_url": "https://data.brreg.no/enhetsregisteret/api/enheter/927001128",
+          "claim_span": "\"navn\":\"DEEP WATER TOOLING AS\""
+        },
+        {
+          "field": "registered_address",
+          "value": {
+            "adresse": [
+              "Kyrkjebakken 26"
+            ],
+            "kommune": "SOGNDAL",
+            "kommunenummer": "4640",
+            "land": "Norge",
+            "landkode": "NO",
+            "postnummer": "6856",
+            "poststed": "SOGNDAL"
+          },
+          "source_url": "https://data.brreg.no/enhetsregisteret/api/enheter/927001128",
+          "claim_span": "\"forretningsadresse\":{\"adresse\":[\"Kyrkjebakken 26\"],\"kommune\":\"SOGNDAL\",\"kommunenummer\":\"4640\",\"land\":\"Norge\",\"landkode\":\"NO\",\"postnummer\":\"6856\",\"poststed\":\"SOGNDAL\"}"
+        }
+      ]
+    },
+    {
+      "comparison": "baseline-fresh-100 -> final-development-100-approved",
+      "change": "added",
+      "organisation_number": "931475924",
+      "registry_legal_name": "ELSO REGNSKAP AS",
+      "official_website": "https://www.elsoregnskap.no/",
+      "saved_source_url": "https://www.elsoregnskap.no/",
+      "saved_claim_span": "Aktuelle saker Om oss Kontakt oss Elso Regnskap AS Org. nr. 931 475 924 post@elsoregnskap.n",
+      "identity_gate_rule": "A: our organisation number is in the site's owner position",
+      "identity_gate_status": "exact",
+      "identity_gate_evidence_span": "Aktuelle saker Om oss Kontakt oss Elso Regnskap AS Org. nr. 931 475 924 post@elsoregnskap.n",
+      "identity_gate_exact_entity": true,
+      "official_registry_corroboration": [
+        {
+          "field": "legal_name",
+          "value": "ELSO REGNSKAP AS",
+          "source_url": "https://data.brreg.no/enhetsregisteret/api/enheter/931475924",
+          "claim_span": "\"navn\":\"ELSO REGNSKAP AS\""
+        },
+        {
+          "field": "registered_address",
+          "value": {
+            "adresse": [
+              "Øygardsvegen 31"
+            ],
+            "kommune": "NORD-FRON",
+            "kommunenummer": "3436",
+            "land": "Norge",
+            "landkode": "NO",
+            "postnummer": "2640",
+            "poststed": "VINSTRA"
+          },
+          "source_url": "https://data.brreg.no/enhetsregisteret/api/enheter/931475924",
+          "claim_span": "\"forretningsadresse\":{\"adresse\":[\"Øygardsvegen 31\"],\"kommune\":\"NORD-FRON\",\"kommunenummer\":\"3436\",\"land\":\"Norge\",\"landkode\":\"NO\",\"postnummer\":\"2640\",\"poststed\":\"VINSTRA\"}"
+        }
+      ]
+    },
+    {
+      "comparison": "baseline-final-holdout-100 -> final-holdout-100-approved",
+      "change": "added",
+      "organisation_number": "917329435",
+      "registry_legal_name": "ANKERMANN AS",
+      "official_website": "https://www.ankermann.no/",
+      "saved_source_url": "https://www.ankermann.no/contact",
+      "saved_claim_span": "4 10 400 Back to Top Oslo, Norway Ankermann AS - Org nr: NO 917 329 435 MVA E-mail: ankerma",
+      "identity_gate_rule": "A: our organisation number is in the site's owner position",
+      "identity_gate_status": "exact",
+      "identity_gate_evidence_span": "4 10 400 Back to Top Oslo, Norway Ankermann AS - Org nr: NO 917 329 435 MVA E-mail: ankerma",
+      "identity_gate_exact_entity": true,
+      "official_registry_corroboration": [
+        {
+          "field": "legal_name",
+          "value": "ANKERMANN AS",
+          "source_url": "https://data.brreg.no/enhetsregisteret/api/enheter/917329435",
+          "claim_span": "\"navn\":\"ANKERMANN AS\""
+        },
+        {
+          "field": "registered_address",
+          "value": {
+            "adresse": [
+              "Bergeråsen 19"
+            ],
+            "kommune": "ASKER",
+            "kommunenummer": "3203",
+            "land": "Norge",
+            "landkode": "NO",
+            "postnummer": "3470",
+            "poststed": "SLEMMESTAD"
+          },
+          "source_url": "https://data.brreg.no/enhetsregisteret/api/enheter/917329435",
+          "claim_span": "\"forretningsadresse\":{\"adresse\":[\"Bergeråsen 19\"],\"kommune\":\"ASKER\",\"kommunenummer\":\"3203\",\"land\":\"Norge\",\"landkode\":\"NO\",\"postnummer\":\"3470\",\"poststed\":\"SLEMMESTAD\"}"
+        }
+      ]
+    }
+  ],
+  "publication_count_deltas": [
+    {
+      "comparison": "baseline-fresh-100 -> final-development-100-approved",
+      "baseline_publication_count": 44,
+      "approved_publication_count": 38,
+      "added_count": 13,
+      "lost_count": 19
+    },
+    {
+      "comparison": "baseline-final-holdout-100 -> final-holdout-100-approved",
+      "baseline_publication_count": 24,
+      "approved_publication_count": 18,
+      "added_count": 0,
+      "lost_count": 6
+    }
+  ],
+  "holdout_removed_publications": [
+    {
+      "organisation_number": "989733621",
+      "url": "https://stoltutvikling.no/prosjekter/lutvannskroken/",
+      "title": "Lutvannskroken",
+      "published_on": "2022-06-08",
+      "source_url": "https://stoltutvikling.no/prosjekter/lutvannskroken/",
+      "identity_proof": [
+        {
+          "type": "website_identity_gate",
+          "status": "exact",
+          "rule": "D: the site names the company and shows its registered street or postcode with town"
+        }
+      ],
+      "evidence_span": "<time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:30:01+02:00\">",
+      "snapshot": "snapshots/2b32b187706492c3def7b1ff4c07c309d7ff8a9118cd39bb44f49eecfb764b9f.html",
+      "body_has_specific_project_content": true
+    },
+    {
+      "organisation_number": "989733621",
+      "url": "https://stoltutvikling.no/prosjekter/nordbergveien-10/",
+      "title": "Nordbergveien 10",
+      "published_on": "2022-06-08",
+      "source_url": "https://stoltutvikling.no/prosjekter/nordbergveien-10/",
+      "identity_proof": [
+        {
+          "type": "website_identity_gate",
+          "status": "exact",
+          "rule": "D: the site names the company and shows its registered street or postcode with town"
+        }
+      ],
+      "evidence_span": "<time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:34:08+02:00\">",
+      "snapshot": "snapshots/83d6d551c081883225a6594931b3c67c1b1702f7266671234777a03c60913728.html",
+      "body_has_specific_project_content": true
+    },
+    {
+      "organisation_number": "989733621",
+      "url": "https://stoltutvikling.no/prosjekter/saeter-terrasse/",
+      "title": "Sæter Terrasse",
+      "published_on": "2022-06-08",
+      "source_url": "https://stoltutvikling.no/prosjekter/saeter-terrasse/",
+      "identity_proof": [
+        {
+          "type": "website_identity_gate",
+          "status": "exact",
+          "rule": "D: the site names the company and shows its registered street or postcode with town"
+        }
+      ],
+      "evidence_span": "<time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:26:40+02:00\">",
+      "snapshot": "snapshots/01686b5b0b83b15d2043596225899a201cf0f4d114b21a1ce346008df9578793.html",
+      "body_has_specific_project_content": true
+    },
+    {
+      "organisation_number": "989733621",
+      "url": "https://stoltutvikling.no/prosjekter/tasen-terrasse/",
+      "title": "Tåsen Terrasse",
+      "published_on": "2022-06-08",
+      "source_url": "https://stoltutvikling.no/prosjekter/tasen-terrasse/",
+      "identity_proof": [
+        {
+          "type": "website_identity_gate",
+          "status": "exact",
+          "rule": "D: the site names the company and shows its registered street or postcode with town"
+        }
+      ],
+      "evidence_span": "<time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:32:03+02:00\">",
+      "snapshot": "snapshots/9941bf2de54c8bc74a86871b72abf2050702018f65d2fe87ddbab5c9b845e2fa.html",
+      "body_has_specific_project_content": true
+    },
+    {
+      "organisation_number": "989733621",
+      "url": "https://stoltutvikling.no/prosjekter/tasen-veien/",
+      "title": "Tåsen veien",
+      "published_on": "2022-06-08",
+      "source_url": "https://stoltutvikling.no/prosjekter/tasen-veien/",
+      "identity_proof": [
+        {
+          "type": "website_identity_gate",
+          "status": "exact",
+          "rule": "D: the site names the company and shows its registered street or postcode with town"
+        }
+      ],
+      "evidence_span": "<time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:24:30+02:00\">",
+      "snapshot": "snapshots/46ab6c097474e6cf4fffaca421903a327482e3a814e1877413d3fb432c225503.html",
+      "body_has_specific_project_content": true
+    },
+    {
+      "organisation_number": "989733621",
+      "url": "https://stoltutvikling.no/prosjekter/ulleval-tarn/",
+      "title": "Ullevål tårn",
+      "published_on": "2022-06-08",
+      "source_url": "https://stoltutvikling.no/prosjekter/ulleval-tarn/",
+      "identity_proof": [
+        {
+          "type": "website_identity_gate",
+          "status": "exact",
+          "rule": "D: the site names the company and shows its registered street or postcode with town"
+        }
+      ],
+      "evidence_span": "<time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:29:04+02:00\">",
+      "snapshot": "snapshots/8196520390c69163274b9b6ae1b211afe8e567649c97a6a66527bc9efbe2792d.html",
+      "body_has_specific_project_content": true
+    }
+  ],
+  "holdout_removed_url_fetch_status": [
+    {
+      "run": "baseline-final-holdout-100",
+      "status_by_url": {
+        "https://stoltutvikling.no/prosjekter/ulleval-tarn/": 200,
+        "https://stoltutvikling.no/prosjekter/lutvannskroken/": 200,
+        "https://stoltutvikling.no/prosjekter/tasen-terrasse/": 200,
+        "https://stoltutvikling.no/prosjekter/saeter-terrasse/": 200,
+        "https://stoltutvikling.no/prosjekter/nordbergveien-10/": 200,
+        "https://stoltutvikling.no/prosjekter/tasen-veien/": 200
+      }
+    },
+    {
+      "run": "final-holdout-100-approved",
+      "status_by_url": {
+        "https://stoltutvikling.no/prosjekter/ulleval-tarn/": 200,
+        "https://stoltutvikling.no/prosjekter/lutvannskroken/": 200,
+        "https://stoltutvikling.no/prosjekter/tasen-terrasse/": 200,
+        "https://stoltutvikling.no/prosjekter/saeter-terrasse/": 200,
+        "https://stoltutvikling.no/prosjekter/nordbergveien-10/": 200,
+        "https://stoltutvikling.no/prosjekter/tasen-veien/": 200
+      }
+    }
+  ],
+  "assessment": {
+    "confirmed_wrong_owner_website": false,
+    "critical_blocker": false,
+    "holdout_removed_urls_assessment": "Clarified from full run snapshots: all six pages have saved bodies in both runs, HTTP 200, identical canonical URL/no redirect, distinct substantive project descriptions, and explicit schema.org CreativeWork datePublished timestamps on 2022-06-08. Current article_published_date rejects them because the time tag is outside any <article>; no JSON-LD article node exists. This is genuine historical portfolio/publication coverage lost by current extraction, not a fetch failure or obvious template artifact. It is not current-news coverage and is not a confirmed wrong-company/critical correctness blocker.",
+    "prior_snapshot_note_corrected": "Both old and approved response bodies are present under each run/snapshots/<sha256>.html via ss_*.json storage_path. The earlier statement that approved bodies were not retained was incorrect; storage sidecars had not been inspected."
+  },
+  "blockers": [],
+  "holdout_removed_publication_snapshot_audit": {
+    "reason": "Current article_published_date returns null for every page. Each saved response has the same canonical requested/final URL (no redirect), HTTP 200, a visible <time itemprop=\"datePublished\"> on a schema.org CreativeWork wrapper, static_page=false, zero HTML <article> elements, and zero JSON-LD article nodes. The time collector records <time> only while inside an <article>; jsonld_publication has no nodes to inspect. Therefore rejection is the current extractor requiring a supported article context for a page time, not an access/fetch failure, static-page gate, missing body, wrong URL, mismatched JSON-LD target, or evidence that the pages are generic templates. The six pages contain distinct substantive project portfolio text and explicit 2022-06-08 datePublished values. They are genuine dated historical company-site publications/portfolio coverage, though they are not current news. Whether these belong in activity scoring is a product/rubric interpretation; treating their loss as precision improvement is unsupported by this evidence alone. No code changes made.",
+    "pages": [
+      {
+        "slug": "lutvannskroken",
+        "baseline": {
+          "metadata_sidecar": "ss_e8e08d6371a0e1f2e7747611.json",
+          "requested_url": "https://stoltutvikling.no/prosjekter/lutvannskroken/",
+          "final_url": "https://stoltutvikling.no/prosjekter/lutvannskroken/",
+          "http_status": 200,
+          "redirect_chain": [],
+          "storage_path": "snapshots/2b32b187706492c3def7b1ff4c07c309d7ff8a9118cd39bb44f49eecfb764b9f.html",
+          "body_exists": true,
+          "body_sha256": "2b32b187706492c3def7b1ff4c07c309d7ff8a9118cd39bb44f49eecfb764b9f",
+          "declared_sha256": "2b32b187706492c3def7b1ff4c07c309d7ff8a9118cd39bb44f49eecfb764b9f",
+          "body_size_bytes": 30490,
+          "headline": "Lutvannskroken",
+          "canonical": "https://stoltutvikling.no/prosjekter/lutvannskroken/",
+          "static_page": false,
+          "html_article_element_count": 0,
+          "jsonld_script_count": 0,
+          "jsonld_article_nodes": [],
+          "datePublished_tag": "<time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:30:01+02:00\">",
+          "datePublished_datetime": "2022-06-08T14:30:01+02:00",
+          "datePublished_context": "jekter status-publish has-post-thumbnail entry\" aria-label=\"Lutvannskroken\" itemscope itemtype=\"https://schema.org/CreativeWork\"><header class=\"entry-header\"><p class=\"entry-meta\"><time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:30:01+02:00\">8. juni 2022</time> By   </p><h1 class=\"entry-title\" itempro",
+          "jsonld_publication_results": [],
+          "article_published_date_result": null
+        },
+        "approved": {
+          "metadata_sidecar": "ss_898eedfd5a8ac7397ab7c1ba.json",
+          "requested_url": "https://stoltutvikling.no/prosjekter/lutvannskroken/",
+          "final_url": "https://stoltutvikling.no/prosjekter/lutvannskroken/",
+          "http_status": 200,
+          "redirect_chain": [],
+          "storage_path": "snapshots/e95f65c996b66427d8f683b07c107676768bff0808606be20aad6b4f424f392e.html",
+          "body_exists": true,
+          "body_sha256": "e95f65c996b66427d8f683b07c107676768bff0808606be20aad6b4f424f392e",
+          "declared_sha256": "e95f65c996b66427d8f683b07c107676768bff0808606be20aad6b4f424f392e",
+          "body_size_bytes": 30490,
+          "headline": "Lutvannskroken",
+          "canonical": "https://stoltutvikling.no/prosjekter/lutvannskroken/",
+          "static_page": false,
+          "html_article_element_count": 0,
+          "jsonld_script_count": 0,
+          "jsonld_article_nodes": [],
+          "datePublished_tag": "<time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:30:01+02:00\">",
+          "datePublished_datetime": "2022-06-08T14:30:01+02:00",
+          "datePublished_context": "jekter status-publish has-post-thumbnail entry\" aria-label=\"Lutvannskroken\" itemscope itemtype=\"https://schema.org/CreativeWork\"><header class=\"entry-header\"><p class=\"entry-meta\"><time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:30:01+02:00\">8. juni 2022</time> By   </p><h1 class=\"entry-title\" itempro",
+          "jsonld_publication_results": [],
+          "article_published_date_result": null
+        }
+      },
+      {
+        "slug": "nordbergveien-10",
+        "baseline": {
+          "metadata_sidecar": "ss_83b90ee67ca108c700321985.json",
+          "requested_url": "https://stoltutvikling.no/prosjekter/nordbergveien-10/",
+          "final_url": "https://stoltutvikling.no/prosjekter/nordbergveien-10/",
+          "http_status": 200,
+          "redirect_chain": [],
+          "storage_path": "snapshots/83d6d551c081883225a6594931b3c67c1b1702f7266671234777a03c60913728.html",
+          "body_exists": true,
+          "body_sha256": "83d6d551c081883225a6594931b3c67c1b1702f7266671234777a03c60913728",
+          "declared_sha256": "83d6d551c081883225a6594931b3c67c1b1702f7266671234777a03c60913728",
+          "body_size_bytes": 31554,
+          "headline": "Nordbergveien 10",
+          "canonical": "https://stoltutvikling.no/prosjekter/nordbergveien-10/",
+          "static_page": false,
+          "html_article_element_count": 0,
+          "jsonld_script_count": 0,
+          "jsonld_article_nodes": [],
+          "datePublished_tag": "<time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:34:08+02:00\">",
+          "datePublished_datetime": "2022-06-08T14:34:08+02:00",
+          "datePublished_context": "kter status-publish has-post-thumbnail entry\" aria-label=\"Nordbergveien 10\" itemscope itemtype=\"https://schema.org/CreativeWork\"><header class=\"entry-header\"><p class=\"entry-meta\"><time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:34:08+02:00\">8. juni 2022</time> By   </p><h1 class=\"entry-title\" itempro",
+          "jsonld_publication_results": [],
+          "article_published_date_result": null
+        },
+        "approved": {
+          "metadata_sidecar": "ss_6d42f0ab0471072765c21bbe.json",
+          "requested_url": "https://stoltutvikling.no/prosjekter/nordbergveien-10/",
+          "final_url": "https://stoltutvikling.no/prosjekter/nordbergveien-10/",
+          "http_status": 200,
+          "redirect_chain": [],
+          "storage_path": "snapshots/3f39baf32c2a1dcf42c2b48638cd1bde12332ed67592457dd33ecc7023e66abf.html",
+          "body_exists": true,
+          "body_sha256": "3f39baf32c2a1dcf42c2b48638cd1bde12332ed67592457dd33ecc7023e66abf",
+          "declared_sha256": "3f39baf32c2a1dcf42c2b48638cd1bde12332ed67592457dd33ecc7023e66abf",
+          "body_size_bytes": 31554,
+          "headline": "Nordbergveien 10",
+          "canonical": "https://stoltutvikling.no/prosjekter/nordbergveien-10/",
+          "static_page": false,
+          "html_article_element_count": 0,
+          "jsonld_script_count": 0,
+          "jsonld_article_nodes": [],
+          "datePublished_tag": "<time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:34:08+02:00\">",
+          "datePublished_datetime": "2022-06-08T14:34:08+02:00",
+          "datePublished_context": "kter status-publish has-post-thumbnail entry\" aria-label=\"Nordbergveien 10\" itemscope itemtype=\"https://schema.org/CreativeWork\"><header class=\"entry-header\"><p class=\"entry-meta\"><time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:34:08+02:00\">8. juni 2022</time> By   </p><h1 class=\"entry-title\" itempro",
+          "jsonld_publication_results": [],
+          "article_published_date_result": null
+        }
+      },
+      {
+        "slug": "saeter-terrasse",
+        "baseline": {
+          "metadata_sidecar": "ss_fcaa70ad23b81ac32e56aa72.json",
+          "requested_url": "https://stoltutvikling.no/prosjekter/saeter-terrasse/",
+          "final_url": "https://stoltutvikling.no/prosjekter/saeter-terrasse/",
+          "http_status": 200,
+          "redirect_chain": [],
+          "storage_path": "snapshots/01686b5b0b83b15d2043596225899a201cf0f4d114b21a1ce346008df9578793.html",
+          "body_exists": true,
+          "body_sha256": "01686b5b0b83b15d2043596225899a201cf0f4d114b21a1ce346008df9578793",
+          "declared_sha256": "01686b5b0b83b15d2043596225899a201cf0f4d114b21a1ce346008df9578793",
+          "body_size_bytes": 35409,
+          "headline": "Sæter Terrasse",
+          "canonical": "https://stoltutvikling.no/prosjekter/saeter-terrasse/",
+          "static_page": false,
+          "html_article_element_count": 0,
+          "jsonld_script_count": 0,
+          "jsonld_article_nodes": [],
+          "datePublished_tag": "<time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:26:40+02:00\">",
+          "datePublished_datetime": "2022-06-08T14:26:40+02:00",
+          "datePublished_context": "jekter status-publish has-post-thumbnail entry\" aria-label=\"Sæter Terrasse\" itemscope itemtype=\"https://schema.org/CreativeWork\"><header class=\"entry-header\"><p class=\"entry-meta\"><time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:26:40+02:00\">8. juni 2022</time> By   </p><h1 class=\"entry-title\" itempro",
+          "jsonld_publication_results": [],
+          "article_published_date_result": null
+        },
+        "approved": {
+          "metadata_sidecar": "ss_b0d731c700529a83c0cee52d.json",
+          "requested_url": "https://stoltutvikling.no/prosjekter/saeter-terrasse/",
+          "final_url": "https://stoltutvikling.no/prosjekter/saeter-terrasse/",
+          "http_status": 200,
+          "redirect_chain": [],
+          "storage_path": "snapshots/870e5cbb240fd03bd9487998cd8da4c5d9a5eba48f3e57939b76a9645d838b62.html",
+          "body_exists": true,
+          "body_sha256": "870e5cbb240fd03bd9487998cd8da4c5d9a5eba48f3e57939b76a9645d838b62",
+          "declared_sha256": "870e5cbb240fd03bd9487998cd8da4c5d9a5eba48f3e57939b76a9645d838b62",
+          "body_size_bytes": 35409,
+          "headline": "Sæter Terrasse",
+          "canonical": "https://stoltutvikling.no/prosjekter/saeter-terrasse/",
+          "static_page": false,
+          "html_article_element_count": 0,
+          "jsonld_script_count": 0,
+          "jsonld_article_nodes": [],
+          "datePublished_tag": "<time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:26:40+02:00\">",
+          "datePublished_datetime": "2022-06-08T14:26:40+02:00",
+          "datePublished_context": "jekter status-publish has-post-thumbnail entry\" aria-label=\"Sæter Terrasse\" itemscope itemtype=\"https://schema.org/CreativeWork\"><header class=\"entry-header\"><p class=\"entry-meta\"><time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:26:40+02:00\">8. juni 2022</time> By   </p><h1 class=\"entry-title\" itempro",
+          "jsonld_publication_results": [],
+          "article_published_date_result": null
+        }
+      },
+      {
+        "slug": "tasen-terrasse",
+        "baseline": {
+          "metadata_sidecar": "ss_b27f9b97ddc20814116852c5.json",
+          "requested_url": "https://stoltutvikling.no/prosjekter/tasen-terrasse/",
+          "final_url": "https://stoltutvikling.no/prosjekter/tasen-terrasse/",
+          "http_status": 200,
+          "redirect_chain": [],
+          "storage_path": "snapshots/9941bf2de54c8bc74a86871b72abf2050702018f65d2fe87ddbab5c9b845e2fa.html",
+          "body_exists": true,
+          "body_sha256": "9941bf2de54c8bc74a86871b72abf2050702018f65d2fe87ddbab5c9b845e2fa",
+          "declared_sha256": "9941bf2de54c8bc74a86871b72abf2050702018f65d2fe87ddbab5c9b845e2fa",
+          "body_size_bytes": 32517,
+          "headline": "Tåsen Terrasse",
+          "canonical": "https://stoltutvikling.no/prosjekter/tasen-terrasse/",
+          "static_page": false,
+          "html_article_element_count": 0,
+          "jsonld_script_count": 0,
+          "jsonld_article_nodes": [],
+          "datePublished_tag": "<time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:32:03+02:00\">",
+          "datePublished_datetime": "2022-06-08T14:32:03+02:00",
+          "datePublished_context": "jekter status-publish has-post-thumbnail entry\" aria-label=\"Tåsen Terrasse\" itemscope itemtype=\"https://schema.org/CreativeWork\"><header class=\"entry-header\"><p class=\"entry-meta\"><time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:32:03+02:00\">8. juni 2022</time> By   </p><h1 class=\"entry-title\" itempro",
+          "jsonld_publication_results": [],
+          "article_published_date_result": null
+        },
+        "approved": {
+          "metadata_sidecar": "ss_766ff0baa2ed35407f4df8e5.json",
+          "requested_url": "https://stoltutvikling.no/prosjekter/tasen-terrasse/",
+          "final_url": "https://stoltutvikling.no/prosjekter/tasen-terrasse/",
+          "http_status": 200,
+          "redirect_chain": [],
+          "storage_path": "snapshots/8790469521b797e6ad3bc9cf005de39e9d2a8fc48f41e043ec22cfdf447690d9.html",
+          "body_exists": true,
+          "body_sha256": "8790469521b797e6ad3bc9cf005de39e9d2a8fc48f41e043ec22cfdf447690d9",
+          "declared_sha256": "8790469521b797e6ad3bc9cf005de39e9d2a8fc48f41e043ec22cfdf447690d9",
+          "body_size_bytes": 32517,
+          "headline": "Tåsen Terrasse",
+          "canonical": "https://stoltutvikling.no/prosjekter/tasen-terrasse/",
+          "static_page": false,
+          "html_article_element_count": 0,
+          "jsonld_script_count": 0,
+          "jsonld_article_nodes": [],
+          "datePublished_tag": "<time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:32:03+02:00\">",
+          "datePublished_datetime": "2022-06-08T14:32:03+02:00",
+          "datePublished_context": "jekter status-publish has-post-thumbnail entry\" aria-label=\"Tåsen Terrasse\" itemscope itemtype=\"https://schema.org/CreativeWork\"><header class=\"entry-header\"><p class=\"entry-meta\"><time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:32:03+02:00\">8. juni 2022</time> By   </p><h1 class=\"entry-title\" itempro",
+          "jsonld_publication_results": [],
+          "article_published_date_result": null
+        }
+      },
+      {
+        "slug": "tasen-veien",
+        "baseline": {
+          "metadata_sidecar": "ss_65a018efee9d8ac74877b610.json",
+          "requested_url": "https://stoltutvikling.no/prosjekter/tasen-veien/",
+          "final_url": "https://stoltutvikling.no/prosjekter/tasen-veien/",
+          "http_status": 200,
+          "redirect_chain": [],
+          "storage_path": "snapshots/46ab6c097474e6cf4fffaca421903a327482e3a814e1877413d3fb432c225503.html",
+          "body_exists": true,
+          "body_sha256": "46ab6c097474e6cf4fffaca421903a327482e3a814e1877413d3fb432c225503",
+          "declared_sha256": "46ab6c097474e6cf4fffaca421903a327482e3a814e1877413d3fb432c225503",
+          "body_size_bytes": 32616,
+          "headline": "Tåsen veien",
+          "canonical": "https://stoltutvikling.no/prosjekter/tasen-veien/",
+          "static_page": false,
+          "html_article_element_count": 0,
+          "jsonld_script_count": 0,
+          "jsonld_article_nodes": [],
+          "datePublished_tag": "<time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:24:30+02:00\">",
+          "datePublished_datetime": "2022-06-08T14:24:30+02:00",
+          "datePublished_context": "rosjekter status-publish has-post-thumbnail entry\" aria-label=\"Tåsen veien\" itemscope itemtype=\"https://schema.org/CreativeWork\"><header class=\"entry-header\"><p class=\"entry-meta\"><time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:24:30+02:00\">8. juni 2022</time> By   </p><h1 class=\"entry-title\" itempro",
+          "jsonld_publication_results": [],
+          "article_published_date_result": null
+        },
+        "approved": {
+          "metadata_sidecar": "ss_78150998eae8940813abfd33.json",
+          "requested_url": "https://stoltutvikling.no/prosjekter/tasen-veien/",
+          "final_url": "https://stoltutvikling.no/prosjekter/tasen-veien/",
+          "http_status": 200,
+          "redirect_chain": [],
+          "storage_path": "snapshots/c350afa714013baba94535e8aca04bc34e82cb9b2998c19b428472bb1b634690.html",
+          "body_exists": true,
+          "body_sha256": "c350afa714013baba94535e8aca04bc34e82cb9b2998c19b428472bb1b634690",
+          "declared_sha256": "c350afa714013baba94535e8aca04bc34e82cb9b2998c19b428472bb1b634690",
+          "body_size_bytes": 32616,
+          "headline": "Tåsen veien",
+          "canonical": "https://stoltutvikling.no/prosjekter/tasen-veien/",
+          "static_page": false,
+          "html_article_element_count": 0,
+          "jsonld_script_count": 0,
+          "jsonld_article_nodes": [],
+          "datePublished_tag": "<time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:24:30+02:00\">",
+          "datePublished_datetime": "2022-06-08T14:24:30+02:00",
+          "datePublished_context": "rosjekter status-publish has-post-thumbnail entry\" aria-label=\"Tåsen veien\" itemscope itemtype=\"https://schema.org/CreativeWork\"><header class=\"entry-header\"><p class=\"entry-meta\"><time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:24:30+02:00\">8. juni 2022</time> By   </p><h1 class=\"entry-title\" itempro",
+          "jsonld_publication_results": [],
+          "article_published_date_result": null
+        }
+      },
+      {
+        "slug": "ulleval-tarn",
+        "baseline": {
+          "metadata_sidecar": "ss_b1d766c4b9e540bee13feed4.json",
+          "requested_url": "https://stoltutvikling.no/prosjekter/ulleval-tarn/",
+          "final_url": "https://stoltutvikling.no/prosjekter/ulleval-tarn/",
+          "http_status": 200,
+          "redirect_chain": [],
+          "storage_path": "snapshots/8196520390c69163274b9b6ae1b211afe8e567649c97a6a66527bc9efbe2792d.html",
+          "body_exists": true,
+          "body_sha256": "8196520390c69163274b9b6ae1b211afe8e567649c97a6a66527bc9efbe2792d",
+          "declared_sha256": "8196520390c69163274b9b6ae1b211afe8e567649c97a6a66527bc9efbe2792d",
+          "body_size_bytes": 37295,
+          "headline": "Ullevål tårn",
+          "canonical": "https://stoltutvikling.no/prosjekter/ulleval-tarn/",
+          "static_page": false,
+          "html_article_element_count": 0,
+          "jsonld_script_count": 0,
+          "jsonld_article_nodes": [],
+          "datePublished_tag": "<time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:29:04+02:00\">",
+          "datePublished_datetime": "2022-06-08T14:29:04+02:00",
+          "datePublished_context": "osjekter status-publish has-post-thumbnail entry\" aria-label=\"Ullevål tårn\" itemscope itemtype=\"https://schema.org/CreativeWork\"><header class=\"entry-header\"><p class=\"entry-meta\"><time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:29:04+02:00\">8. juni 2022</time> By   </p><h1 class=\"entry-title\" itempro",
+          "jsonld_publication_results": [],
+          "article_published_date_result": null
+        },
+        "approved": {
+          "metadata_sidecar": "ss_94d4144f29ec4da4b03f387a.json",
+          "requested_url": "https://stoltutvikling.no/prosjekter/ulleval-tarn/",
+          "final_url": "https://stoltutvikling.no/prosjekter/ulleval-tarn/",
+          "http_status": 200,
+          "redirect_chain": [],
+          "storage_path": "snapshots/6dca878d3d43ac3081107004e6156c59dd6aa83da154b1c46f45721f2c2b00f4.html",
+          "body_exists": true,
+          "body_sha256": "6dca878d3d43ac3081107004e6156c59dd6aa83da154b1c46f45721f2c2b00f4",
+          "declared_sha256": "6dca878d3d43ac3081107004e6156c59dd6aa83da154b1c46f45721f2c2b00f4",
+          "body_size_bytes": 37295,
+          "headline": "Ullevål tårn",
+          "canonical": "https://stoltutvikling.no/prosjekter/ulleval-tarn/",
+          "static_page": false,
+          "html_article_element_count": 0,
+          "jsonld_script_count": 0,
+          "jsonld_article_nodes": [],
+          "datePublished_tag": "<time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:29:04+02:00\">",
+          "datePublished_datetime": "2022-06-08T14:29:04+02:00",
+          "datePublished_context": "osjekter status-publish has-post-thumbnail entry\" aria-label=\"Ullevål tårn\" itemscope itemtype=\"https://schema.org/CreativeWork\"><header class=\"entry-header\"><p class=\"entry-meta\"><time class=\"entry-time\" itemprop=\"datePublished\" datetime=\"2022-06-08T14:29:04+02:00\">8. juni 2022</time> By   </p><h1 class=\"entry-title\" itempro",
+          "jsonld_publication_results": [],
+          "article_published_date_result": null
+        }
+      }
+    ]
+  }
+}

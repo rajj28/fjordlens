@@ -1,0 +1,18 @@
+{
+  "id": "ss_4e64027a6089ac30756a3adb",
+  "requested_url": "https://data.brreg.no/enhetsregisteret/api/konsernstruktur/977324882",
+  "final_url": "https://data.brreg.no/enhetsregisteret/api/konsernstruktur/977324882",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:12:34Z",
+  "content_sha256": "44f09a7e3ea201199427f884e1589acd68f940a693ef533a13b6e8c4d77d9667",
+  "redirect_chain": [],
+  "source_class": "official_registry",
+  "access_policy": "official_open_api_NLOD_2.0",
+  "storage_path": "snapshots/44f09a7e3ea201199427f884e1589acd68f940a693ef533a13b6e8c4d77d9667.json",
+  "content_type": "application/json",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 22018,
+  "cache_hit": false,
+  "error": null
+}

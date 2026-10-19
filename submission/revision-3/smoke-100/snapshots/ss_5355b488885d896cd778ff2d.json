@@ -1,0 +1,18 @@
+{
+  "id": "ss_5355b488885d896cd778ff2d",
+  "requested_url": "https://dwt.no/products/subsea-tooling/dwt-opg-3.2",
+  "final_url": "https://dwt.no/products/subsea-tooling/dwt-opg-3.2",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:12:37Z",
+  "content_sha256": "4a5135b2e877cc36dbaaf88acfae792256a08cc4ad17097c5afe12e9a38e65d8",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/4a5135b2e877cc36dbaaf88acfae792256a08cc4ad17097c5afe12e9a38e65d8.html",
+  "content_type": "text/html",
+  "last_modified": "Tue, 24 Jun 2025 11:55:00 GMT",
+  "etag": "\"b1c2-6384fff7edb80-gzip\"",
+  "body_size_bytes": 45506,
+  "cache_hit": false,
+  "error": null
+}

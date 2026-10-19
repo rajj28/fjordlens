@@ -1,0 +1,167 @@
+{
+  "source_commit": "7cb1a9492f847feb56b28336605137367cfee953",
+  "clone_clean": true,
+  "tests": {
+    "447_tests_on_025b287": "passed",
+    "448_tests_on_480de25": "passed",
+    "448_tests_on_7cb1a94": "passed by root; targeted runner tests 14/14 passed locally"
+  },
+  "official_endpoint_connectivity": "HTTP 200",
+  "brave_search_key_configured": false,
+  "runs": {
+    "final-development-100-approved": {
+      "source_commit": "025b2877aa5fdfb4e1ad695b1ffce0944a32bf8b",
+      "complete": true,
+      "companies": 100,
+      "requests": 1148,
+      "runtime_seconds": 236.578,
+      "deadline_cuts": 0,
+      "failed_envelopes": 0,
+      "evidence_validation_errors": 0,
+      "budget_passed": true,
+      "website_companies": 11,
+      "activity_companies": 4,
+      "company_publication_companies": 4,
+      "company_publication_records": 38,
+      "search_configured": false,
+      "citations": {
+        "valid": true,
+        "checked": 4665,
+        "findings": 0
+      },
+      "evidence_audit": {
+        "passed": true,
+        "profiles": 100,
+        "claims_checked": 4588,
+        "claims_with_resolvable_evidence": 4588,
+        "financial_values_checked": 1842,
+        "errors": 0
+      }
+    },
+    "final-holdout-100-approved": {
+      "source_commit": "025b2877aa5fdfb4e1ad695b1ffce0944a32bf8b",
+      "complete": true,
+      "companies": 100,
+      "requests": 991,
+      "runtime_seconds": 150.484,
+      "deadline_cuts": 0,
+      "failed_envelopes": 0,
+      "evidence_validation_errors": 0,
+      "budget_passed": true,
+      "website_companies": 9,
+      "activity_companies": 3,
+      "company_publication_companies": 3,
+      "company_publication_records": 18,
+      "search_configured": false,
+      "citations": {
+        "valid": true,
+        "checked": 4726,
+        "findings": 0
+      },
+      "evidence_audit": {
+        "passed": true,
+        "profiles": 100,
+        "claims_checked": 4670,
+        "claims_with_resolvable_evidence": 4670,
+        "financial_values_checked": 1962,
+        "errors": 0
+      }
+    },
+    "final-smoke-100-480de25": {
+      "source_commit": "480de259f33b74f9bbb1c01c02103eb8d7c13b68",
+      "complete": true,
+      "companies": 100,
+      "requests": 1145,
+      "runtime_seconds": 235.204,
+      "deadline_cuts": 0,
+      "failed_envelopes": 0,
+      "evidence_validation_errors": 0,
+      "budget_passed": true,
+      "website_companies": 11,
+      "activity_companies": 4,
+      "company_publication_companies": 4,
+      "company_publication_records": 38,
+      "search_configured": false,
+      "citations": {
+        "valid": true,
+        "checked": 4665,
+        "findings": 0
+      },
+      "evidence_audit": {
+        "passed": true,
+        "profiles": 100,
+        "claims_checked": 4588,
+        "claims_with_resolvable_evidence": 4588,
+        "financial_values_checked": 1842,
+        "errors": 0
+      }
+    },
+    "final-smoke-100-7cb1a94": {
+      "source_commit": "7cb1a9492f847feb56b28336605137367cfee953",
+      "complete": true,
+      "companies": 100,
+      "requests": 1147,
+      "runtime_seconds": 234.484,
+      "deadline_cuts": 0,
+      "failed_envelopes": 0,
+      "evidence_validation_errors": 0,
+      "budget_passed": true,
+      "website_companies": 11,
+      "activity_companies": 4,
+      "company_publication_companies": 4,
+      "company_publication_records": 38,
+      "search_configured": false,
+      "citations": {
+        "valid": true,
+        "checked": 4665,
+        "findings": 0
+      },
+      "evidence_audit": {
+        "passed": true,
+        "profiles": 100,
+        "claims_checked": 4588,
+        "claims_with_resolvable_evidence": 4588,
+        "financial_values_checked": 1842,
+        "errors": 0
+      }
+    }
+  },
+  "targeted_publication_checks": {
+    "988024295": {
+      "present_in_run": true,
+      "publication_urls": [],
+      "utility_path_absent": true
+    },
+    "934297571": {
+      "present_in_run": true,
+      "publication_urls": [
+        "https://nettsmed.no/synlig-i-chatgpt/",
+        "https://nettsmed.no/webbyra-priser/",
+        "https://nettsmed.no/ai-sok-pa-egen-nettside/",
+        "https://nettsmed.no/ai-act/",
+        "https://nettsmed.no/ai-konsulent/",
+        "https://nettsmed.no/rankmath-faq-css-styling/",
+        "https://nettsmed.no/vegvesenet-api-en/",
+        "https://nettsmed.no/bronnoysund-api-automated-lookup/",
+        "https://nettsmed.no/ai-seo-konsulent/",
+        "https://nettsmed.no/starte-nettbutikk/",
+        "https://nettsmed.no/nettbutikk-regnskap-integrasjon/",
+        "https://nettsmed.no/universell-utforming-nettside/",
+        "https://nettsmed.no/skreddersydd-mcp/",
+        "https://nettsmed.no/infinite-faq/",
+        "https://nettsmed.no/hva-er-jev/"
+      ],
+      "utility_path_absent": true
+    }
+  },
+  "baseline_comparisons": {
+    "development": "final-smoke-100-7cb1a94/baseline-comparison.json",
+    "holdout": "final-holdout-100-approved/baseline-comparison.json",
+    "baseline_date": "2026-10-17",
+    "candidate_date": "2026-10-20",
+    "limitation": "Live source, network, and date differences confound before/after changes; these are observed coverage comparisons, not accuracy/recall."
+  },
+  "holdout_note": "The final-holdout-100 input excludes the 300 prior evaluation companies; no code was tuned against holdout. Holdout run was performed on predecessor commit 025b287; later commits changed runtime finalization only.",
+  "interrupted_attempt": "final-development-100 contains preserved partial output from the interrupted run; never overwritten.",
+  "artifacts_root": "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-v3-benchmark-20261017"
+}

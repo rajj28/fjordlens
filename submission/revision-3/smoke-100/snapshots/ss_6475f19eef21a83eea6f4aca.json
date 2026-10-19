@@ -1,0 +1,24 @@
+{
+  "id": "ss_6475f19eef21a83eea6f4aca",
+  "requested_url": "https://www.rokken.no/privacy-policy/privacy-policy-and-cookies-article150-795.html",
+  "final_url": "https://www.rokken.no/privacy-policy/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:12:40Z",
+  "content_sha256": "c16dc76d5a203959464560309b27784581ec79ba7c6a59597dfd77ac1763a698",
+  "redirect_chain": [
+    {
+      "url": "https://www.rokken.no/privacy-policy/privacy-policy-and-cookies-article150-795.html",
+      "status": 301,
+      "snapshot_id": "ss_361a90fba9896a6fb2aeebac"
+    }
+  ],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/c16dc76d5a203959464560309b27784581ec79ba7c6a59597dfd77ac1763a698.html",
+  "content_type": "text/html; charset=utf-8",
+  "last_modified": "Mon, 19 Oct 2026 05:04:50 GMT",
+  "etag": null,
+  "body_size_bytes": 45306,
+  "cache_hit": false,
+  "error": null
+}

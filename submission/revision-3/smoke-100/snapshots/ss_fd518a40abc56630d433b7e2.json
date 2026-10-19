@@ -1,0 +1,18 @@
+{
+  "id": "ss_fd518a40abc56630d433b7e2",
+  "requested_url": "https://tomrerfuras.no/",
+  "final_url": "https://tomrerfuras.no/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:12:10Z",
+  "content_sha256": "cbb8fe9c0e84e7e7e209abf7e73a1c111c7a4e5ba963456e966743054716aeac",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/cbb8fe9c0e84e7e7e209abf7e73a1c111c7a4e5ba963456e966743054716aeac.html",
+  "content_type": "text/html",
+  "last_modified": "Fri, 04 Sep 2026 11:22:22 GMT",
+  "etag": null,
+  "body_size_bytes": 58507,
+  "cache_hit": false,
+  "error": null
+}

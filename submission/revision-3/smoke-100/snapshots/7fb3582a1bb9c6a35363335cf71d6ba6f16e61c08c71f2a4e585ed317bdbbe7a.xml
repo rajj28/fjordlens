@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Nettsmed</title>
+    <link>https://nettsmed.no/</link>
+    <atom:link href="https://nettsmed.no/feed/" rel="self" type="application/rss+xml" />
+    <description>Artikler fra Nettsmed om nettsider, WordPress og AI.</description>
+    <language>nb-NO</language>
+    <item>
+      <title>Starte nettbutikk i 2026: 9 steg og reelle kostnader år 1</title>
+      <link>https://nettsmed.no/starte-nettbutikk/</link>
+      <guid isPermaLink="true">https://nettsmed.no/starte-nettbutikk/</guid>
+      <pubDate>Sat, 10 Oct 2026 16:00:00 GMT</pubDate>
+      <description>Starte nettbutikk i 2026? Se 9 steg for norske bedrifter: ENK eller AS, MVA, Vipps, frakt og reelle kostnader for år 1. Få et tilbud på nettbutikk.</description>
+    </item>
+    <item>
+      <title>Synlig i ChatGPT og AI-søk: guide for norske bedrifter</title>
+      <link>https://nettsmed.no/synlig-i-chatgpt/</link>
+      <guid isPermaLink="true">https://nettsmed.no/synlig-i-chatgpt/</guid>
+      <pubDate>Fri, 09 Oct 2026 15:30:00 GMT</pubDate>
+      <description>Slik blir bedriften synlig i ChatGPT og AI-søk i 2026: svar først, ekte priser, gratis verktøy, Bing og måling. Med egne tall, også det som ikke virket.</description>
+    </item>
+    <item>
+      <title>Webbyrå priser 2026: 17 norske byråer sammenlignet</title>
+      <link>https://nettsmed.no/webbyra-priser/</link>
+      <guid isPermaLink="true">https://nettsmed.no/webbyra-priser/</guid>
+      <pubDate>Fri, 09 Oct 2026 15:00:00 GMT</pubDate>
+      <description>Webbyrå priser i 2026: vi har samlet publiserte nettsidepriser fra 17 norske byråer. Se median, prisspenn, hva som driver prisen og hva du bør spørre om.</description>
+    </item>
+    <item>
+      <title>Tripletex-integrasjon for nettbutikk: 3 sikre valg i 2026</title>
+      <link>https://nettsmed.no/nettbutikk-regnskap-integrasjon/</link>
+      <guid isPermaLink="true">https://nettsmed.no/nettbutikk-regnskap-integrasjon/</guid>
+      <pubDate>Wed, 07 Oct 2026 10:00:00 GMT</pubDate>
+      <description>Tripletex-integrasjon for nettbutikk: koble WooCommerce til Tripletex, PowerOffice eller Fiken. Tre veier, feller og sjekkliste. Få tilbud på oppsett.</description>
+    </item>
+    <item>
+      <title>Universell utforming av nettsider: 35 krav i 2026</title>
+      <link>https://nettsmed.no/universell-utforming-nettside/</link>
+      <guid isPermaLink="true">https://nettsmed.no/universell-utforming-nettside/</guid>
+      <pubDate>Fri, 02 Oct 2026 15:05:00 GMT</pubDate>
+      <description>Universell utforming av nettsider: 35 krav for private bedrifter og nettbutikker i 2026. Få oversikt, og bestill en gratis uu-sjekk.</description>
+    </item>
+    <item>
+      <title>Skreddersydd MCP: AI-integrasjon som snakker med systemene deres</title>
+      <link>https://nettsmed.no/skreddersydd-mcp/</link>
+      <guid isPermaLink="true">https://nettsmed.no/skreddersydd-mcp/</guid>
+      <pubDate>Wed, 23 Sep 2026 19:19:02 GMT</pubDate>
+      <description>Skreddersydd MCP kobler ChatGPT og Claude trygt til CRM, regnskap og support. Se hva det betyr for bedriften — og når Nettsmed passer.</description>
+    </item>
+    <item>
+      <title>Infinite FAQ: AI svarer på neste spørsmål, rett i FAQ-en</title>
+      <link>https://nettsmed.no/infinite-faq/</link>
+      <guid isPermaLink="true">https://nettsmed.no/infinite-faq/</guid>
+      <pubDate>Tue, 22 Sep 2026 12:37:54 GMT</pubDate>
+      <description>Infinite FAQ lar kunden stille neste spørsmål rett i FAQ-en, og AI svarer som en ny rad. Slik bygde vi det, uten chatbot og uten å røre schemaet.</description>
+    </item>
+    <item>
+      <title>Hva er Jev? TypeSafes System One-modell i produksjon</title>
+      <link>https://nettsmed.no/hva-er-jev/</link>
+      <guid isPermaLink="true">https://nettsmed.no/hva-er-jev/</guid>
+      <pubDate>Sun, 20 Sep 2026 16:23:58 GMT</pubDate>
+      <description>Hva er Jev? TypeSafes System One-modell tar beslutninger i stedet for tekst. Vi satte den i produksjon på nettsmed.no, og her er tallene vi målte.</description>
+    </item>
+    <item>
+      <title>AI-søk på egen nettside: Beste guide 2026</title>
+      <link>https://nettsmed.no/ai-sok-pa-egen-nettside/</link>
+      <guid isPermaLink="true">https://nettsmed.no/ai-sok-pa-egen-nettside/</guid>
+      <pubDate>Sat, 19 Sep 2026 15:42:35 GMT</pubDate>
+      <description>AI-søk på egen nettside krever indeks, semantisk søk og drift — ikke bare en widget. Se kravene, og få hjelp til å komme i gang hos Nettsmed.</description>
+    </item>
+    <item>
+      <title>AI Act enkelt forklart: 5 svar din bedrift trenger i 2026</title>
+      <link>https://nettsmed.no/ai-act/</link>
+      <guid isPermaLink="true">https://nettsmed.no/ai-act/</guid>
+      <pubDate>Wed, 16 Sep 2026 13:19:31 GMT</pubDate>
+      <description>AI Act gjelder i EU fra august 2026, men er ennå ikke norsk lov. Se hva din bedrift må gjøre nå — enkel sjekkliste uten jusspråk fra Nettsmed.</description>
+    </item>
+  </channel>
+</rss>

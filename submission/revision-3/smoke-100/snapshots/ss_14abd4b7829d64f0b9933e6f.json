@@ -1,0 +1,18 @@
+{
+  "id": "ss_14abd4b7829d64f0b9933e6f",
+  "requested_url": "https://nettsmed.no/contact/",
+  "final_url": "https://nettsmed.no/contact/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:12:38Z",
+  "content_sha256": "5138590ea5490aabcc72865dd7c0bfcba92763e749fcd7933b62b23ea9245f35",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/5138590ea5490aabcc72865dd7c0bfcba92763e749fcd7933b62b23ea9245f35.html",
+  "content_type": "text/html; charset=utf-8",
+  "last_modified": null,
+  "etag": "W/\"943f4c77cc5eaa5a830b8aec6ae4eb47\"",
+  "body_size_bytes": 68790,
+  "cache_hit": false,
+  "error": null
+}

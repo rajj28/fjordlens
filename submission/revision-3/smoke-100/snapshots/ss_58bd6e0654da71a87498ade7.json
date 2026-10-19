@@ -1,0 +1,18 @@
+{
+  "id": "ss_58bd6e0654da71a87498ade7",
+  "requested_url": "https://ponshelse.no/",
+  "final_url": "https://ponshelse.no/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:12:10Z",
+  "content_sha256": "38c5c1ce84bcf7eb60ef06dd61792616b1ae34052b1d61867b12c60e88fad595",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/38c5c1ce84bcf7eb60ef06dd61792616b1ae34052b1d61867b12c60e88fad595.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 309689,
+  "cache_hit": false,
+  "error": null
+}
