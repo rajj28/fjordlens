@@ -18,7 +18,7 @@ def main():
     run.add_argument("--registry-snapshot", help="Frozen official identity source-bundle folder; other connectors remain live")
     run.add_argument("--cutoff", help="Latest allowed evidence retrieval time, UTC ISO-8601")
     run.add_argument("--workers", type=int, default=None, help="Concurrent website workers (default 32)")
-    run.add_argument("--max-requests", type=int, default=None, help="Total HTTP attempts (default: SIGNALPOST_MAX_REQUESTS or 30 per company)")
+    run.add_argument("--max-requests", type=int, default=None, help="Total HTTP attempts (default: SIGNALPOST_MAX_REQUESTS or 20 per company, minimum 2000)")
     run.add_argument("--seconds", type=float, default=None, help="Wall-clock budget (default: SIGNALPOST_TIME_BUDGET_SECONDS or 2600)")
     run.add_argument("--per-company", type=int, default=None, help="HTTP attempts per company (default 40)")
     run.add_argument("--fresh", action="store_true", help="Do not treat an earlier run in --output as the previous snapshot")

@@ -24,6 +24,6 @@ fjordlens = ["web/*", "data/*.json.gz"]
 strategy_version = "2026-10-17-v5"
 default_wall_seconds = 2600
 default_requests_per_company = 40
-default_total_requests_per_company = 30
+default_total_requests_per_company = 20
 default_site_content_pages = 12
 default_external_cost_usd = 0

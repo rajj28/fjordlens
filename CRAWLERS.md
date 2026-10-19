@@ -116,7 +116,7 @@ Official API reference: https://data.brreg.no/enhetsregisteret/api/dokumentasjon
 ## Network layer (`net.py`)
 
 ### Budget and pacing
-- `Budget` (`net.Budget`): run-level `max_requests` (default ~30×companies, min 2000), wall-clock `seconds` (default 2600), per-company `per_company` (default 40). Shared sources (e.g., NAV feed catch-up) use `org="_shared"` and count only toward the run total.
+- `Budget` (`net.Budget`): run-level `max_requests` (default 20×companies, min 2000), wall-clock `seconds` (default 2600), per-company `per_company` (default 40). Shared sources (e.g., NAV feed catch-up) use `org="_shared"` and count only toward the run total.
 - Deadline margin: requests stop 5–50% before the hard limit to allow finalization.
 - Separate rate lanes per host: `official_interval` (default 0.1s, env `FJORDLENS_OFFICIAL_INTERVAL`), `site_interval` (default 0.5s, env `FJORDLENS_SITE_INTERVAL`). Filing-copy endpoint (`/aarsregnskap/kopi/`) gets its own lane at 1.1s.
 - `Robots` crawl-delay increases the effective interval when present (capped at 30s; longer delays skip the site).

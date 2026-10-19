@@ -604,7 +604,8 @@ def run_batch(inputs, output, *, run_id=None, previous=None, replay=None, cutoff
         jobs.append(job)
     pipeline = Pipeline(jobs, fetcher, max_pages=max_pages, workers=workers or 32)
     pipeline.start()
-    hard_stop = clock_start + seconds - margin * 0.5
+    # Preserve the whole assembly allowance even when a connector ignores its fetch deadline.
+    hard_stop = clock_start + seconds - margin
     next_provisional = time.monotonic() + min(first_provisional, provisional_every)  # Early safety net.
     while pipeline.busy() and time.monotonic() < hard_stop:
         pipeline.wait(min(hard_stop, next_provisional), 2.0)
@@ -669,6 +670,10 @@ def run_batch(inputs, output, *, run_id=None, previous=None, replay=None, cutoff
         report["report"] = write_report(results, output / "report")
     except Exception as exc:  # noqa: BLE001 - the viewer is a convenience; envelopes are already written
         report["report"] = {"error": f"{type(exc).__name__}: {str(exc)[:200]}"}
+    # Exports and the viewer are part of this process's runtime, too.
+    elapsed = time.monotonic() - clock_start
+    report.update(runtime_seconds=round(elapsed, 3), completed_at=now(), peak_memory_mb=peak_memory_mb(),
+                  budget_passed=budget.total <= max_requests and budget.cost <= 10 and elapsed <= seconds)
     write_json(output / "run-report.json", report)
     return report
 

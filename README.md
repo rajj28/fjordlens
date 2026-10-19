@@ -48,7 +48,7 @@ The agent is designed to finish inside the wall-clock budget and write every env
 | Setting | Flag | Environment variable | Default |
 |---|---|---|---|
 | Wall clock (s) | `--seconds` | `SIGNALPOST_TIME_BUDGET_SECONDS` | 2600 |
-| Total HTTP attempts | `--max-requests` | `SIGNALPOST_MAX_REQUESTS` | 30 × companies (min 2000) |
+| Total HTTP attempts | `--max-requests` | `SIGNALPOST_MAX_REQUESTS` | 20 × companies (min 2000) |
 | Attempts per company | `--per-company` | `FJORDLENS_PER_COMPANY` | 40 |
 | Website workers | `--workers` | – | 32 |
 | Site content pages | `--max-pages` | – | 12 (within the same request limits) |
@@ -61,6 +61,8 @@ that hangs or trickles bytes costs seconds, not the run; a company site that ans
 
 See [submission measurements](submission/README.md) for versioned live-run results, budgets and validation.
 Third-party API cost is **$0** when the optional search key is unset.
+These defaults are local settings. Use Builderr's supplied time and request limits for each official batch;
+the current contract supports variable batch sizes and does not promise the old fixed 100-company budget.
 
 ## What a profile contains
 

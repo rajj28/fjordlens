@@ -222,6 +222,19 @@ class RunnerAuditTests(unittest.TestCase):
             path.write_bytes(gzip.compress(('\ufeff\n' + json.dumps({"organisation_number": ORG}) + '\n\n').encode()))
             self.assertEqual(read_previous(path), {ORG: {"organisation_number": ORG}})
 
+    def test_slow_report_export_counts_toward_the_runtime_budget(self):
+        with tempfile.TemporaryDirectory() as directory:
+            # Advance a synthetic clock only when report generation starts. No real wait.
+            clock = [0.0]
+            def render(*args):
+                clock[0] = 61.0
+                return {"report": "synthetic"}
+            with patch('fjordlens.runner.time.monotonic', side_effect=lambda: clock[0]), \
+                    patch('fjordlens.report.write_report', side_effect=render):
+                _, _, report, _ = self.run_offline(Path(directory), seconds=60)
+            self.assertEqual(report['runtime_seconds'], 61.0)
+            self.assertFalse(report['budget_passed'])
+
 
 if __name__ == "__main__":
     unittest.main()
