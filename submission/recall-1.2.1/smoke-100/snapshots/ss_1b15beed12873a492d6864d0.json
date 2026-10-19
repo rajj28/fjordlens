@@ -1,0 +1,18 @@
+{
+  "id": "ss_1b15beed12873a492d6864d0",
+  "requested_url": "https://ponshelse.no/pons-blogg/",
+  "final_url": "https://ponshelse.no/pons-blogg/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:43:15Z",
+  "content_sha256": "020b1f70428f7b7face096c392ad544f985fe9317b4033e4d577f3f725cee66b",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/020b1f70428f7b7face096c392ad544f985fe9317b4033e4d577f3f725cee66b.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 205543,
+  "cache_hit": false,
+  "error": null
+}

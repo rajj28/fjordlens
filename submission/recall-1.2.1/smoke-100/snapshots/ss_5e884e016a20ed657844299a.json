@@ -1,0 +1,18 @@
+{
+  "id": "ss_5e884e016a20ed657844299a",
+  "requested_url": "https://ponshelse.no/vilkar-og-betingelser/",
+  "final_url": "https://ponshelse.no/vilkar-og-betingelser/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:43:14Z",
+  "content_sha256": "24b9385754ad0ddd0345c2919bc91272ea8fcc75c537c907fbb14deb840c6b9c",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/24b9385754ad0ddd0345c2919bc91272ea8fcc75c537c907fbb14deb840c6b9c.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 140103,
+  "cache_hit": false,
+  "error": null
+}

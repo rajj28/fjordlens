@@ -1,0 +1,24 @@
+{
+  "id": "ss_d6d8d12e7892eb5aed24b651",
+  "requested_url": "https://www.astomed.no/",
+  "final_url": "https://astomed.no/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:43:25Z",
+  "content_sha256": "efd1a5f89a22136d31a4cb8e1d3ee8b506396a84db61d70b44bfa459c0c9b763",
+  "redirect_chain": [
+    {
+      "url": "https://www.astomed.no/",
+      "status": 301,
+      "snapshot_id": "ss_2e7da3d62273b150d561d9f2"
+    }
+  ],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/efd1a5f89a22136d31a4cb8e1d3ee8b506396a84db61d70b44bfa459c0c9b763.html",
+  "content_type": "text/html; charset=utf-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 347650,
+  "cache_hit": false,
+  "error": null
+}

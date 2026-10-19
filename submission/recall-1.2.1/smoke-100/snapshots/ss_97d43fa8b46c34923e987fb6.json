@@ -1,0 +1,18 @@
+{
+  "id": "ss_97d43fa8b46c34923e987fb6",
+  "requested_url": "https://avito.no/aboutus-company",
+  "final_url": "https://avito.no/aboutus-company",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:46:47Z",
+  "content_sha256": "46fbbbdfec7bbbb49e3ae2a43f699b8cf9591eb71d874dae3a4e144e9a19d95b",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/46fbbbdfec7bbbb49e3ae2a43f699b8cf9591eb71d874dae3a4e144e9a19d95b.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": "Mon, 19 Oct 2026 02:04:29 GMT",
+  "etag": null,
+  "body_size_bytes": 70536,
+  "cache_hit": false,
+  "error": null
+}

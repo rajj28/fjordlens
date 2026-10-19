@@ -1,0 +1,18 @@
+{
+  "id": "ss_7f4d1745df86cdcf3173b9aa",
+  "requested_url": "https://www.elsoregnskap.no/kontakt-oss/",
+  "final_url": "https://www.elsoregnskap.no/kontakt-oss/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:43:38Z",
+  "content_sha256": "00f6fa586810b6d5a7af28b321d3fcc7ef2fceb89150d8a0f2d04df9e9f8e7d1",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/00f6fa586810b6d5a7af28b321d3fcc7ef2fceb89150d8a0f2d04df9e9f8e7d1.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 43174,
+  "cache_hit": false,
+  "error": null
+}

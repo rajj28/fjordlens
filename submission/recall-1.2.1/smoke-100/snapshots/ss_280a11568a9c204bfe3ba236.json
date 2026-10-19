@@ -1,0 +1,18 @@
+{
+  "id": "ss_280a11568a9c204bfe3ba236",
+  "requested_url": "https://data.brreg.no/enhetsregisteret/api/enheter/930969095/roller",
+  "final_url": "https://data.brreg.no/enhetsregisteret/api/enheter/930969095/roller",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:43:22Z",
+  "content_sha256": "a4532419c794fd0a7226c386e297d5855e529f1be16f968286780acc5b49b330",
+  "redirect_chain": [],
+  "source_class": "official_registry",
+  "access_policy": "official_open_api_NLOD_2.0",
+  "storage_path": "snapshots/a4532419c794fd0a7226c386e297d5855e529f1be16f968286780acc5b49b330.json",
+  "content_type": "application/json",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 2959,
+  "cache_hit": false,
+  "error": null
+}

@@ -1,0 +1,18 @@
+{
+  "id": "ss_08cb974d0e39dab8749ba92f",
+  "requested_url": "https://dwt.no/news",
+  "final_url": "https://dwt.no/news",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:43:32Z",
+  "content_sha256": "31eaa5de8b082a361ef22f84496c2c2b825b7eb050fb7c5fd9cfa5d13e7aaf09",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/31eaa5de8b082a361ef22f84496c2c2b825b7eb050fb7c5fd9cfa5d13e7aaf09.html",
+  "content_type": "text/html",
+  "last_modified": "Tue, 24 Jun 2025 11:54:59 GMT",
+  "etag": "\"c5dc-6384fff78a2f4-gzip\"",
+  "body_size_bytes": 50652,
+  "cache_hit": false,
+  "error": null
+}

@@ -1,0 +1,18 @@
+{
+  "id": "ss_e81a1e6f5d95135c98bb6ecd",
+  "requested_url": "https://www.rokken.no/logg-inn/",
+  "final_url": "https://www.rokken.no/logg-inn/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:44:06Z",
+  "content_sha256": "a0bc356507a529f108c1168420788aaa1980ea60404fa1f430a36cac0701c1ad",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/a0bc356507a529f108c1168420788aaa1980ea60404fa1f430a36cac0701c1ad.html",
+  "content_type": "text/html; charset=utf-8",
+  "last_modified": "Mon, 19 Oct 2026 01:12:17 GMT",
+  "etag": null,
+  "body_size_bytes": 34753,
+  "cache_hit": false,
+  "error": null
+}

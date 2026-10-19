@@ -1,0 +1,18 @@
+{
+  "id": "ss_46972078dedd7026ec146511",
+  "requested_url": "https://nettsmed.no/ai-seo-konsulent/",
+  "final_url": "https://nettsmed.no/ai-seo-konsulent/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:43:35Z",
+  "content_sha256": "51e3f0cbb6c4c0675e159852b7222cf658a5dc191a66d4ea3dc67fc8e069ea69",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/51e3f0cbb6c4c0675e159852b7222cf658a5dc191a66d4ea3dc67fc8e069ea69.html",
+  "content_type": "text/html; charset=utf-8",
+  "last_modified": null,
+  "etag": "W/\"d6615846592c2413af408d75288e68d9\"",
+  "body_size_bytes": 104707,
+  "cache_hit": false,
+  "error": null
+}

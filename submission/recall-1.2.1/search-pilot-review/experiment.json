@@ -1,0 +1,66 @@
+{
+  "experiment": "Targeted search fallback, not a random recall benchmark or full batch run",
+  "source_parent_commit": "b60fd09f8bc575d296b00da2de311465e06f5137",
+  "working_tree_status": [
+    " M CRAWLERS.md",
+    " M README.md",
+    " M fjordlens/__main__.py",
+    " M fjordlens/net.py",
+    " M fjordlens/runner.py",
+    " M fjordlens/website.py",
+    " M scripts/audit_evidence.py",
+    " M tests/test_review_fixes.py",
+    "?? tests/test_search_budget.py",
+    "?? tests/test_social_declaration_audit.py"
+  ],
+  "frozen_identity_source": "final-smoke-100-7cb1a94",
+  "selection": "Three previously unresolved companies with 9, 10 and 40 registered employees",
+  "queries_per_company": 2,
+  "search_requests": 6,
+  "search_request_limit": 6,
+  "http_attempts": 19,
+  "runtime_seconds": 35.562,
+  "declared_cost_estimate_usd": 0.030000000000000002,
+  "api_statuses": [
+    200,
+    200,
+    200,
+    200,
+    200,
+    200
+  ],
+  "credential_saved": false,
+  "search_results_saved": false,
+  "results": [
+    {
+      "org": "930969095",
+      "name": "VADSØ MØBELSENTER AS",
+      "search_attempts": 2,
+      "website_state": "ambiguous",
+      "verified_website": [],
+      "social_records": 0,
+      "publications": 0,
+      "validation_errors": []
+    },
+    {
+      "org": "935550483",
+      "name": "LILLESTRØM PIZZADRIFT AS",
+      "search_attempts": 2,
+      "website_state": "not_available",
+      "verified_website": [],
+      "social_records": 0,
+      "publications": 0,
+      "validation_errors": []
+    },
+    {
+      "org": "919453273",
+      "name": "MØLLER SPORTSBILER ASKER & BÆRUM AS",
+      "search_attempts": 2,
+      "website_state": "not_available",
+      "verified_website": [],
+      "social_records": 0,
+      "publications": 0,
+      "validation_errors": []
+    }
+  ]
+}

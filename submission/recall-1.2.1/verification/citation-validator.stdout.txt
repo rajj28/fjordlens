@@ -1,0 +1,7 @@
+{
+  "valid": true,
+  "envelopes_checked": 100,
+  "citations_checked": 4667,
+  "findings": 0,
+  "first_findings": []
+}

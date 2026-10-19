@@ -1,0 +1,18 @@
+{
+  "id": "ss_3516d0dbb88b6463115b070a",
+  "requested_url": "https://xn--gyplangen-72a0s.no/",
+  "final_url": "https://xn--gyplangen-72a0s.no/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:45:18Z",
+  "content_sha256": "e77ab43aecbf3770cddbd2500846323979c7ef2ede3b3325d2c64b39030d9ad3",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/e77ab43aecbf3770cddbd2500846323979c7ef2ede3b3325d2c64b39030d9ad3.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 89367,
+  "cache_hit": false,
+  "error": null
+}

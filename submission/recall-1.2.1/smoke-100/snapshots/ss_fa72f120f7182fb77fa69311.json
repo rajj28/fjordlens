@@ -1,0 +1,24 @@
+{
+  "id": "ss_fa72f120f7182fb77fa69311",
+  "requested_url": "https://www.avito.no/",
+  "final_url": "https://avito.no/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:46:45Z",
+  "content_sha256": "db5e265a5e1ad88c5052ce09fce4f9a0bc0b3aef40a67e338bd8b0cd3a208c60",
+  "redirect_chain": [
+    {
+      "url": "https://www.avito.no/",
+      "status": 301,
+      "snapshot_id": "ss_d0c4658082881d851c85d723"
+    }
+  ],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/db5e265a5e1ad88c5052ce09fce4f9a0bc0b3aef40a67e338bd8b0cd3a208c60.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": "Mon, 19 Oct 2026 02:04:28 GMT",
+  "etag": null,
+  "body_size_bytes": 122006,
+  "cache_hit": false,
+  "error": null
+}

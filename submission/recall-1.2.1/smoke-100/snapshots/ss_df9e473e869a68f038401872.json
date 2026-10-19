@@ -1,0 +1,18 @@
+{
+  "id": "ss_df9e473e869a68f038401872",
+  "requested_url": "https://www.elsoregnskap.no/aktuelle-saker/skattefrie-gaver/",
+  "final_url": "https://www.elsoregnskap.no/aktuelle-saker/skattefrie-gaver/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:43:51Z",
+  "content_sha256": "b4b28ce43b23981411ac2a64ac3ee7e8e434f11edf3ebf9c53c4c728ef0eff0c",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/b4b28ce43b23981411ac2a64ac3ee7e8e434f11edf3ebf9c53c4c728ef0eff0c.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 60738,
+  "cache_hit": false,
+  "error": null
+}

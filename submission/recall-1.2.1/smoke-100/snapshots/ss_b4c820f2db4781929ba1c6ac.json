@@ -1,0 +1,18 @@
+{
+  "id": "ss_b4c820f2db4781929ba1c6ac",
+  "requested_url": "https://www.rokken.no/om-oss/category841.html",
+  "final_url": "https://www.rokken.no/om-oss/category841.html",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:44:11Z",
+  "content_sha256": "9dba3b82d5c3ab985bab31b04e8a4be992e3d82a233847131f5d526d2bf66f44",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/9dba3b82d5c3ab985bab31b04e8a4be992e3d82a233847131f5d526d2bf66f44.html",
+  "content_type": "text/html; charset=utf-8",
+  "last_modified": "Sun, 18 Oct 2026 23:51:33 GMT",
+  "etag": null,
+  "body_size_bytes": 44304,
+  "cache_hit": false,
+  "error": null
+}

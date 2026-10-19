@@ -1,0 +1,18 @@
+{
+  "id": "ss_fc0405fb8159e2556fafb4f4",
+  "requested_url": "https://www.elsoregnskap.no/ansatte/unni-tryen/",
+  "final_url": "https://www.elsoregnskap.no/ansatte/unni-tryen/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:43:51Z",
+  "content_sha256": "f1bb5e83125e195f60c778b006152d7608339a4c41095d03033571c45343e01f",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/f1bb5e83125e195f60c778b006152d7608339a4c41095d03033571c45343e01f.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 40997,
+  "cache_hit": false,
+  "error": null
+}

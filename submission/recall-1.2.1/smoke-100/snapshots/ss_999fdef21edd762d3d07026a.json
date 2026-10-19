@@ -1,0 +1,18 @@
+{
+  "id": "ss_999fdef21edd762d3d07026a",
+  "requested_url": "https://ponshelse.no/tjenester/",
+  "final_url": "https://ponshelse.no/tjenester/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:43:20Z",
+  "content_sha256": "3658f7ac592b348ace3634fd3878de12af5a2b643078d05b6991fbeaab1c7515",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/3658f7ac592b348ace3634fd3878de12af5a2b643078d05b6991fbeaab1c7515.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 200137,
+  "cache_hit": false,
+  "error": null
+}

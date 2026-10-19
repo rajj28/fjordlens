@@ -1,0 +1,10 @@
+python : ----------------------------------------------------------------------
+At line:2 char:1
++ python -m unittest discover -s tests -q 2>&1 | Tee-Object -FilePath ' ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (---------------...---------------:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+Ran 470 tests in 29.359s
+
+OK

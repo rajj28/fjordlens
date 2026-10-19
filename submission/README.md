@@ -1,6 +1,8 @@
 # Submission evidence
 
-Latest: [FjordLens 1.2.0](revision-3/README.md), validated on 20 October 2026.
+Latest: [FjordLens 1.2.1](recall-1.2.1/README.md), validated on 20 October 2026.
+
+Previous checkpoint: [FjordLens 1.2.0](revision-3/README.md).
 
 Previous: [Version 2 / FjordLens 1.1.0](revision-2/README.md), validated on 17 October 2026.
 

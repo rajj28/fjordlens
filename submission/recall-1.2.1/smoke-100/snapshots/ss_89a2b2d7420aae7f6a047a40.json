@@ -1,0 +1,18 @@
+{
+  "id": "ss_89a2b2d7420aae7f6a047a40",
+  "requested_url": "https://nettsmed.no/personvern-og-lov/",
+  "final_url": "https://nettsmed.no/personvern-og-lov/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:43:35Z",
+  "content_sha256": "fa58b347527fe7a0e0b7b0ef3bb3ca818138f45f734d6e3be7d6bd26b0e38ce9",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/fa58b347527fe7a0e0b7b0ef3bb3ca818138f45f734d6e3be7d6bd26b0e38ce9.html",
+  "content_type": "text/html; charset=utf-8",
+  "last_modified": null,
+  "etag": "W/\"08c21595ebb2bb88692811830081538c\"",
+  "body_size_bytes": 67676,
+  "cache_hit": false,
+  "error": null
+}

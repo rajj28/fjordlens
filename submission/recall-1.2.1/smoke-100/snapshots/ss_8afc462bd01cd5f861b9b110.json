@@ -1,0 +1,24 @@
+{
+  "id": "ss_8afc462bd01cd5f861b9b110",
+  "requested_url": "https://www.autoringen.no/",
+  "final_url": "https://autoringen.no/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:43:33Z",
+  "content_sha256": "988fffd9282f1ed4fe45a5f94567d18517d8201471143dceccb7c33565883788",
+  "redirect_chain": [
+    {
+      "url": "https://www.autoringen.no/",
+      "status": 301,
+      "snapshot_id": "ss_f5bc8cc4fd49db4cab021b70"
+    }
+  ],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/988fffd9282f1ed4fe45a5f94567d18517d8201471143dceccb7c33565883788.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 56194,
+  "cache_hit": false,
+  "error": null
+}

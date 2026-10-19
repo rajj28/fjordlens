@@ -1,0 +1,18 @@
+{
+  "id": "ss_02fb79203864eb67e6384662",
+  "requested_url": "https://www.elsoregnskap.no/om-oss/",
+  "final_url": "https://www.elsoregnskap.no/om-oss/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:43:40Z",
+  "content_sha256": "0ea6f2109a58aaed8d8d42d2c6e0a16ca1600fad1c87ecb2b249fea9654832d8",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/0ea6f2109a58aaed8d8d42d2c6e0a16ca1600fad1c87ecb2b249fea9654832d8.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 47095,
+  "cache_hit": false,
+  "error": null
+}

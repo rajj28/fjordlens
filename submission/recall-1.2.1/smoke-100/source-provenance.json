@@ -1,0 +1,55 @@
+{
+  "artifact_type": "LIVE RUN SOURCE PROVENANCE",
+  "source_commit": "02f5195453b7241728385d58966f399027576a5a",
+  "source_repository": "local repository fetched into isolated clean clone",
+  "clone_path": "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-v3-final-20261017",
+  "working_tree_clean_before_run": true,
+  "working_tree_status_before_run": [],
+  "python": "3.11.9",
+  "python_executable": "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-v3-final-20261017\\.venv\\Scripts\\python.exe",
+  "installed_python_packages": [
+    {
+      "name": "pip",
+      "version": "24.0"
+    },
+    {
+      "name": "setuptools",
+      "version": "65.5.0"
+    }
+  ],
+  "command": [
+    ".venv\\Scripts\\python.exe",
+    "-m",
+    "fjordlens",
+    "run",
+    "--input",
+    "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-v3-benchmark-20261017\\fresh-100.jsonl",
+    "--output",
+    "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-v3-benchmark-20261017\\final-smoke-100-02f5195",
+    "--seconds",
+    "600",
+    "--max-requests",
+    "4000",
+    "--per-company",
+    "40",
+    "--max-search-requests",
+    "0",
+    "--fresh"
+  ],
+  "input_path": "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-v3-benchmark-20261017\\fresh-100.jsonl",
+  "input_sha256": "df42898b1f77746050df8ec1bcdf93591fa4376a1afe2436da203744da65e7f2",
+  "network_and_search": {
+    "live_public_http": true,
+    "brave_key_environment_variables_unset_for_run_process": [
+      "BRAVE_SEARCH_API_KEY",
+      "BRAVE_API_KEY"
+    ],
+    "max_search_requests": 0,
+    "search_requests_reported": 0,
+    "search_configured": false
+  },
+  "run_id": "fjordlens-20261019T194258Z",
+  "run_complete": true,
+  "run_report_requests": 1144,
+  "runtime_seconds": 234.75
+}

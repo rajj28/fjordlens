@@ -1,0 +1,18 @@
+{
+  "id": "ss_971fdd3bef851067bc45576f",
+  "requested_url": "https://bjaroyhandel.no/",
+  "final_url": "https://bjaroyhandel.no/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:43:15Z",
+  "content_sha256": "def0e25f5e92de6d33c780010cfce9bd59c46b4ef7a15ed55cdac8366e8680e1",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/def0e25f5e92de6d33c780010cfce9bd59c46b4ef7a15ed55cdac8366e8680e1.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 137898,
+  "cache_hit": false,
+  "error": null
+}

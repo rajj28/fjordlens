@@ -1,0 +1,143 @@
+{
+  "artifact_type": "OFFLINE RE-EXTRACTION",
+  "mode": "Saved snapshots only; no network or API keys used",
+  "datasets": {
+    "development": {
+      "source_run": "final-smoke-100-7cb1a94",
+      "baseline_source_commit": "7cb1a9492f847feb56b28336605137367cfee953",
+      "profiles": 100,
+      "same_host_saved_html_pages_scanned": 121,
+      "page_scope_rejections": 2,
+      "social_claim_records_before": 10,
+      "social_claim_records_after": 12,
+      "records_added_by_platform_url": 2,
+      "records_lost_by_platform_url": 0,
+      "companies_with_social_before": 6,
+      "companies_with_social_after": 7,
+      "companies_gained_coverage": 1,
+      "companies_lost_coverage": 0,
+      "added_by_company": {
+        "934297571": [
+          [
+            "LinkedIn",
+            "https://www.linkedin.com/company/86803995"
+          ]
+        ],
+        "931475924": [
+          [
+            "Facebook",
+            "https://www.facebook.com/profile.php?id=61553549982503"
+          ]
+        ]
+      },
+      "lost_by_company": {},
+      "output_directory": "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-v3-benchmark-20261017\\sameas-offline-reextract-7cb1a94-development-v5",
+      "audits": {
+        "citation": {
+          "valid": true,
+          "envelopes_checked": 100,
+          "citations_checked": 4667,
+          "findings": 0
+        },
+        "evidence": {
+          "passed": true,
+          "profiles": 100,
+          "claims_checked": 4590,
+          "claims_with_resolvable_evidence": 4590,
+          "financial_values_checked_against_raw_source": 1842,
+          "errors": 0
+        }
+      },
+      "artifact_written_local": "2026-10-20T01:12:07+05:30"
+    },
+    "holdout": {
+      "source_run": "final-holdout-100-approved",
+      "baseline_source_commit": "025b2877aa5fdfb4e1ad695b1ffce0944a32bf8b",
+      "profiles": 100,
+      "same_host_saved_html_pages_scanned": 113,
+      "page_scope_rejections": 3,
+      "social_claim_records_before": 4,
+      "social_claim_records_after": 4,
+      "records_added_by_platform_url": 0,
+      "records_lost_by_platform_url": 0,
+      "companies_with_social_before": 3,
+      "companies_with_social_after": 3,
+      "companies_gained_coverage": 0,
+      "companies_lost_coverage": 0,
+      "added_by_company": {},
+      "lost_by_company": {},
+      "output_directory": "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-v3-benchmark-20261017\\sameas-offline-reextract-7cb1a94-holdout-v5",
+      "audits": {
+        "citation": {
+          "valid": true,
+          "envelopes_checked": 100,
+          "citations_checked": 4726,
+          "findings": 0
+        },
+        "evidence": {
+          "passed": true,
+          "profiles": 100,
+          "claims_checked": 4670,
+          "claims_with_resolvable_evidence": 4670,
+          "financial_values_checked_against_raw_source": 1962,
+          "errors": 0
+        }
+      },
+      "artifact_written_local": "2026-10-20T01:12:12+05:30"
+    }
+  },
+  "extractor_provenance": {
+    "extractor_commit": "02f5195453b7241728385d58966f399027576a5a",
+    "extractor_commit_time": "2026-10-20T01:11:00+05:30",
+    "replay_parent_ancestry_commit": "b60fd09f8bc575d296b00da2de311465e06f5137",
+    "replay_execution_state": "Committed extractor source; v5 output files were written after the frozen commit time. Parent confirmed replay was run after this commit. No separate git-status-at-launch log was retained.",
+    "website_py_sha256_replay_worktree_bytes": "8e7b41e92e145862d339f2973498b5c0554239104d252d320b43170eddcce1f6",
+    "website_py_sha256_frozen_git_blob": "837bdff4ae2fbe10cb4839c1ba460aa12e166ffdf93273371b3774f330f1e145",
+    "content_equivalence": "Verified: working-tree website.py normalized from CRLF to LF is byte-identical to the frozen commit blob."
+  },
+  "deltas": [
+    {
+      "dataset": "development",
+      "organisation_number": "934297571",
+      "name": "NETTSMED AS",
+      "added_platform_url": [
+        [
+          "LinkedIn",
+          "https://www.linkedin.com/company/86803995"
+        ]
+      ],
+      "lost_platform_url": [],
+      "added_relationship_tuples": [
+        [
+          "LinkedIn",
+          "https://www.linkedin.com/company/86803995",
+          "declared_in_site_organization_markup"
+        ]
+      ],
+      "lost_relationship_tuples": []
+    },
+    {
+      "dataset": "development",
+      "organisation_number": "931475924",
+      "name": "ELSO REGNSKAP AS",
+      "added_platform_url": [
+        [
+          "Facebook",
+          "https://www.facebook.com/profile.php?id=61553549982503"
+        ]
+      ],
+      "lost_platform_url": [],
+      "added_relationship_tuples": [
+        [
+          "Facebook",
+          "https://www.facebook.com/profile.php?id=61553549982503",
+          "declared_in_site_organization_markup"
+        ]
+      ],
+      "lost_relationship_tuples": []
+    }
+  ],
+  "added_claims": [],
+  "audit_checked_at_local": "2026-10-20T01:16:16+05:30",
+  "artifact_note": "v5 is authoritative. v4 is superseded because shallow-copying non-social seed claims allowed in-memory mutation during replay and caused missing evidence references in its artifact assembly. v5 deep-copied seed claims and passes both audits."
+}

@@ -1,0 +1,18 @@
+{
+  "id": "ss_73bc3b3acd48da0227539ef1",
+  "requested_url": "https://avito.no/aboutus-career",
+  "final_url": "https://avito.no/aboutus-career",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:46:47Z",
+  "content_sha256": "e8e349d40065df2d583392477f889f3c22749b226eeab87afaec03e575fae633",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/e8e349d40065df2d583392477f889f3c22749b226eeab87afaec03e575fae633.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": "Mon, 19 Oct 2026 02:04:31 GMT",
+  "etag": null,
+  "body_size_bytes": 70364,
+  "cache_hit": false,
+  "error": null
+}

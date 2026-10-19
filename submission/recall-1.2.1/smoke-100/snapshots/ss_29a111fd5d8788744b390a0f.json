@@ -1,0 +1,18 @@
+{
+  "id": "ss_29a111fd5d8788744b390a0f",
+  "requested_url": "https://avito.no/contact-us-thank-you",
+  "final_url": "https://avito.no/contact-us-thank-you",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:46:49Z",
+  "content_sha256": "e5bc04a315bebd0541ef4c8a1722dc85ade9f99bef899dec6c91428c8b550bb2",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/e5bc04a315bebd0541ef4c8a1722dc85ade9f99bef899dec6c91428c8b550bb2.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": "Mon, 19 Oct 2026 02:04:31 GMT",
+  "etag": null,
+  "body_size_bytes": 57678,
+  "cache_hit": false,
+  "error": null
+}

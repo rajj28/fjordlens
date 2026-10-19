@@ -1,0 +1,18 @@
+{
+  "id": "ss_a635e550a4de3762bb0420e4",
+  "requested_url": "https://nettsmed.no/about-nettsmed/",
+  "final_url": "https://nettsmed.no/about-nettsmed/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:43:33Z",
+  "content_sha256": "0d6e105acb631e3d4676dbb570bba7f307964b8e9501c4229d0009caacf8902f",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/0d6e105acb631e3d4676dbb570bba7f307964b8e9501c4229d0009caacf8902f.html",
+  "content_type": "text/html; charset=utf-8",
+  "last_modified": null,
+  "etag": "W/\"7eb06a8121b1287f7bc49843f5ff57b9\"",
+  "body_size_bytes": 85730,
+  "cache_hit": false,
+  "error": null
+}

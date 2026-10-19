@@ -1,0 +1,130 @@
+{
+  "pilot_path": "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-v3-benchmark-20261017\\search-pilot-six-attempts",
+  "experiment": {
+    "experiment": "Targeted search fallback, not a random recall benchmark or full batch run",
+    "source_parent_commit": "b60fd09f8bc575d296b00da2de311465e06f5137",
+    "working_tree_status": [
+      " M CRAWLERS.md",
+      " M README.md",
+      " M fjordlens/__main__.py",
+      " M fjordlens/net.py",
+      " M fjordlens/runner.py",
+      " M fjordlens/website.py",
+      " M scripts/audit_evidence.py",
+      " M tests/test_review_fixes.py",
+      "?? tests/test_search_budget.py",
+      "?? tests/test_social_declaration_audit.py"
+    ],
+    "frozen_identity_source": "final-smoke-100-7cb1a94",
+    "selection": "Three previously unresolved companies with 9, 10 and 40 registered employees",
+    "queries_per_company": 2,
+    "search_requests": 6,
+    "search_request_limit": 6,
+    "http_attempts": 19,
+    "runtime_seconds": 35.562,
+    "declared_cost_estimate_usd": 0.030000000000000002,
+    "api_statuses": [
+      200,
+      200,
+      200,
+      200,
+      200,
+      200
+    ],
+    "credential_saved": false,
+    "search_results_saved": false,
+    "results": [
+      {
+        "org": "930969095",
+        "name": "VADSØ MØBELSENTER AS",
+        "search_attempts": 2,
+        "website_state": "ambiguous",
+        "verified_website": [],
+        "social_records": 0,
+        "publications": 0,
+        "validation_errors": []
+      },
+      {
+        "org": "935550483",
+        "name": "LILLESTRØM PIZZADRIFT AS",
+        "search_attempts": 2,
+        "website_state": "not_available",
+        "verified_website": [],
+        "social_records": 0,
+        "publications": 0,
+        "validation_errors": []
+      },
+      {
+        "org": "919453273",
+        "name": "MØLLER SPORTSBILER ASKER & BÆRUM AS",
+        "search_attempts": 2,
+        "website_state": "not_available",
+        "verified_website": [],
+        "social_records": 0,
+        "publications": 0,
+        "validation_errors": []
+      }
+    ]
+  },
+  "scope": "Read-only review of saved pilot envelope, attempt records, request receipts and fetched snapshots. No live API calls, no key access, no source changes.",
+  "results": [
+    {
+      "org": "930969095",
+      "name": "VADS? M?BELSENTER AS",
+      "api_queries": 2,
+      "candidate_urls": [
+        "https://www.varanger-kraftmarked.no/",
+        "https://www.largestcompanies.com/",
+        "https://www.regnskapstall.no/"
+      ],
+      "verified_site": false,
+      "diagnosis": "Returned nominees were third-party/wrong-owner destinations. Varanger KraftMarked page is a utility-company site; its exact-name hit is a customer feature (?Vads? M?belsenter AS er ?rets siste m?nedens kunde?), not ownership evidence. Its contact/about pages identify Varanger KraftMarked. Largestcompanies is a general directory homepage (.com) with no target legal proof. Regnskapstall is a directory profile whose detail subpage reproduces the exact target legal name, org no. 930 969 095 and Tanavegen 4 / 9801 Vads?, but this is third-party registry data, not evidence the target owns that domain; saved info/contact pages identify Regnskapstall as a Digitale Medier 1881 / Opplysningen 1881 service. Gate outcomes correctly remain ambiguous. No official_website claim or exact target-owner proof was missed in saved pages.",
+      "saved_evidence": [
+        {
+          "url": "https://www.varanger-kraftmarked.no/nyhetsarkiv/vadso-mobelsenter-as-er-arets-siste-manedens-kunde",
+          "sha256": "8e8599366568a94c24f7de3d1ddb7c84edc58cae5ac9677608fb4ead465a972f",
+          "observation": "customer feature, names Odd-Richard Larsen, no target org/address/registry email proof"
+        },
+        {
+          "url": "https://www.varanger-kraftmarked.no/om-varanger-kraftmarked/",
+          "sha256": "837d2e9193066ed79eebbed5c5d9ab3be10aef03ed2a89522e96aac95c1ad9cb",
+          "observation": "describes Varanger KraftMarked as the power supplier"
+        },
+        {
+          "url": "https://www.regnskapstall.no/informasjon-om-vadsoe-moebelsenter-as-100137721S1",
+          "sha256": "1bb79d0e4b71607fbeb32517226defbd893dac9b66408c7fa2b0133a2fb613c7",
+          "observation": "directory page contains correct company number/legal name/address, not owner position on company-owned site"
+        },
+        {
+          "url": "https://info.regnskapstall.no/",
+          "sha256": "a6d97a0b7a64bbf618b20ab801b66841e45f0463ece88be50af2450f82470288",
+          "observation": "Regnskapstall identifies itself as a service from Digitale Medier 1881 AS owned by Fonecta Group"
+        }
+      ]
+    },
+    {
+      "org": "935550483",
+      "name": "LILLESTR?M PIZZADRIFT AS",
+      "api_queries": 2,
+      "candidate_urls": [],
+      "verified_site": false,
+      "diagnosis": "No usable candidate URL was emitted, fetched, or gate-assessed. Saved official workplace is PIZZABAKEREN LILLESTR?M (10 employees) with no website or business email field. The pilot intentionally did not preserve raw search results/query text, so cannot distinguish zero web results from all results excluded by nomination filters; no evidence of a missed proof or gate false negative."
+    },
+    {
+      "org": "919453273",
+      "name": "M?LLER SPORTSBILER ASKER & B?RUM AS",
+      "api_queries": 2,
+      "candidate_urls": [],
+      "verified_site": false,
+      "diagnosis": "No new usable search candidate URL was emitted, fetched, or gate-assessed; raw results were not retained. The baseline frozen run already had official workplace candidate porsche-asker.no, whose robots.txt fetch returned HTTP 429, a servicefactory.no workplace-brand guess blocked by robots.txt, and an msab.no DNS guess fetched as HTTP 200 but produced no owner-proof request and remained ambiguous. Thus this is no search uplift on an unresolved existing candidate/access issue, not evidence the pilot missed correct-company proof. The pilot envelope contains only the search attempt and lacks these prior company-site attempts/snapshots; use final-smoke for this baseline context."
+    }
+  ],
+  "aggregate_diagnosis": "No new root bug found. The six Brave calls returned HTTP 200, but two organizations yielded no usable candidates, while Vads? yielded only a third-party customer story and directory entries. No saved page demonstrates correct-company owned-site proof that the unchanged gate rejected. Search results were deliberately not stored, so the two empty candidate lists cannot be diagnosed more finely from this pilot artifact.",
+  "request_log_note": "Search request receipts intentionally omit URL/query details; no API key or raw Brave response was accessed. Six search requests are identifiable by org, timestamps, and declared cost; 13 additional robots/page requests are recorded.",
+  "hashes": {
+    "varanger_customer_story": "8e8599366568a94c24f7de3d1ddb7c84edc58cae5ac9677608fb4ead465a972f",
+    "varanger_about": "837d2e9193066ed79eebbed5c5d9ab3be10aef03ed2a89522e96aac95c1ad9cb",
+    "regnskapstall_target_profile": "1bb79d0e4b71607fbeb32517226defbd893dac9b66408c7fa2b0133a2fb613c7",
+    "regnskapstall_about": "a6d97a0b7a64bbf618b20ab801b66841e45f0463ece88be50af2450f82470288"
+  }
+}

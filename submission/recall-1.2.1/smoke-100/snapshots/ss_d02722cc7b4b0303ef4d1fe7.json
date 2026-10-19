@@ -1,0 +1,18 @@
+{
+  "id": "ss_d02722cc7b4b0303ef4d1fe7",
+  "requested_url": "https://autoringen.no/info/kontakt-oss",
+  "final_url": "https://autoringen.no/info/kontakt-oss",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:43:34Z",
+  "content_sha256": "85bff8f5968fee709092093a18be5c877f9eb0aece0a08ef60539adfa31e0f92",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/85bff8f5968fee709092093a18be5c877f9eb0aece0a08ef60539adfa31e0f92.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 40735,
+  "cache_hit": false,
+  "error": null
+}

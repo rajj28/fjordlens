@@ -1,0 +1,43 @@
+{
+  "baseline_source_commit": "7cb1a9492f847feb56b28336605137367cfee953",
+  "candidate_source_commit": "02f5195453b7241728385d58966f399027576a5a",
+  "baseline": {
+    "official_website": {
+      "records": 11,
+      "companies": 11
+    },
+    "company_linked_profile": {
+      "records": 10,
+      "companies": 6
+    },
+    "company_publication": {
+      "records": 38,
+      "companies": 4
+    },
+    "independent_publications": 0
+  },
+  "candidate": {
+    "official_website": {
+      "records": 11,
+      "companies": 11
+    },
+    "company_linked_profile": {
+      "records": 12,
+      "companies": 7
+    },
+    "company_publication": {
+      "records": 38,
+      "companies": 4
+    },
+    "independent_publications": 0
+  },
+  "websites_added": {},
+  "websites_lost": {},
+  "website_values_changed": [],
+  "official_score": null,
+  "limitations": [
+    "Sequential live runs are confounded by source/network changes.",
+    "This sample was used during development and is not an independent holdout.",
+    "Coverage is not labelled recall. The frozen-snapshot social comparison is separate."
+  ]
+}

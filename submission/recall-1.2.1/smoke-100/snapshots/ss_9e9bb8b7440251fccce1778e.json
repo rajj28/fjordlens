@@ -1,0 +1,18 @@
+{
+  "id": "ss_9e9bb8b7440251fccce1778e",
+  "requested_url": "https://autoringen.no/info/personvern",
+  "final_url": "https://autoringen.no/info/personvern",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:43:35Z",
+  "content_sha256": "0575ff64bcfd1e5360b66acc143de896b9b97d425cda8017b3eed37456f6de51",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/0575ff64bcfd1e5360b66acc143de896b9b97d425cda8017b3eed37456f6de51.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 44043,
+  "cache_hit": false,
+  "error": null
+}

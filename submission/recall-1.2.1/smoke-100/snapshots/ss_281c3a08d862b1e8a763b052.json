@@ -1,0 +1,18 @@
+{
+  "id": "ss_281c3a08d862b1e8a763b052",
+  "requested_url": "https://nettsmed.no/articles/",
+  "final_url": "https://nettsmed.no/articles/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-19T19:43:33Z",
+  "content_sha256": "0674bf1709cf1d8e68de4e96c4ea21fb477b479e92f148e240ff27fb8fa10135",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/0674bf1709cf1d8e68de4e96c4ea21fb477b479e92f148e240ff27fb8fa10135.html",
+  "content_type": "text/html; charset=utf-8",
+  "last_modified": null,
+  "etag": "W/\"945cac8331748cca3d68a43af63f5d15\"",
+  "body_size_bytes": 67889,
+  "cache_hit": false,
+  "error": null
+}
