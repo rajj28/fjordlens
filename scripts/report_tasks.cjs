@@ -42,11 +42,27 @@ const {pathToFileURL}=require('node:url');
       await page.goto(index+'#org='+orgs[0]);
       await page.waitForFunction(()=>compare.length===0&&activeTab==='overview');
       await page.click('[data-tab="ask"]');
-      await page.click('[data-question="Who leads it?"]');
+      const firstPrompt=page.locator('#tab-content [data-question]').first();
+      assert(await firstPrompt.count()>0,`${name}: no answerable guided prompt is shown`);
+      const selectedQuestion=await firstPrompt.getAttribute('data-question');
+      await firstPrompt.click();
       await page.waitForFunction(()=>!document.querySelector('#answer').textContent.includes('Checking'));
       const answer=await page.locator('#answer').innerText();
-      assert(!answer.startsWith('Found '),`${name}: leadership answer is still a claim count`);
-      assert(answer.length>30,`${name}: leadership answer missing`);
+      assert(!answer.startsWith('Found '),`${name}: ${selectedQuestion} answer is still a claim count`);
+      assert(answer.length>30,`${name}: ${selectedQuestion} answer missing`);
+      await page.click('[data-tab="overview"]');
+      assert(await page.locator('.attention').isVisible(),`${name}: attention brief missing`);
+      assert.equal(await page.locator('.attention-card').count(),4,`${name}: expected four attention categories`);
+      const askAction=page.getByRole('button',{name:'Ask about this company'});
+      assert(await askAction.isVisible(),`${name}: overview Ask action missing`);
+      await askAction.click();
+      assert(await page.locator('.ask-box').isVisible(),`${name}: guided Ask panel did not open`);
+      assert(await page.locator('.ask-box [data-question]').count()>0,`${name}: answerable prompt suggestions missing`);
+      await page.locator('#question').fill('predict next year revenue');
+      await page.locator('#ask-form button[type="submit"]').click();
+      await page.waitForFunction(()=>!document.querySelector('#answer').textContent.includes('Checking'));
+      assert((await page.locator('#answer').innerText()).includes('does not forecast future results'),`${name}: actionable unsupported explanation missing`);
+      assert(await page.locator('#answer [data-question]').count()>0,`${name}: unsupported answer omitted suggested questions`);
       if(process.argv[3]){
         const queries=await page.evaluate(()=>[...window.FJ_ANSWER_CONFIG.questions,window.FJ_ANSWER_CONFIG.online,window.FJ_ANSWER_CONFIG.overview,'Who leads it?','revenue and employees','financial distress','leadership and online presence','news and changes','predict revenue','is it fraudulent?','unrecognised topic']);
         for(const query of queries){
@@ -57,6 +73,8 @@ const {pathToFileURL}=require('node:url');
           assert.equal(staticResult.answerable,serverResult.answerable,`static/server answerability mismatch: ${query}`);
           assert.deepEqual([...staticResult.claim_ids].sort(),[...serverResult.claim_ids].sort(),`static/server cited claims mismatch: ${query}`);
           assert.deepEqual([...staticResult.evidence_ids].sort(),[...serverResult.evidence_ids].sort(),`static/server cited evidence mismatch: ${query}`);
+          assert.deepEqual(staticResult.suggested_questions||[],serverResult.suggested_questions||[],`static/server suggested questions mismatch: ${query}`);
+          assert.deepEqual(staticResult.unsupported_or_uncertain||[],serverResult.unsupported_or_uncertain||[],`static/server coverage notes mismatch: ${query}`);
         }
       }
       // Distinct periods/currencies must never produce an apparently comparable ratio.

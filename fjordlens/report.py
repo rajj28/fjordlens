@@ -15,7 +15,7 @@ CHUNK_SIZE = 25
 
 
 def _latest_amount(profile, field):
-    items = [c for c in profile.get("claims", []) if c.get("field") == field and c.get("scope") == "legal_entity" and isinstance(c.get("value"), dict) and not c.get("stale")]
+    items = [c for c in profile.get("claims", []) if c.get("field") == field and c.get("scope") == "legal_entity" and isinstance(c.get("value"), dict) and c.get("availability") == "available" and not c.get("stale")]
     items.sort(key=lambda c: (c.get("reporting_period") or {}).get("tilDato", ""), reverse=True)
     try:
         return float(items[0]["value"]["amount"]) if items else None
@@ -24,10 +24,14 @@ def _latest_amount(profile, field):
 
 
 def summary_row(profile, chunk=None):
-    """List-view row; also used by the local server so both views agree."""
+    """Current-claim list row; also used by the local server so both views agree."""
     values = {}
     for claim in profile.get("claims", []):
-        values.setdefault(claim["field"], claim["value"])
+        if claim.get("availability") != "available" or claim.get("stale"):
+            continue
+        field = claim["field"]
+        values.setdefault(field, claim)
+    values = {field: claim["value"] for field, claim in values.items()}
     industry = values.get("industry")
     address = values.get("registered_address")
     row = {"organisation_number": profile["organisation_number"],
@@ -36,7 +40,7 @@ def summary_row(profile, chunk=None):
            "city": address.get("poststed", "Not reported") if isinstance(address, dict) else "Not reported",
            "employees": values.get("employees"), "claim_count": len(profile.get("claims", [])),
            "website_verified": (profile.get("availability", {}).get("website") or {}).get("state") == "available",
-           "hiring": any(c["field"] == "job_posting" for c in profile.get("claims", [])),
+           "hiring": any(c.get("field") == "job_posting" and c.get("availability") == "available" and not c.get("stale") for c in profile.get("claims", [])),
            "state": profile.get("state"), "updated_at": (profile.get("run") or {}).get("completed_at"),
            "changes": sum(1 for c in profile.get("changes", []) if c.get("material")),
            "municipality": address.get("kommune") if isinstance(address, dict) else None,
@@ -51,7 +55,7 @@ def summary_row(profile, chunk=None):
 def compact(profile):
     """Drop what the viewer never shows (raw snapshot metadata, crawl attempts) to keep chunks small."""
     from .answers import QUESTIONS
-    from .research import ONLINE_QUESTION, OVERVIEW_QUESTION, answer_profile
+    from .research import ONLINE_QUESTION, OVERVIEW_QUESTION, answer_profile, suggested_questions
     keep = dict(profile)
     # Precompute the same grounded answers used by the API. Keep references, not duplicate claim bodies.
     answer_fields = ("answer", "answerable", "sentences", "claim_ids", "evidence_ids", "unsupported_or_uncertain")
@@ -59,6 +63,7 @@ def compact(profile):
     for question in (*QUESTIONS, ONLINE_QUESTION, OVERVIEW_QUESTION):
         result = answer_profile(profile, question)
         keep["question_answers"][question] = {key: result[key] for key in answer_fields}
+    keep["answer_suggestions"] = suggested_questions(profile)
     keep["source_snapshot_count"] = len(profile.get("source_snapshots", []))
     keep["source_snapshots"] = []
     keep["attempts"] = []

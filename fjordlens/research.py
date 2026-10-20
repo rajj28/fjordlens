@@ -232,9 +232,21 @@ ANSWER_ROUTES = [
     (OVERVIEW_QUESTION, r"\b(?:overview|summari[sz]e|summary|about (?:it|them|the company|this company))\b"),
 ]
 UNSUPPORTED_ANSWER_ROUTES = [
-    (r"\b(?:sentiment|glassdoor|reviews?|buzz|traffic|fraud\w*)\b", "This is not established by the qualified sources collected for this company."),
-    (r"\b(?:predict\w*|forecast\w*|will it|should I invest|buy (?:its |the )?shares|share price)\b", "The captured public records do not support predictions or investment recommendations."),
+    (r"\b(?:sentiment|glassdoor|reviews?|buzz|traffic|fraud\w*)\b",
+     "FjordLens does not collect customer reviews, web analytics, or sentiment. It can summarize official records, filed accounts, NAV job-feed entries, and company-published material."),
+    (r"\b(?:predict\w*|forecast\w*|will it|should I invest|buy (?:its |the )?shares|share price)\b",
+     "FjordLens does not forecast future results or recommend investments. It can report filed figures and comparable historical periods when the captured accounts support them."),
 ]
+
+SUGGESTION_PRIORITY = (QUESTIONS[7], QUESTIONS[10], QUESTIONS[3], QUESTIONS[1], QUESTIONS[8],
+                       QUESTIONS[4], QUESTIONS[6], QUESTIONS[0], QUESTIONS[2], QUESTIONS[5], QUESTIONS[9])
+
+
+def suggested_questions(envelope, limit=4):
+    """Offer only prompts with a current direct answer in this profile; never guess at coverage."""
+    answers = {item["question"]: item for item in build_answers(envelope)}
+    return [question for question in SUGGESTION_PRIORITY
+            if answers.get(question, {}).get("answerable")][:max(0, limit)]
 
 
 def answer_question_keys(question):
@@ -273,7 +285,7 @@ def answer_profile(envelope, question):
         _, limitations = financial_insights(envelope)
         gaps.extend(item["text"] for item in limitations if item["scope"] == "legal_entity")
     if not picked:
-        message = "; ".join(blocked) or "This question is not supported by the captured company facts. Ask about its business, leadership, locations, filed finances, hiring, website, employees, changes, activity or contact details."
+        message = "; ".join(blocked) or "I could not match this request to a supported answer from the captured company facts. Try one of the suggested questions below, or inspect the profile coverage notes."
         gaps = [message]
         picked = [{"answer": message, "answerable": False, "claim_ids": [], "evidence_ids": []}]
     used_ids = {cid for item in picked for cid in item["claim_ids"]}
@@ -286,10 +298,12 @@ def answer_profile(envelope, question):
     evidence_ids = sorted({eid for c in claims for eid in c.get("evidence_ids", [])} | {eid for a in picked for eid in a.get("evidence_ids", [])})
     families = {c["family"] for c in claims}
     answerable = any(a["answerable"] for a in picked)
+    suggestions = suggested_questions(envelope) if not answerable else []
     return {"organisation_number": envelope.get("organisation_number"), "company_name": (envelope.get("legal_identity") or {}).get("name"),
             "question": q, "topics": keys, "answer": " ".join(s["text"] for s in sentences), "answerable": answerable,
             "sentences": sentences, "claim_ids": sorted(used_ids), "evidence_ids": evidence_ids, "citations": citations,
             "facts": facts, "claims": claims, "abstained": not answerable, "unsupported_or_uncertain": list(dict.fromkeys(gaps)),
             "availability": {f: (envelope.get("availability") or {}).get(f, {}) for f in sorted(families)},
+            "suggested_questions": suggestions,
             "changes": envelope.get("changes", []) if QUESTIONS[7] in keys else [], "method": "grounded_answers_v2",
             "answer_policy": "Only current source-linked claims support the answer; missing evidence is reported as missing, never as zero. Filed periods and company/group scope are kept separate."}

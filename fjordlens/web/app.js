@@ -9,7 +9,10 @@ const formatAmount = value => {const [whole,fraction] = String(value).split('.')
 const PAGE_SIZE=100;
 let companies=[], current=null, activeTab='overview', selected=null, compare=[], visibleCompanies=PAGE_SIZE;
 let comparisonProfiles=new Map(), comparisonRevision=0, questionRevision=0;
-const claim = field => current?.claims.find(c=>c.field===field);
+const claim = field => {
+  const claims=current?.claims.filter(c=>c.field===field&&c.availability==='available')||[];
+  return claims.find(c=>!c.stale)||claims.filter(c=>c.stale).sort((a,b)=>String(b.last_observed_at||'').localeCompare(String(a.last_observed_at||'')))[0];
+};
 const fields = families => current.claims.filter(c=>families.includes(c.family));
 // Data layer: the run's static report (window.FJ_INDEX + lazily loaded chunks, works from file://)
 // or the local server API. Both return the same envelope shapes.
@@ -27,10 +30,12 @@ function localAnswer(p,q){
   keys=[...new Set(keys)];
   const ordered=[...keys.filter(key=>config.questions.includes(key)),...([config.online,config.overview].filter(key=>keys.includes(key)))];
   const picked=ordered.map(key=>catalog[key]).filter(Boolean);
-  if(!picked.length){const message=unsupported.join('; ')||'This question is not supported by the captured company facts. Ask about its business, leadership, locations, filed finances, hiring, website, employees, changes, activity or contact details.';return {answer:message,answerable:false,abstained:true,sentences:[{text:message,claim_ids:[],stale:false}],claim_ids:[],evidence_ids:[],claims:[],unsupported_or_uncertain:[message],changes:[]};}
+  const suggestedQuestions=[...new Set((p.answer_suggestions||[]).filter(key=>catalog[key]?.answerable))];
+  if(!picked.length){const message=unsupported.join('; ')||'I could not match this request to a supported answer from the captured company facts. Try one of the suggested questions below, or inspect the profile coverage notes.';return {answer:message,answerable:false,abstained:true,sentences:[{text:message,claim_ids:[],stale:false}],claim_ids:[],evidence_ids:[],claims:[],unsupported_or_uncertain:[message],suggested_questions:suggestedQuestions,changes:[]};}
   const ids=[...new Set(picked.flatMap(a=>a.claim_ids))].sort(),claims=p.claims.filter(c=>ids.includes(c.id)&&c.availability==='available'&&!c.stale);
   const sentences=picked.flatMap(a=>a.sentences),availability={};claims.forEach(c=>{availability[c.family]=p.availability[c.family]||{};});
-  return {answer:sentences.map(s=>s.text).join(' '),answerable:picked.some(a=>a.answerable),abstained:!picked.some(a=>a.answerable),sentences,claim_ids:ids,evidence_ids:[...new Set(picked.flatMap(a=>a.evidence_ids))].sort(),claims,availability,unsupported_or_uncertain:[...new Set(picked.flatMap(a=>a.unsupported_or_uncertain))],changes:keys.includes(config.questions[7])?p.changes:[]};
+  const answerable=picked.some(a=>a.answerable);
+  return {answer:sentences.map(s=>s.text).join(' '),answerable,abstained:!answerable,sentences,claim_ids:ids,evidence_ids:[...new Set(picked.flatMap(a=>a.evidence_ids))].sort(),claims,availability,unsupported_or_uncertain:[...new Set(picked.flatMap(a=>a.unsupported_or_uncertain))],suggested_questions:answerable?[]:suggestedQuestions,changes:keys.includes(config.questions[7])?p.changes:[]};
 }
 async function askApi(org,q){return STATIC?localAnswer(current,q):fetch(`/api/ask?org=${encodeURIComponent(org)}&q=${encodeURIComponent(q)}`).then(r=>r.json());}
 const latestClaim=(p,field,scope='legal_entity')=>p.claims.filter(c=>c.field===field&&(c.scope===scope||!c.reporting_period)).sort((a,b)=>String(b.reporting_period?.tilDato||'').localeCompare(String(a.reporting_period?.tilDato||'')))[0];
@@ -81,17 +86,41 @@ function renderProfile(){
 function citation(c,org=''){return c?`<button class="cite" data-claim="${esc(c.id)}" ${org?`data-evidence-org="${esc(org)}"`:''} aria-label="Inspect supporting evidence for ${esc(label(c.field))}">↗</button>`:'';}
 function claimCard(c){return `<div class="claim-card"><div class="claim-head"><h4>${esc(label(c.field))}</h4><span class="state ${c.stale?'':'available'}">${c.stale?'Last known':'Sourced'}</span></div><div class="claim-value">${valueHTML(c.value)}</div><div class="claim-meta"><span>${esc(label(c.scope))}</span>${c.reporting_period?`<span>${esc(c.reporting_period.fraDato)} → ${esc(c.reporting_period.tilDato)}</span>`:''}${c.effective_at?`<span>Effective ${esc(c.effective_at)}</span>`:''}<button data-claim="${c.id}">Inspect ${c.evidence_ids.length} source${c.evidence_ids.length===1?'':'s'} ↗</button></div></div>`;}
 function emptyFamily(f){const s=current.availability[f];return `<div class="notice"><b>${esc(label(s.state))}.</b> ${esc(s.reason)}</div>`;}
+function renderAttentionOverview(p,out){
+  const s=p.summary||{},a=s.attention||{},cite=ids=>(ids||[]).slice(0,4).map(id=>citation(p.claims.find(c=>c.id===id))).join('');
+  const changes=a.changes||[],risks=a.risks||[],stale=a.stale||[],unknowns=(a.unknowns||s.unknowns||[]).filter(item=>item.text);
+  const changeMarkup=changes.slice(0,1).map(changeCard).join('')+(changes.length>1?`<details><summary>Review ${changes.length-1} more material change${changes.length===2?'':'s'}</summary>${changes.slice(1).map(changeCard).join('')}</details>`:'');
+  const riskMarkup=risks.map(item=>`<li>${esc(item.text)}${cite(item.claim_ids)}</li>`).join('');
+  const staleMarkup=stale.map(item=>`<li>${esc(item.text)}${cite(item.claim_ids)}</li>`).join('');
+  const unknownMarkup=unknowns.map(item=>`<li><b>${esc(label(item.family||'coverage'))}</b> · ${esc(item.text)}</li>`).join('');
+  let changeState;
+  if(a.comparison==='first_observation') changeState='<p>This is the first observation. Changes cannot be established without a previous run.</p>';
+  else if(changes.length) changeState=changeMarkup;
+  else changeState=`<p>No material change was confirmed in this run.${stale.length?` ${stale.length} earlier fact(s) could not be reconfirmed.`:''}</p>`;
+  const staleState=stale.length?`<ul><li><span class="state">Last known</span> ${esc(stale[0].text)}${cite(stale[0].claim_ids)}</li></ul>${stale.length>1?`<details><summary>Review ${stale.length-1} more last-known fact${stale.length===2?'':'s'}</summary><ul>${stale.slice(1).map(item=>`<li><span class="state">Last known</span> ${esc(item.text)}${cite(item.claim_ids)}</li>`).join('')}</ul></details>`:''}`:'<p>No retained stale claims in this run.</p>';
+  const unknownState=unknowns.length?`<ul>${unknowns.slice(0,2).map(item=>`<li><b>${esc(label(item.family||'coverage'))}</b> · ${esc(item.text)}</li>`).join('')}</ul>${unknowns.length>2?`<details><summary>Why ${unknowns.length} topics are missing</summary><ul>${unknownMarkup}</ul></details>`:''}`:'<p>No unavailable research families are reported.</p>';
+  const riskState=risks.length?`<ul>${risks.slice(0,1).map(item=>`<li>${esc(item.text)}${cite(item.claim_ids)}</li>`).join('')}</ul>${risks.length>1?`<details><summary>Review ${risks.length-1} more sourced indicator${risks.length===2?'':'s'}</summary><ul>${risks.slice(1).map(item=>`<li>${esc(item.text)}${cite(item.claim_ids)}</li>`).join('')}</ul></details>`:''}`:`<p>${esc(a.risk_note||'No specific risk indicator is established by this brief; captured records do not establish current solvency.')}</p>`;
+  const factFields=[['employees','Registered employees'],['founded_on','Founded'],['registered_address','Registered address'],['latest_filing_year','Latest filed year']];
+  const facts=`<div class="key-facts">${factFields.map(([field,title])=>{const currentFact=p.claims.find(x=>x.field===field&&!x.stale&&x.availability==='available');const c=currentFact||p.claims.filter(x=>x.field===field&&x.stale).sort((a,b)=>String(b.last_observed_at||'').localeCompare(String(a.last_observed_at||'')))[0];return `<div class="fact"><div class="fact-label">${title}${c?.stale?' <span class="state">Last known</span>':''}</div><div class="fact-value">${field==='registered_address'&&c?esc([...(c.value.adresse||[]),c.value.postnummer,c.value.poststed].filter(Boolean).join(', ')):valueHTML(c?.value)}${c?citation(c):''}</div></div>`;}).join('')}</div>`;
+  const coverage=`<div class="health-grid">${Object.entries(p.availability||{}).map(([family,state])=>`<div class="health-row" title="${esc(state.reason)}"><span>${esc(label(family))}</span><span class="state ${esc(state.state)}">${esc(label(state.state))}</span></div>`).join('')}</div>`;
+  const briefText=s.brief?.text||'';
+  const briefSentences=new Set(briefText.split(/(?<=[.!?])\s+/).map(text=>text.trim()));
+  const renderedSentences=new Set();
+  const sections=(s.sections||[]).map(sec=>({ ...sec, sentences:sec.sentences.filter(item=>{
+    const text=String(item.text||'').trim();
+    if(!text||briefSentences.has(text)||renderedSentences.has(text))return false;
+    renderedSentences.add(text);
+    return true;
+  }) })).filter(sec=>sec.sentences.length).map(sec=>`<div class="summary-section"><h4>${esc(sec.title)}</h4>${sec.sentences.map(item=>`<p>${esc(item.text)}${cite(item.claim_ids)}${item.stale?' <span class="state">Last known</span>':''}</p>`).join('')}</div>`).join('');
+  const legacy=!(s.sections||[]).length?(s.sentences||[]).slice(0,6).map(item=>`<p>${esc(item.text)}${cite(item.claim_ids)}</p>`).join(''):'';
+  out.innerHTML=`<section class="attention" aria-label="Attention brief"><div class="block-title"><h3>Attention brief</h3><span class="subtle">Source-backed signals · no risk score</span></div><div class="attention-grid"><section class="attention-card"><h4>Since the last check</h4>${changeState}</section><section class="attention-card"><h4>Established risk indicators</h4>${riskState}</section><section class="attention-card"><h4>Needs reconfirmation <span class="count">${stale.length}</span></h4>${staleState}</section><section class="attention-card"><h4>Not established <span class="count">${unknowns.length}</span></h4>${unknownState}</section></div></section><div class="block-title"><h3>Company at a glance</h3><span class="subtle">Cited markers open their source trail</span></div><div class="summary">${s.brief?.text?`<p class="brief">${esc(s.brief.text)}${cite(s.brief.claim_ids)}</p>`:'<p>The captured sources do not establish a company summary.</p>'}</div>${sections||legacy?`<details class="secondary-details"><summary>More source-backed context</summary><div class="summary">${sections||legacy}</div></details>`:''}<details class="secondary-details"><summary>Registered facts</summary>${facts}</details><details class="secondary-details"><summary>Research coverage (${p.claims.length} claims · ${p.evidence.length} evidence records)</summary>${coverage}</details><div class="overview-actions"><button class="button primary" data-tab="ask">Ask about this company</button><button class="button" data-tab="changes">Review changes</button></div>`;
+}
 function renderTab(){
   const p=current, out=$('#tab-content');
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===activeTab));
   if(activeTab==='overview'){
-    const factFields=[['employees','Registered employees'],['founded_on','Founded'],['registered_address','Registered address'],['latest_filing_year','Latest filed year']];
-    const s=p.summary||{}, cite=ids=>(ids||[]).slice(0,3).map(id=>citation(p.claims.find(c=>c.id===id))).join('');
-    const answered=(p.answers||[]).map(a=>`<div class="summary-section"><h4>${esc(a.question)}</h4><p>${esc(a.answer)}${cite(a.claim_ids)}</p></div>`).join('');
-    const sections=(s.sections||[]).map(sec=>`<div class="summary-section"><h4>${esc(sec.title)}</h4>${sec.sentences.map(x=>`<p>${esc(x.text)}${cite(x.claim_ids)}${x.stale?' <span class="state">Last known</span>':''}</p>`).join('')}</div>`).join('');
-    const legacy=(s.sentences||[]).slice(0,6).map(x=>`<p>${esc(x.text)}${cite(x.claim_ids)}</p>`).join('');
-    const unknowns=(s.unknowns||[]).filter(u=>u.text).map(u=>`<li>${esc(u.text)}</li>`).join('');
-    out.innerHTML=`<div class="block-title"><h3>The company, in context</h3><span class="subtle">Every sentence cites its sources ↗</span></div><div class="summary">${s.brief&&s.brief.text?`<p class="brief">${esc(s.brief.text)}${cite(s.brief.claim_ids)}</p>`:''}${sections||legacy||'<p>The captured sources do not establish a company summary.</p>'}</div>${answered?`<div class="block-title"><h3>Standard questions</h3><span class="subtle">Answered only from cited claims</span></div><div class="summary">${answered}</div>`:''}${unknowns?`<div class="block-title"><h3>What we could not establish, and why</h3><span class="subtle">Missing is never zero</span></div><ul class="unknowns">${unknowns}</ul>`:''}<div class="key-facts">${factFields.map(([field,title])=>{const c=claim(field);return `<div class="fact"><div class="fact-label">${title}</div><div class="fact-value">${field==='registered_address'&&c?esc([...(c.value.adresse||[]),c.value.postnummer,c.value.poststed].filter(Boolean).join(', ')):valueHTML(c?.value)}${citation(c)}</div></div>`;}).join('')}</div><div class="block-title"><h3>What we could establish</h3><span class="subtle">${p.claims.length} claims · ${p.evidence.length} evidence records</span></div><div class="health-grid">${Object.entries(p.availability).map(([family,s])=>`<div class="health-row" title="${esc(s.reason)}"><span>${esc(label(family))}</span><span class="state ${s.state}">${esc(label(s.state))}</span></div>`).join('')}</div>${askBox()}`;
+    renderAttentionOverview(p,out);
+    return;
   } else if(activeTab==='financials'){
     out.innerHTML='<div class="block-title"><h3>Filed financial results</h3><span class="subtle">Original currencies & reporting periods</span></div><div class="notice">Company and consolidated accounts are labelled separately. Missing values are not zero.</div>'+ (fields(['financials']).map(claimCard).join('')||emptyFamily('financials')) + '<div class="section-gap">'+fields(['filing_history']).map(claimCard).join('')+'</div>';
   } else if(activeTab==='people'){
@@ -107,7 +136,14 @@ function renderTab(){
   }
 }
 function changeCard(c){return `<div class="claim-card"><h4>${esc(label(c.field))} · ${esc(label(c.type))}</h4><div class="source-details">Observed ${esc(c.observed_at||'Not reported')}</div><div class="data-pair"><span>Previous</span><span>${valueHTML(c.previous_value)}${(c.previous_evidence_ids||[]).length?`<button class="button" data-change="${esc(c.id)}" data-side="previous">Inspect previous evidence</button>`:''}</span></div><div class="data-pair"><span>Current</span><span>${valueHTML(c.current_value)}${(c.current_evidence_ids||[]).length?`<button class="button" data-change="${esc(c.id)}" data-side="current">Inspect current evidence</button>`:''}</span></div></div>`;}
-function askBox(){return '<section class="ask-box"><h3>Ask the evidence</h3><p>Answers use this company’s saved claims and sources.</p><form class="ask-form" id="ask-form"><input id="question" aria-label="Question about this company" placeholder="What do we know about this company?" required><button class="button primary" type="submit">Ask ↗</button></form><div class="ask-chips">'+['Who leads it?','Is it hiring?','What changed?'].map(q=>`<button class="chip" data-question="${esc(q)}">${q}</button>`).join('')+'</div><div class="answer" id="answer" aria-live="polite"></div></section>';}
+function guidedQuestions(p){
+  return [...new Set(p?.answer_suggestions||[])].slice(0,4);
+}
+function askBox(){
+  const prompts=guidedQuestions(current),chips=prompts.map(q=>'<button class="chip" type="button" data-question="'+esc(q)+'">'+esc(q)+'</button>').join('');
+  const empty=chips||'<span class="subtle">No direct-answer prompts are available yet. Review the profile coverage and evidence trail.</span>';
+  return '<section class="ask-box"><div class="ask-intro"><span class="eyebrow">GROUNDED IN THIS DOSSIER</span><h3>Ask the evidence</h3><p>Answers use captured claims. Supported facts link to evidence; missing coverage stays explicit.</p></div><form class="ask-form" id="ask-form"><input id="question" aria-label="Question about this company" placeholder="Ask about leadership, filed numbers, or changes…" required><button class="button primary" type="submit">Ask ↗</button></form><div class="ask-chips" aria-label="Suggested questions">'+empty+'</div><div class="answer" id="answer" aria-live="polite"></div></section>';
+}
 async function askQuestion(q){
   const revision=++questionRevision;$('#question').value=q;$('#answer').textContent='Checking the captured evidence...';const org=current.organisation_number;
   try{
@@ -116,7 +152,10 @@ async function askQuestion(q){
     const text=sentences.map(s=>`<p class="answer-text">${esc(s.text)}${(s.claim_ids||[]).map(id=>citation(current.claims.find(c=>c.id===id))).join('')}</p>`).join('');
     const details=(r.claims||[]).length?`<details><summary>Inspect ${r.claims.length} supporting claim${r.claims.length===1?'':'s'}</summary>${r.claims.map(claimCard).join('')}</details>`:'';
     const changes=(r.changes||[]).filter(c=>c.material!==false).map(changeCard).join('');
-    $('#answer').innerHTML=text+changes+details;
+    const gaps=(r.unsupported_or_uncertain||[]).filter(g=>g&&g!==r.answer);
+    const caveats=gaps.length?`<details class="answer-caveats"><summary>Coverage notes (${gaps.length})</summary><ul>${gaps.map(g=>`<li>${esc(g)}</li>`).join('')}</ul></details>`:'';
+    const next=(r.suggested_questions||[]).length?`<div class="suggested-next"><b>Try a supported question</b><div class="ask-chips">${r.suggested_questions.map(q=>`<button class="chip" type="button" data-question="${esc(q)}">${esc(q)}</button>`).join('')}</div></div>`:'';
+    $('#answer').innerHTML=text+changes+details+caveats+next;
   }catch{if($('#answer')&&revision===questionRevision)$('#answer').textContent='Could not read the saved profile. Please try again.';}
 }
 function evidenceHTML(p,ids){return ids.map(id=>{

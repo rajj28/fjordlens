@@ -331,19 +331,59 @@ def _summarize(profile):
             label = FAMILY_LABELS.get(family, family)
             unknown_items.append({"family": family, "state": state.get("state"), "reason": state.get("reason"),
                                   "text": f"{label[0].upper() + label[1:]}: {verb}. {state.get('reason')} ({state.get('state')})."})
+    # The attention brief is deliberately descriptive rather than scored. Only explicit
+    # registry flags or an exact filed negative-equity figure are presented as risk indicators.
+    risk_items = []
+    for field, label in (("bankrupt", "The official register flags bankruptcy."),
+                         ("liquidating", "The official register flags liquidation.")):
+        for claim in by_field.get(field, []):
+            if claim.get("value") is True:
+                risk_items.append({"kind": "official_registry_flag", "text": label,
+                                   "claim_ids": [claim["id"]], "evidence_ids": claim.get("evidence_ids", [])})
+    for insight in financial_sentences:
+        if "equity was negative" in insight["text"]:
+            risk_items.append({"kind": "negative_filed_equity", "text": insight["text"],
+                               "claim_ids": insight["claim_ids"],
+                               "evidence_ids": sorted({eid for cid in insight["claim_ids"] if cid in current_by_id
+                                                       for eid in current_by_id[cid].get("evidence_ids", [])})})
+
+    stale_items = [{"field": claim.get("field"), "family": claim.get("family"),
+                    "text": f"Last known {claim.get('field', 'fact').replace('_', ' ')} could not be reconfirmed.",
+                    "claim_ids": [claim["id"]], "evidence_ids": claim.get("evidence_ids", [])}
+                   for claim in profile.get("claims", []) if claim.get("stale")]
+    change_items = []
+    for change in material:
+        change_items.append({
+            "id": change.get("id"), "type": change.get("type"), "field": change.get("field"),
+            "text": f"{CHANGE_PHRASES.get(change.get('type'), str(change.get('type', 'Update')).replace('_', ' ').capitalize())}: {change_detail(change)}.",
+            "previous_value": change.get("previous_value"), "current_value": change.get("current_value"),
+            "observed_at": change.get("observed_at"), "claim_ids": [change["claim_id"]] if change.get("claim_id") in by_id else [],
+            "previous_evidence_ids": change.get("previous_evidence_ids", []),
+            "current_evidence_ids": change.get("current_evidence_ids", []),
+        })
+    attention = {
+        "comparison": "compared" if previous else "first_observation",
+        "previous_run_id": previous,
+        "changes": change_items,
+        "risks": risk_items,
+        "risk_note": None if risk_items else "No specific risk indicator is established by this brief; captured records do not establish current solvency.",
+        "stale": stale_items,
+        "unknowns": unknown_items,
+        "material_change_count": len(material),
+    }
+
     # Lead with actual business activity when available, followed by scale and the filed outcome.
     business = next((s for s in what["sentences"] if description and description["id"] in s["claim_ids"]), None)
     business = business or next((s for s in what["sentences"] if any(c and c["id"] in s["claim_ids"] for c in (first("registered_activity"), first("statutory_purpose")))), None)
     business = business or next(iter(what["sentences"]), None)
     workforce = next((s for s in what["sentences"] if employees and employees["id"] in s["claim_ids"]), None)
-    risk = next((s for s in what["sentences"] if any(c["id"] in s["claim_ids"] for c in flags)), None)
     brief_sentences = []
-    for sentence in [business, workforce, *numbers["sentences"][:1], *analysis["sentences"][:1], risk, *hiring["sentences"][:1]]:
+    for sentence in [business, workforce, *numbers["sentences"][:1], *analysis["sentences"][:1], *hiring["sentences"][:1]]:
         if sentence and sentence not in brief_sentences:
             brief_sentences.append(sentence)
     brief_ids = sorted({i for s in brief_sentences for i in s["claim_ids"]})
-    return {"method": "grounded_templates_v3", "brief": {"text": " ".join(s["text"] for s in brief_sentences), "claim_ids": brief_ids},
-            "sections": [s for s in sections if s["sentences"]], "sentences": flat, "unknowns": unknown_items,
+    return {"method": "grounded_templates_v4_attention", "brief": {"text": " ".join(s["text"] for s in brief_sentences), "claim_ids": brief_ids},
+            "attention": attention, "sections": sections, "sentences": flat, "unknowns": unknown_items,
             "change_count": len(changes), "material_change_count": len(material), "stale_claim_count": len(stale),
             "refresh_note": unchanged_refresh_note(profile),
             "interpretation": "Every sentence cites the claims it rests on. Company-published content is self-reported. "

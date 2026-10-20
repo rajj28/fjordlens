@@ -5,6 +5,14 @@ import gzip
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 from .synthesis import answer
+from .research import suggested_questions
+
+
+def _company_response(profile):
+    response = dict(profile)
+    response["answer_suggestions"] = suggested_questions(profile)
+    return response
+
 
 def serve(data_path: Path, port=8787):
     text = gzip.decompress(data_path.read_bytes()).decode("utf-8") if data_path.suffix == ".gz" else data_path.read_text(encoding="utf-8")
@@ -34,7 +42,7 @@ def serve(data_path: Path, port=8787):
                            "changes": sum(len(p["changes"]) for p in rows), "retrieved_at": max((r["updated_at"] for r in index), default=None)}})
             elif p.path.startswith("/api/company/"):
                 record = profiles.get(p.path.rsplit("/", 1)[-1])
-                self.send(record or {"error": "Company not found"}, status=200 if record else 404)
+                self.send(_company_response(record) if record else {"error": "Company not found"}, status=200 if record else 404)
             elif p.path == "/api/ask":
                 record = profiles.get(params.get("org", [""])[0])
                 self.send(answer(record, params.get("q", [""])[0][:1000]) if record else {"error": "Company not found"}, status=200 if record else 404)
