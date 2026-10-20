@@ -1,0 +1,18 @@
+{
+  "id": "ss_ad9355ad5dbb5583f1d35a84",
+  "requested_url": "https://bjaroyhandel.no/kontakt/",
+  "final_url": "https://bjaroyhandel.no/kontakt/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-20T19:30:34Z",
+  "content_sha256": "ec9c41c103b3875ff19f7dfa8156dc037e927c61eafe2742a8b4db9483f17008",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/ec9c41c103b3875ff19f7dfa8156dc037e927c61eafe2742a8b4db9483f17008.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 114712,
+  "cache_hit": false,
+  "error": null
+}

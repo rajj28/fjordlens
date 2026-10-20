@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "results": [
+    {
+      "name": "desktop",
+      "prompts": 4,
+      "errors": []
+    },
+    {
+      "name": "mobile",
+      "prompts": 4,
+      "errors": []
+    }
+  ]
+}

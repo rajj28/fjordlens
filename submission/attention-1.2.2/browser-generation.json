@@ -1,0 +1,10 @@
+{
+  "kind": "offline viewer regeneration from existing captures",
+  "input_profiles": 100,
+  "seconds": 1.0,
+  "report": {
+    "report": "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-release-1.2.2-20261021\\browser-check\\report\\index.html",
+    "companies": 100,
+    "chunks": 4
+  }
+}

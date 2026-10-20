@@ -1,0 +1,18 @@
+{
+  "id": "ss_2785f2d0e3fd898ce0eb2cd1",
+  "requested_url": "https://www.rokken.no/aktuelt/category935.html",
+  "final_url": "https://www.rokken.no/aktuelt/category935.html",
+  "http_status": 200,
+  "retrieved_at": "2026-10-20T19:31:16Z",
+  "content_sha256": "4d5fb3cef88fdb7721e6ee19a76e5dafbfa9aecd3726f7f3e3dbe51b648072a6",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/4d5fb3cef88fdb7721e6ee19a76e5dafbfa9aecd3726f7f3e3dbe51b648072a6.html",
+  "content_type": "text/html; charset=utf-8",
+  "last_modified": "Tue, 20 Oct 2026 09:08:42 GMT",
+  "etag": null,
+  "body_size_bytes": 113753,
+  "cache_hit": false,
+  "error": null
+}

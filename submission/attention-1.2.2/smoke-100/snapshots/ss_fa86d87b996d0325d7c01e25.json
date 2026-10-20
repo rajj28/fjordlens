@@ -1,0 +1,18 @@
+{
+  "id": "ss_fa86d87b996d0325d7c01e25",
+  "requested_url": "https://ponshelse.no/medlemskap/",
+  "final_url": "https://ponshelse.no/medlemskap/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-20T19:30:40Z",
+  "content_sha256": "84848800a170f8b53add36eb9dfcc9d0b2efae9949fd52df9e6406bd671897e8",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/84848800a170f8b53add36eb9dfcc9d0b2efae9949fd52df9e6406bd671897e8.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 172630,
+  "cache_hit": false,
+  "error": null
+}

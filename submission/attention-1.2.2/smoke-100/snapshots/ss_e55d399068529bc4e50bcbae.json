@@ -1,0 +1,24 @@
+{
+  "id": "ss_e55d399068529bc4e50bcbae",
+  "requested_url": "https://www.rokken.no/",
+  "final_url": "https://www.rokken.no/?lang=no_NO",
+  "http_status": 200,
+  "retrieved_at": "2026-10-20T19:30:42Z",
+  "content_sha256": "6a94f07bd651eba38ed3f9d16c8c356c7cc11de74e79c31a49197484cf6fb947",
+  "redirect_chain": [
+    {
+      "url": "https://www.rokken.no/",
+      "status": 302,
+      "snapshot_id": "ss_6e2ab18dc0ce68a181ff613b"
+    }
+  ],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/6a94f07bd651eba38ed3f9d16c8c356c7cc11de74e79c31a49197484cf6fb947.html",
+  "content_type": "text/html; charset=utf-8",
+  "last_modified": "Tue, 20 Oct 2026 12:09:56 GMT",
+  "etag": null,
+  "body_size_bytes": 67067,
+  "cache_hit": false,
+  "error": null
+}

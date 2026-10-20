@@ -1,0 +1,31 @@
+{
+  "passed": true,
+  "results": [
+    {
+      "viewport": "desktop",
+      "selectedProfileTop": 16.1875,
+      "tasks": [
+        "find company",
+        "inspect citation",
+        "compare with citations",
+        "same-document permalink",
+        "direct leadership answer",
+        "period/scope guards",
+        "previous/current change evidence"
+      ]
+    },
+    {
+      "viewport": "mobile",
+      "selectedProfileTop": 16,
+      "tasks": [
+        "find company",
+        "inspect citation",
+        "compare with citations",
+        "same-document permalink",
+        "direct leadership answer",
+        "period/scope guards",
+        "previous/current change evidence"
+      ]
+    }
+  ]
+}

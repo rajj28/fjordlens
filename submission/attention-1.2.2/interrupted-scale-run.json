@@ -1,0 +1,24 @@
+{
+  "source_commit": "02f5195453b7241728385d58966f399027576a5a",
+  "status": "interrupted_unverified",
+  "final_run_report_present": false,
+  "live_process_present": false,
+  "limitations": "No final run report; run is excluded from completed benchmark results. Provisional envelopes are not proof of completed research.",
+  "envelopes.jsonl": {
+    "bytes": 119109177,
+    "sha256": "b911c40a0dba6af95d1ed51f7fc621ac01c8212c57e8521b9152e365bc9fd997",
+    "null_bytes": 0,
+    "parseable_rows": 1000,
+    "invalid_rows": 0,
+    "states": {
+      "available": 1000
+    }
+  },
+  "requests-live.jsonl": {
+    "bytes": 2768798,
+    "sha256": "e33ce801464f03e111cdfaa23edc64ed6172ba76a22b12d267948a89ad691557",
+    "null_bytes": 298,
+    "parseable_rows": 10180,
+    "invalid_rows": 1
+  }
+}

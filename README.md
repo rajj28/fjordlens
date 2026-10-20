@@ -5,6 +5,38 @@ Give FjordLens organisation numbers; it returns one terminal profile per company
 availability states, a cited summary, change tracking against the previous run, and a self-contained report
 viewer. Built for [Builderr's Signalpost challenge](https://builderr.ai/challenges/signalpost).
 
+## Latest release: 1.2.2
+
+New in this release: a cited attention brief, guided questions shared by the offline and live viewers, and current-versus-last-known fact handling.
+
+The public release is tested from runtime source [`30b3eb4e9bc8dfaae1c798445683efc5adca4cb5`](https://github.com/rajj28/fjordlens/tree/30b3eb4e9bc8dfaae1c798445683efc5adca4cb5) on `improve-signalpost-recall`. Read the [full release report and evidence guide](submission/attention-1.2.2/README.md). The runtime uses only the Python standard library; it has no LLM dependency. Optional API search was explicitly disabled for the reported validation, with no private credential used.
+
+| Check | Verified result |
+|---|---|
+| Clean-clone regression suite | 481 tests passed |
+| Live smoke inputs / terminal envelopes | 100 / 100 |
+| Runtime / local budget | 240.157 s / 600 s |
+| HTTP attempts / local allowance | 1,157 / 4,000 |
+| Search requests / external API cost | 0 / $0 |
+| Evidence audit | 4,590 claims; 1,842 raw financial values; zero audit errors |
+| Citation contract | 4,667 citations; zero findings |
+| Deadline-cut companies / envelope validation errors | 0 / 0 |
+| Browser validation | Desktop/mobile static and live interfaces; 42 static/API answer comparisons |
+
+This release's 100-company input is a reused development smoke sample, not an unseen holdout or official score. The fresh 100-company live run is complete; full-scale live validation remains pending. The [1.2.1 checkpoint](submission/recall-1.2.1/README.md) is historical and its measurements are not results for 1.2.2.
+
+Reproduce the runtime from a clean checkout (the optional-search allowance is zero):
+
+```bash
+git checkout 30b3eb4e9bc8dfaae1c798445683efc5adca4cb5
+python -m venv .venv
+# Activate the environment for your shell.
+python -m pip install -r requirements.txt
+python -m fjordlens run --input companies.jsonl --output out/run --max-search-requests 0
+```
+
+Open `out/run/report/index.html` for the offline viewer, or run `python -m fjordlens serve --data out/run/envelopes.jsonl` for the local interface. Validate the output with `python scripts/validate_citations.py out/run`, `python scripts/audit_evidence.py out/run`, and `python -m unittest discover -s tests`. See the [release report](submission/attention-1.2.2/README.md) for exact evidence paths, browser checks, limitations, and artifact-specific commands.
+
 - **No API keys required, no model calls, no packages to install.** Python 3.10+ standard library only
   (tested on 3.11.9 and 3.14). One optional, evaluator-supplied key (Brave Search) adds website nomination;
   without it nothing paid is called.

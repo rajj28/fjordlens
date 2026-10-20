@@ -1,0 +1,298 @@
+{
+  "version": "1.2.2",
+  "source_commit": "30b3eb4e9bc8dfaae1c798445683efc5adca4cb5",
+  "branch": "improve-signalpost-recall",
+  "unit_tests": 481,
+  "run": {
+    "agent": "FjordLens",
+    "version": "1.2.2",
+    "run_id": "fjordlens-20261020T193015Z",
+    "started_at": "2026-10-20T19:30:15Z",
+    "completed_at": "2026-10-20T19:34:15Z",
+    "complete": true,
+    "input_count": 100,
+    "terminal_envelopes": 100,
+    "unique_organisations": 100,
+    "companies_cut_by_deadline": 0,
+    "requests": 1157,
+    "request_limit": 4000,
+    "per_company_request_limit": 40,
+    "search_requests": 0,
+    "search_request_limit": 0,
+    "runtime_seconds": 240.157,
+    "runtime_limit_seconds": 600.0,
+    "third_party_cost_usd": 0.0,
+    "cost_per_company_usd": 0.0,
+    "p50_company_runtime_ms": 98086.0,
+    "p95_company_runtime_ms": 140641,
+    "family_company_coverage": {
+      "identity": 100,
+      "financials": 100,
+      "leadership": 99,
+      "locations": 75,
+      "group": 8,
+      "filing_history": 100,
+      "website": 11,
+      "description": 99,
+      "contact": 38,
+      "social_profiles": 7,
+      "hiring": 0,
+      "activity": 4,
+      "workforce": 33
+    },
+    "published_claims": 4590,
+    "coverage_diagnostics": {
+      "unique_companies": 100,
+      "website_outcomes": {
+        "fetch_or_access_failure": 10,
+        "identity_unverified": 52,
+        "no_candidate": 27,
+        "verified": 11
+      },
+      "source_family_company_coverage": [
+        {
+          "source_class": "company_owned",
+          "family": "activity",
+          "companies": 4
+        },
+        {
+          "source_class": "company_owned",
+          "family": "contact",
+          "companies": 9
+        },
+        {
+          "source_class": "company_owned",
+          "family": "description",
+          "companies": 11
+        },
+        {
+          "source_class": "company_owned",
+          "family": "identity",
+          "companies": 8
+        },
+        {
+          "source_class": "company_owned",
+          "family": "social_profiles",
+          "companies": 7
+        },
+        {
+          "source_class": "company_owned",
+          "family": "website",
+          "companies": 11
+        },
+        {
+          "source_class": "official_annual_accounts",
+          "family": "filing_history",
+          "companies": 100
+        },
+        {
+          "source_class": "official_annual_accounts",
+          "family": "financials",
+          "companies": 100
+        },
+        {
+          "source_class": "official_group_structure",
+          "family": "group",
+          "companies": 8
+        },
+        {
+          "source_class": "official_registry",
+          "family": "contact",
+          "companies": 33
+        },
+        {
+          "source_class": "official_registry",
+          "family": "description",
+          "companies": 99
+        },
+        {
+          "source_class": "official_registry",
+          "family": "identity",
+          "companies": 100
+        },
+        {
+          "source_class": "official_registry",
+          "family": "workforce",
+          "companies": 33
+        },
+        {
+          "source_class": "official_roles",
+          "family": "leadership",
+          "companies": 99
+        },
+        {
+          "source_class": "official_subunits",
+          "family": "contact",
+          "companies": 25
+        },
+        {
+          "source_class": "official_subunits",
+          "family": "locations",
+          "companies": 75
+        },
+        {
+          "source_class": "official_subunits",
+          "family": "workforce",
+          "companies": 6
+        }
+      ],
+      "publication_companies": 4,
+      "publication_records_by_source": {
+        "company_owned": 38
+      },
+      "website_search_batches": 0,
+      "search_configured": false,
+      "scope": "Observed coverage, not a count of all real-world opportunities or an official recall score"
+    },
+    "evidence_validation_errors": 0,
+    "failed_envelopes": 0,
+    "changes": 0,
+    "material_changes": 0,
+    "peak_memory_mb": 158.2,
+    "replay": false,
+    "python": "3.11.9",
+    "previous_run": null,
+    "result_file": "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-release-1.2.2-20261021\\smoke-100\\envelopes.jsonl",
+    "envelope_states": {
+      "available": 100,
+      "not_available": 0,
+      "blocked": 0,
+      "not_applicable": 0,
+      "ambiguous": 0,
+      "failed": 0
+    },
+    "official_score": null,
+    "accuracy_and_recall": "Not measured: requires independent checked labels",
+    "models_at_runtime": [],
+    "budget_passed": true,
+    "registry_snapshot_supplied": false,
+    "cache_policy": "Declared NAV nomination index refreshed at runtime; every published ad fetched live. Other caches are run-local unless --replay or --registry-snapshot is supplied.",
+    "external_observations": 86,
+    "report": {
+      "report": "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-release-1.2.2-20261021\\smoke-100\\report\\index.html",
+      "companies": 100,
+      "chunks": 4
+    }
+  },
+  "evidence_audit": {
+    "profiles": 100,
+    "claims_checked": 4590,
+    "claims_with_resolvable_evidence": 4590,
+    "financial_values_checked_against_raw_source": 1842,
+    "errors": [],
+    "passed": true,
+    "scope": "Snapshot hashes, selector resolution and exact financial amounts/periods/scopes. Not a measurement of external recall or independently reviewed company precision."
+  },
+  "citation_validation": {
+    "validator": "signalpost_public_citation_v1",
+    "valid": true,
+    "envelopes_checked": 100,
+    "citations_checked": 4667,
+    "factual_support_verified": false,
+    "entity_binding_verified": false,
+    "findings": []
+  },
+  "snapshots": {
+    "cited_evidence_records": 4667,
+    "cited_snapshot_references_hash_verified": 4667,
+    "copied_body_and_metadata_files": 1039
+  },
+  "validation_errors": 0,
+  "offline_1000": {
+    "source_commit": "30b3eb4e9bc8dfaae1c798445683efc5adca4cb5",
+    "kind": "offline viewer generation and browser check only",
+    "data": "provisional 1000-profile envelopes from interrupted 1.2.1 run",
+    "not_a_live_research_benchmark": true,
+    "generation": {
+      "kind": "offline viewer regeneration from existing captures",
+      "input_profiles": 1000,
+      "seconds": 9.984,
+      "report": {
+        "report": "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-offline-1000-1.2.2-20261021\\report\\index.html",
+        "companies": 1000,
+        "chunks": 40
+      }
+    },
+    "checks": {
+      "live-ui": {
+        "passed": true,
+        "results": [
+          {
+            "name": "desktop",
+            "prompts": 4,
+            "errors": []
+          },
+          {
+            "name": "mobile",
+            "prompts": 4,
+            "errors": []
+          }
+        ]
+      },
+      "browser-tasks": {
+        "passed": true,
+        "results": [
+          {
+            "viewport": "desktop",
+            "selectedProfileTop": 16.1875,
+            "tasks": [
+              "find company",
+              "inspect citation",
+              "compare with citations",
+              "same-document permalink",
+              "direct leadership answer",
+              "period/scope guards",
+              "previous/current change evidence"
+            ]
+          },
+          {
+            "viewport": "mobile",
+            "selectedProfileTop": 16,
+            "tasks": [
+              "find company",
+              "inspect citation",
+              "compare with citations",
+              "same-document permalink",
+              "direct leadership answer",
+              "period/scope guards",
+              "previous/current change evidence"
+            ]
+          }
+        ]
+      },
+      "screens": {
+        "errors": []
+      }
+    }
+  },
+  "source_provenance": {
+    "source_commit": "30b3eb4e9bc8dfaae1c798445683efc5adca4cb5",
+    "working_tree_clean_before_run": true,
+    "python": "3.11.9",
+    "command": [
+      "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-release-1.2.2-20261021\\clean-clone\\.venv\\Scripts\\python.exe",
+      "-m",
+      "fjordlens",
+      "run",
+      "--input",
+      "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-v3-benchmark-20261017\\fresh-100.jsonl",
+      "--output",
+      "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-release-1.2.2-20261021\\smoke-100",
+      "--seconds",
+      "600",
+      "--max-requests",
+      "4000",
+      "--per-company",
+      "40",
+      "--max-search-requests",
+      "0",
+      "--fresh"
+    ],
+    "input_sha256": "df42898b1f77746050df8ec1bcdf93591fa4376a1afe2436da203744da65e7f2",
+    "sample_role": "reused development sample; smoke/completion check, not an unseen holdout or official score",
+    "search_key_environment_removed": true,
+    "max_search_requests": 0
+  },
+  "limits": "Local development smoke sample and chosen budgets, not official score or hidden-ground-truth recall. Original 1000 live run has no final report and is excluded.",
+  "cli_usage": "Copilot Auto implemented and tested release fixes in an isolated public-source copy. Free OpenCode DeepSeek review was stopped at 150 seconds without a completed finding. No Brave requests in this release validation."
+}

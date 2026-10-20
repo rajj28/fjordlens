@@ -1,0 +1,18 @@
+{
+  "id": "ss_4a29d01fe554592b075ac3e0",
+  "requested_url": "https://www.rokken.no/contact/category331.html",
+  "final_url": "https://www.rokken.no/contact/category331.html",
+  "http_status": 200,
+  "retrieved_at": "2026-10-20T19:30:51Z",
+  "content_sha256": "616bcb5f665cc193456be40fc57081e640fb664f54a5ed68f2b13a5f42216f7f",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/616bcb5f665cc193456be40fc57081e640fb664f54a5ed68f2b13a5f42216f7f.html",
+  "content_type": "text/html; charset=utf-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 54107,
+  "cache_hit": false,
+  "error": null
+}

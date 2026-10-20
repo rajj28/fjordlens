@@ -1,0 +1,18 @@
+{
+  "id": "ss_660956d44ce3b3188bf8b44f",
+  "requested_url": "https://ponshelse.no/helsekontroll/",
+  "final_url": "https://ponshelse.no/helsekontroll/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-20T19:30:43Z",
+  "content_sha256": "f3615c9b88800b841c6e5e6979642fb1ad988432534be4d9c7fcf1dd80bb5be9",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/f3615c9b88800b841c6e5e6979642fb1ad988432534be4d9c7fcf1dd80bb5be9.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 216640,
+  "cache_hit": false,
+  "error": null
+}

@@ -1,0 +1,18 @@
+{
+  "id": "ss_9383e932481f503593575544",
+  "requested_url": "https://avito.no/aboutus-team",
+  "final_url": "https://avito.no/aboutus-team",
+  "http_status": 200,
+  "retrieved_at": "2026-10-20T19:34:08Z",
+  "content_sha256": "b8b2641bd528d0701f7fe513d5113f85f84c0362eb8b2024d7153e97b6eb4c77",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/b8b2641bd528d0701f7fe513d5113f85f84c0362eb8b2024d7153e97b6eb4c77.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": "Tue, 20 Oct 2026 02:06:48 GMT",
+  "etag": null,
+  "body_size_bytes": 109743,
+  "cache_hit": false,
+  "error": null
+}

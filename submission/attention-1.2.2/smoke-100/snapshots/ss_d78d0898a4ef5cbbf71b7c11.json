@@ -1,0 +1,18 @@
+{
+  "id": "ss_d78d0898a4ef5cbbf71b7c11",
+  "requested_url": "https://ponshelse.no/om-oss/",
+  "final_url": "https://ponshelse.no/om-oss/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-20T19:30:34Z",
+  "content_sha256": "bc93e536fe7603a3a9191a0f435e83912ea2ced3716fc98fa1cd3fa292c16dea",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/bc93e536fe7603a3a9191a0f435e83912ea2ced3716fc98fa1cd3fa292c16dea.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 224518,
+  "cache_hit": false,
+  "error": null
+}

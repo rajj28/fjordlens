@@ -1,0 +1,18 @@
+{
+  "id": "ss_886c9a44b54d13e2fe7c102a",
+  "requested_url": "https://ponshelse.no/blogg/solkrem/",
+  "final_url": "https://ponshelse.no/blogg/solkrem/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-20T19:30:41Z",
+  "content_sha256": "bfd3b6f73af35c84696099b8b029dc08b061b19ddbbd0201ff3473dbe05e8aac",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/bfd3b6f73af35c84696099b8b029dc08b061b19ddbbd0201ff3473dbe05e8aac.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 170195,
+  "cache_hit": false,
+  "error": null
+}

@@ -1,0 +1,28 @@
+{
+  "source_commit": "30b3eb4e9bc8dfaae1c798445683efc5adca4cb5",
+  "working_tree_clean_before_run": true,
+  "python": "3.11.9",
+  "command": [
+    "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-release-1.2.2-20261021\\clean-clone\\.venv\\Scripts\\python.exe",
+    "-m",
+    "fjordlens",
+    "run",
+    "--input",
+    "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-v3-benchmark-20261017\\fresh-100.jsonl",
+    "--output",
+    "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-release-1.2.2-20261021\\smoke-100",
+    "--seconds",
+    "600",
+    "--max-requests",
+    "4000",
+    "--per-company",
+    "40",
+    "--max-search-requests",
+    "0",
+    "--fresh"
+  ],
+  "input_sha256": "df42898b1f77746050df8ec1bcdf93591fa4376a1afe2436da203744da65e7f2",
+  "sample_role": "reused development sample; smoke/completion check, not an unseen holdout or official score",
+  "search_key_environment_removed": true,
+  "max_search_requests": 0
+}

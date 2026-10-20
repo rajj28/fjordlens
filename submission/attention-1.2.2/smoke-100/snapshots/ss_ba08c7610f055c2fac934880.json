@@ -1,0 +1,18 @@
+{
+  "id": "ss_ba08c7610f055c2fac934880",
+  "requested_url": "https://xn--gyplangen-72a0s.no/river-activities/",
+  "final_url": "https://xn--gyplangen-72a0s.no/river-activities/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-20T19:32:42Z",
+  "content_sha256": "323b0fb0342df1c54c033ae26013951713ad4072f679ff990f6850b5f35dbd25",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/323b0fb0342df1c54c033ae26013951713ad4072f679ff990f6850b5f35dbd25.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 90636,
+  "cache_hit": false,
+  "error": null
+}

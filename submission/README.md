@@ -1,6 +1,8 @@
 # Submission evidence
 
-Latest: [FjordLens 1.2.1](recall-1.2.1/README.md), validated on 20 October 2026.
+Latest: [FjordLens 1.2.2](attention-1.2.2/README.md), validated on 21 October 2026. The exact-source 100-company smoke run, evidence audits and desktop/mobile browser checks passed. Full-scale live validation remains pending.
+
+History: [FjordLens 1.2.1](recall-1.2.1/README.md), validated on 20 October 2026. Its results belong to that prior checkpoint, not 1.2.2.
 
 Previous checkpoint: [FjordLens 1.2.0](revision-3/README.md).
 

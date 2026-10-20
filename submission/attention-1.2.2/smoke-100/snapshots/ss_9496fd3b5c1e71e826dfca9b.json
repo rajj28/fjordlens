@@ -1,0 +1,18 @@
+{
+  "id": "ss_9496fd3b5c1e71e826dfca9b",
+  "requested_url": "https://www.elsoregnskap.no/personvernerklaering/",
+  "final_url": "https://www.elsoregnskap.no/personvernerklaering/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-20T19:30:59Z",
+  "content_sha256": "89554ee6eb5eee9f467847d76a7d8532a2f6fe650aef4bb21d3d0904c34723fa",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/89554ee6eb5eee9f467847d76a7d8532a2f6fe650aef4bb21d3d0904c34723fa.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 44575,
+  "cache_hit": false,
+  "error": null
+}

@@ -1,0 +1,24 @@
+{
+  "id": "ss_914f6a7a9cc2b054cf1a2049",
+  "requested_url": "https://www.rokken.no/personvern/personvern-og-informasjonskapsler-article149-794.html",
+  "final_url": "https://www.rokken.no/personvern/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-20T19:31:42Z",
+  "content_sha256": "8ac4ca8b7a4b88583f161c39e1c3472187dbb6ca695ba9c4fba23b6f5855e322",
+  "redirect_chain": [
+    {
+      "url": "https://www.rokken.no/personvern/personvern-og-informasjonskapsler-article149-794.html",
+      "status": 301,
+      "snapshot_id": "ss_6601284ae4cbcbcbbe56b994"
+    }
+  ],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/8ac4ca8b7a4b88583f161c39e1c3472187dbb6ca695ba9c4fba23b6f5855e322.html",
+  "content_type": "text/html; charset=utf-8",
+  "last_modified": "Tue, 20 Oct 2026 05:36:33 GMT",
+  "etag": null,
+  "body_size_bytes": 45856,
+  "cache_hit": false,
+  "error": null
+}

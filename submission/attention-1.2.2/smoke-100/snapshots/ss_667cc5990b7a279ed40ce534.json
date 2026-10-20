@@ -1,0 +1,18 @@
+{
+  "id": "ss_667cc5990b7a279ed40ce534",
+  "requested_url": "https://bjaroyhandel.no/personvern/",
+  "final_url": "https://bjaroyhandel.no/personvern/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-20T19:30:36Z",
+  "content_sha256": "a56808d77c3047c9c83782b933bb581e094e1ca83f10418da16052ce91e21525",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/a56808d77c3047c9c83782b933bb581e094e1ca83f10418da16052ce91e21525.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 96017,
+  "cache_hit": false,
+  "error": null
+}

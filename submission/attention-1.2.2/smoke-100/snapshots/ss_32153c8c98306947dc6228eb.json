@@ -1,0 +1,18 @@
+{
+  "id": "ss_32153c8c98306947dc6228eb",
+  "requested_url": "https://www.elsoregnskap.no/digitale-regnskapstjenester/",
+  "final_url": "https://www.elsoregnskap.no/digitale-regnskapstjenester/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-20T19:30:57Z",
+  "content_sha256": "fa03af0d068be9be032882c273593ce2370b5724e4291775cb47248ee899dcd6",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/fa03af0d068be9be032882c273593ce2370b5724e4291775cb47248ee899dcd6.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 48756,
+  "cache_hit": false,
+  "error": null
+}

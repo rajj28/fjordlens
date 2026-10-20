@@ -1,0 +1,67 @@
+{
+  "source_commit": "30b3eb4e9bc8dfaae1c798445683efc5adca4cb5",
+  "kind": "offline viewer generation and browser check only",
+  "data": "provisional 1000-profile envelopes from interrupted 1.2.1 run",
+  "not_a_live_research_benchmark": true,
+  "generation": {
+    "kind": "offline viewer regeneration from existing captures",
+    "input_profiles": 1000,
+    "seconds": 9.984,
+    "report": {
+      "report": "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-offline-1000-1.2.2-20261021\\report\\index.html",
+      "companies": 1000,
+      "chunks": 40
+    }
+  },
+  "checks": {
+    "live-ui": {
+      "passed": true,
+      "results": [
+        {
+          "name": "desktop",
+          "prompts": 4,
+          "errors": []
+        },
+        {
+          "name": "mobile",
+          "prompts": 4,
+          "errors": []
+        }
+      ]
+    },
+    "browser-tasks": {
+      "passed": true,
+      "results": [
+        {
+          "viewport": "desktop",
+          "selectedProfileTop": 16.1875,
+          "tasks": [
+            "find company",
+            "inspect citation",
+            "compare with citations",
+            "same-document permalink",
+            "direct leadership answer",
+            "period/scope guards",
+            "previous/current change evidence"
+          ]
+        },
+        {
+          "viewport": "mobile",
+          "selectedProfileTop": 16,
+          "tasks": [
+            "find company",
+            "inspect citation",
+            "compare with citations",
+            "same-document permalink",
+            "direct leadership answer",
+            "period/scope guards",
+            "previous/current change evidence"
+          ]
+        }
+      ]
+    },
+    "screens": {
+      "errors": []
+    }
+  }
+}

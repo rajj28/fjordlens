@@ -1,0 +1,18 @@
+{
+  "id": "ss_1df744b384404c101814ec4f",
+  "requested_url": "https://data.brreg.no/enhetsregisteret/api/underenheter?overordnetEnhet=914767180&size=1000",
+  "final_url": "https://data.brreg.no/enhetsregisteret/api/underenheter?overordnetEnhet=914767180&size=1000",
+  "http_status": 200,
+  "retrieved_at": "2026-10-20T19:30:31Z",
+  "content_sha256": "51eaf37a87bf080d4faf70806f05edc13d000eec544ac058d84706f43e84c6aa",
+  "redirect_chain": [],
+  "source_class": "official_registry",
+  "access_policy": "official_open_api_NLOD_2.0",
+  "storage_path": "snapshots/51eaf37a87bf080d4faf70806f05edc13d000eec544ac058d84706f43e84c6aa.json",
+  "content_type": "application/json",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 1222,
+  "cache_hit": false,
+  "error": null
+}

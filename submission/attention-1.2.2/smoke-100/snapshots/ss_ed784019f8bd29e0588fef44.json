@@ -1,0 +1,18 @@
+{
+  "id": "ss_ed784019f8bd29e0588fef44",
+  "requested_url": "https://www.rokken.no/kontakt-oss/category29.html",
+  "final_url": "https://www.rokken.no/kontakt-oss/category29.html",
+  "http_status": 200,
+  "retrieved_at": "2026-10-20T19:30:46Z",
+  "content_sha256": "32d5e40a8be28f3808e31256aa096783e3cbb93cbb8e863f96f0e67e8f44ceab",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/32d5e40a8be28f3808e31256aa096783e3cbb93cbb8e863f96f0e67e8f44ceab.html",
+  "content_type": "text/html; charset=utf-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 55266,
+  "cache_hit": false,
+  "error": null
+}

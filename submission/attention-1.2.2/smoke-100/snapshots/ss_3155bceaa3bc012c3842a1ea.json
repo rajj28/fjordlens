@@ -1,0 +1,18 @@
+{
+  "id": "ss_3155bceaa3bc012c3842a1ea",
+  "requested_url": "https://www.rokken.no/om-oss/article-1956",
+  "final_url": "https://www.rokken.no/om-oss/article-1956",
+  "http_status": 200,
+  "retrieved_at": "2026-10-20T19:31:21Z",
+  "content_sha256": "58643100aa258440163fd400eae825b8045fc4a66768f5e656a465f5e5fdfc78",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/58643100aa258440163fd400eae825b8045fc4a66768f5e656a465f5e5fdfc78.html",
+  "content_type": "text/html; charset=utf-8",
+  "last_modified": "Tue, 20 Oct 2026 11:52:47 GMT",
+  "etag": null,
+  "body_size_bytes": 40469,
+  "cache_hit": false,
+  "error": null
+}

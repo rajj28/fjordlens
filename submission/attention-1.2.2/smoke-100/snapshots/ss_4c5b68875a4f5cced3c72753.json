@@ -1,0 +1,18 @@
+{
+  "id": "ss_4c5b68875a4f5cced3c72753",
+  "requested_url": "https://ponshelse.no/kontakt-oss/",
+  "final_url": "https://ponshelse.no/kontakt-oss/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-20T19:30:29Z",
+  "content_sha256": "67cb49a155512eec85cdc634c51d6d659af1a697284f5ff0064572c7175532ca",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/67cb49a155512eec85cdc634c51d6d659af1a697284f5ff0064572c7175532ca.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 198628,
+  "cache_hit": false,
+  "error": null
+}

@@ -1,0 +1,18 @@
+{
+  "id": "ss_1c8a9e9b22b2f0368d70317b",
+  "requested_url": "https://nettsmed.no/ai-konsulent/",
+  "final_url": "https://nettsmed.no/ai-konsulent/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-20T19:30:50Z",
+  "content_sha256": "43d9296e57e677b4f8439c8e3dd3044754634dff68a728a35e1a52219b999f65",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/43d9296e57e677b4f8439c8e3dd3044754634dff68a728a35e1a52219b999f65.html",
+  "content_type": "text/html; charset=utf-8",
+  "last_modified": null,
+  "etag": "W/\"1567fec0e3e1d3738691064fad3ab977\"",
+  "body_size_bytes": 104132,
+  "cache_hit": false,
+  "error": null
+}

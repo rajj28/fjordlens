@@ -1,0 +1,18 @@
+{
+  "id": "ss_4902ec4a16dfd2b37722534a",
+  "requested_url": "https://ponshelse.no/personvernerklaering-2/",
+  "final_url": "https://ponshelse.no/personvernerklaering-2/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-20T19:30:30Z",
+  "content_sha256": "6b9be548f44e346eec6611f1b483e3bd5416713230223617bfd2a8d2be781a7a",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/6b9be548f44e346eec6611f1b483e3bd5416713230223617bfd2a8d2be781a7a.html",
+  "content_type": "text/html; charset=UTF-8",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 124667,
+  "cache_hit": false,
+  "error": null
+}

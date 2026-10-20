@@ -1,0 +1,18 @@
+{
+  "id": "ss_07e7e024cfe2bfd659e4102c",
+  "requested_url": "https://nettsmed.no/ai-act/",
+  "final_url": "https://nettsmed.no/ai-act/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-20T19:30:50Z",
+  "content_sha256": "d437f40d94cda1d21e601481f66577e8524bc66c40b8b473efab8bfcf67f6560",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/d437f40d94cda1d21e601481f66577e8524bc66c40b8b473efab8bfcf67f6560.html",
+  "content_type": "text/html; charset=utf-8",
+  "last_modified": null,
+  "etag": "W/\"fe69c2fe754702e078922685acc8146f\"",
+  "body_size_bytes": 106253,
+  "cache_hit": false,
+  "error": null
+}

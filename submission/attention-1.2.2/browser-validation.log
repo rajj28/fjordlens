@@ -1,0 +1,26 @@
+{
+  "generation": {
+    "kind": "offline viewer regeneration from existing captures",
+    "input_profiles": 100,
+    "seconds": 1.0,
+    "report": {
+      "report": "C:\\Users\\Acer\\AppData\\Local\\Temp\\fjordlens-release-1.2.2-20261021\\browser-check\\report\\index.html",
+      "companies": 100,
+      "chunks": 4
+    }
+  },
+  "checks": {
+    "live-ui": {
+      "exit_code": 0,
+      "output": "{\n  \"passed\": true,\n  \"results\": [\n    {\n      \"name\": \"desktop\",\n      \"prompts\": 4,\n      \"errors\": []\n    },\n    {\n      \"name\": \"mobile\",\n      \"prompts\": 4,\n      \"errors\": []\n    }\n  ]\n}\n"
+    },
+    "browser-tasks": {
+      "exit_code": 0,
+      "output": "{\n  \"passed\": true,\n  \"results\": [\n    {\n      \"viewport\": \"desktop\",\n      \"selectedProfileTop\": 16.1875,\n      \"tasks\": [\n        \"find company\",\n        \"inspect citation\",\n        \"compare with citations\",\n        \"same-document permalink\",\n        \"direct leadership answer\",\n        \"period/scope guards\",\n        \"previous/current change evidence\"\n      ]\n    },\n    {\n      \"viewport\": \"mobile\",\n      \"selectedProfileTop\": 16,\n      \"tasks\": [\n        \"find company\",\n        \"inspect citation\",\n        \"compare with citations\",\n        \"same-document permalink\",\n        \"direct leadership answer\",\n        \"period/scope guards\",\n        \"previous/current change evidence\"\n      ]\n    }\n  ]\n}\n"
+    },
+    "screens": {
+      "exit_code": 0,
+      "output": "{\n  \"errors\": []\n}\n"
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "id": "ss_6ee6f312e21855c60d19311b",
+  "requested_url": "https://data.brreg.no/enhetsregisteret/api/enheter/935159873",
+  "final_url": "https://data.brreg.no/enhetsregisteret/api/enheter/935159873",
+  "http_status": 200,
+  "retrieved_at": "2026-10-20T19:30:31Z",
+  "content_sha256": "5eadc4bb0347ca433111d65496f44477c17a88bebc509b34498b037d5f03374a",
+  "redirect_chain": [],
+  "source_class": "official_registry",
+  "access_policy": "official_open_api_NLOD_2.0",
+  "storage_path": "snapshots/5eadc4bb0347ca433111d65496f44477c17a88bebc509b34498b037d5f03374a.json",
+  "content_type": "application/json",
+  "last_modified": null,
+  "etag": null,
+  "body_size_bytes": 1895,
+  "cache_hit": false,
+  "error": null
+}

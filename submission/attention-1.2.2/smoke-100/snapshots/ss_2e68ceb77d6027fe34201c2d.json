@@ -1,0 +1,18 @@
+{
+  "id": "ss_2e68ceb77d6027fe34201c2d",
+  "requested_url": "https://dwt.no/",
+  "final_url": "https://dwt.no/",
+  "http_status": 200,
+  "retrieved_at": "2026-10-20T19:30:53Z",
+  "content_sha256": "42a193b5abe63de7aa6d68625412bcbda4cf2d49d17b06c3831729d2dbe2ab61",
+  "redirect_chain": [],
+  "source_class": "company_owned",
+  "access_policy": "robots_checked_public_page",
+  "storage_path": "snapshots/42a193b5abe63de7aa6d68625412bcbda4cf2d49d17b06c3831729d2dbe2ab61.html",
+  "content_type": "text/html",
+  "last_modified": "Tue, 24 Jun 2025 11:54:59 GMT",
+  "etag": "\"b61b-6384fff787fe1-gzip\"",
+  "body_size_bytes": 46619,
+  "cache_hit": false,
+  "error": null
+}
